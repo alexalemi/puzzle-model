@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[oc]
+*.egg-info
+build/
+dist/
+wheels/
+
+# Virtual environments
+.venv
+
+# Raw scraped data (large, re-downloadable)
+data/raw/
+
+# Marimo session cache
+__marimo__/
+
+# Claude Code
+.claude/

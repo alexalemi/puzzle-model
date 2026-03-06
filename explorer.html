@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speed Puzzling Model Explorer</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&family=Source+Sans+3:wght@300;400;600&family=Source+Code+Pro:wght@400&display=swap');
+
+  :root {
+    --text: #303030;
+    --text-light: #6e6e6e;
+    --accent: #d4a04a;
+    --bg: #fcfcfc;
+    --bg-alt: #f6f4f0;
+    --border: #e0ddd5;
+    --blue: #4a7fb5;
+    --red: #c44e52;
+    --green: #55a868;
+    --purple: #8172b2;
+    --orange: #dd8452;
+    --chart-bg: #fafaf7;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Serif 4', Georgia, serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 48px 0 32px;
+    margin-bottom: 40px;
+  }
+  header h1 {
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 600; font-size: 36px;
+    letter-spacing: -0.5px; margin-bottom: 8px;
+  }
+  header .subtitle { font-size: 18px; color: var(--text-light); font-weight: 300; }
+  header .meta {
+    margin-top: 16px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 13px; color: var(--text-light);
+    display: flex; gap: 24px;
+  }
+
+  section { margin-bottom: 48px; }
+  h2 {
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 600; font-size: 22px;
+    margin-bottom: 16px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 { font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 16px; margin-bottom: 8px; }
+  p { margin-bottom: 16px; font-size: 16px; }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px; margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--bg-alt); border: 1px solid var(--border);
+    border-radius: 4px; padding: 16px; text-align: center;
+  }
+  .stat-card .value {
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 600; font-size: 28px; color: var(--blue); display: block;
+  }
+  .stat-card .label {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 12px; color: var(--text-light);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  .chart-container {
+    background: var(--chart-bg); border: 1px solid var(--border);
+    border-radius: 4px; padding: 20px; margin-bottom: 16px; overflow-x: auto;
+  }
+  .chart-row {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-bottom: 16px;
+  }
+  @media (max-width: 700px) { .chart-row { grid-template-columns: 1fr; } }
+
+  svg text { font-family: 'Source Sans 3', sans-serif; fill: var(--text); }
+  .axis text { font-size: 11px; fill: var(--text-light); }
+  .axis line, .axis path { stroke: var(--border); }
+  .chart-title { font-size: 13px; font-weight: 600; fill: var(--text); }
+
+  table {
+    width: 100%; border-collapse: collapse;
+    font-family: 'Source Sans 3', sans-serif; font-size: 14px; margin-bottom: 16px;
+  }
+  th {
+    background: var(--bg-alt); font-weight: 600; text-align: left;
+    padding: 8px 12px; border-bottom: 2px solid var(--border);
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-light);
+  }
+  td { padding: 6px 12px; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: var(--bg-alt); }
+  .num { font-family: 'Source Code Pro', monospace; text-align: right; }
+  .bar-cell { position: relative; padding-right: 60px; }
+  .bar-bg {
+    position: absolute; left: 0; top: 2px; bottom: 2px;
+    border-radius: 2px; opacity: 0.15;
+  }
+
+  details {
+    margin-bottom: 16px; border: 1px solid var(--border);
+    border-radius: 4px; background: var(--bg);
+  }
+  details[open] { background: var(--chart-bg); }
+  summary {
+    font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 15px;
+    padding: 12px 16px; cursor: pointer; user-select: none;
+    list-style: none; display: flex; align-items: center; gap: 8px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before {
+    content: ''; display: inline-block;
+    width: 0; height: 0;
+    border-left: 5px solid var(--text-light);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    transition: transform 0.15s; flex-shrink: 0;
+  }
+  details[open] > summary::before { transform: rotate(90deg); }
+  .details-content { padding: 0 16px 16px; }
+
+  .model-selector { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .model-btn {
+    font-family: 'Source Sans 3', sans-serif; font-size: 13px;
+    padding: 6px 16px; border: 1px solid var(--border); border-radius: 3px;
+    background: var(--bg); cursor: pointer; transition: all 0.15s; color: var(--text);
+  }
+  .model-btn:hover { border-color: var(--blue); color: var(--blue); }
+  .model-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
+
+  .metric-highlight {
+    display: inline-block; background: var(--bg-alt);
+    border: 1px solid var(--border); border-radius: 3px;
+    padding: 2px 8px; font-family: 'Source Code Pro', monospace; font-size: 13px;
+  }
+
+  .tooltip {
+    position: absolute; pointer-events: none; background: white;
+    border: 1px solid var(--border); border-radius: 3px;
+    padding: 8px 12px; font-family: 'Source Sans 3', sans-serif;
+    font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    z-index: 100; max-width: 240px;
+  }
+  .tooltip .tt-label { color: var(--text-light); }
+  .tooltip .tt-value { font-weight: 600; }
+
+  .search-box {
+    font-family: 'Source Sans 3', sans-serif; font-size: 14px;
+    padding: 8px 12px; border: 1px solid var(--border); border-radius: 3px;
+    width: 100%; max-width: 320px; margin-bottom: 12px;
+    background: var(--bg); color: var(--text);
+  }
+  .search-box:focus { outline: none; border-color: var(--blue); }
+
+  .footnote { font-size: 13px; color: var(--text-light); font-style: italic; margin-top: 4px; }
+
+  .equation {
+    font-family: 'Source Code Pro', monospace; font-size: 14px;
+    background: var(--bg-alt); padding: 12px 16px; border-radius: 4px;
+    margin: 12px 0; overflow-x: auto; border-left: 3px solid var(--accent);
+  }
+
+  .loading {
+    text-align: center; padding: 60px 0;
+    font-family: 'Source Sans 3', sans-serif; color: var(--text-light);
+    font-size: 16px;
+  }
+
+  footer {
+    border-top: 1px solid var(--border); padding: 24px 0; margin-top: 48px;
+    font-family: 'Source Sans 3', sans-serif; font-size: 13px; color: var(--text-light);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<header>
+  <h1>Speed Puzzling Model Explorer</h1>
+  <p class="subtitle">A Bayesian latent factor model for predicting jigsaw puzzle competition times</p>
+  <div class="meta">
+    <span id="meta-records"></span>
+    <span id="meta-puzzlers"></span>
+    <span id="meta-puzzles"></span>
+  </div>
+</header>
+
+<div id="app">
+  <div class="loading">Loading data...</div>
+</div>
+
+</div>
+
+<div class="tooltip" id="tooltip" style="display:none;"></div>
+
+<script>
+fetch('explorer_data.json')
+  .then(r => r.json())
+  .then(DATA => {
+    document.getElementById('app').innerHTML = `
+<!-- Data Overview -->
+<section>
+  <h2>Data Overview</h2>
+  <div class="stat-grid" id="stat-grid"></div>
+  <div class="chart-row">
+    <div class="chart-container"><div id="chart-scatter"></div></div>
+    <div class="chart-container"><div id="chart-piece-dist"></div></div>
+  </div>
+  <details>
+    <summary>Log-time distributions by piece count</summary>
+    <div class="details-content">
+      <p class="footnote">Log-transformed completion times are approximately normal within each piece count, supporting the log-normal likelihood assumption.</p>
+      <div id="chart-histograms" class="chart-row" style="grid-template-columns: repeat(3, 1fr);"></div>
+    </div>
+  </details>
+  <details>
+    <summary>Puzzler observation frequency</summary>
+    <div class="details-content">
+      <p class="footnote">Most puzzlers have very few observations. Bayesian shrinkage pulls their estimates toward the population mean, avoiding overfitting.</p>
+      <div class="chart-container"><div id="chart-puzzler-freq"></div></div>
+    </div>
+  </details>
+</section>
+
+<!-- Model -->
+<section>
+  <h2>Model Specification</h2>
+  <p>Each model decomposes log-completion-time additively:</p>
+  <div class="equation">log(t<sub>ij</sub>) = &mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub> + c&middot;log(N<sub>j</sub>) + &Sigma;<sub>k</sub> a<sub>ik</sub> b<sub>jk</sub> &phi;<sub>k</sub>(N<sub>j</sub>) + &epsilon;</div>
+  <details>
+    <summary>Model hierarchy details</summary>
+    <div class="details-content">
+      <table>
+        <tr><th>Model</th><th>Formula</th><th>Parameters</th><th>Description</th></tr>
+        <tr><td>Model 0</td><td class="num">&mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub></td><td class="num" id="m0-params"></td><td>Basic IRT: puzzler speed + puzzle difficulty</td></tr>
+        <tr><td>Model 1</td><td class="num">+ c&middot;log(N)</td><td class="num" id="m1-params"></td><td>Add global piece-count scaling</td></tr>
+        <tr><td>Model 1b</td><td class="num">+ &Sigma;<sub>k</sub> c<sub>k</sub>&phi;<sub>k</sub>(N)</td><td class="num" id="m1b-params"></td><td>Global coeff. for all 5 basis functions</td></tr>
+        <tr><td>Model 2</td><td class="num">+ a<sub>i</sub>b<sub>j</sub>&phi;(N)</td><td class="num" id="m2-params"></td><td>Single interaction dimension (K=1)</td></tr>
+        <tr><td>Model 3</td><td class="num">+ &Sigma;<sub>k=1..3</sub></td><td class="num" id="m3-params"></td><td>Three interaction dimensions (K=3)</td></tr>
+        <tr><td>Model 4</td><td class="num">Student-t(&nu;)</td><td class="num" id="m4-params"></td><td>Robust likelihood (heavy tails)</td></tr>
+        <tr><td>Model 5</td><td class="num">+ &gamma;<sub>source</sub></td><td class="num" id="m5-params"></td><td>Model 3 + source fixed effect</td></tr>
+      </table>
+      <p class="footnote">Priors: &alpha;<sub>i</sub> ~ N(0, &sigma;<sub>&alpha;</sub>), &beta;<sub>j</sub> ~ N(0, &sigma;<sub>&beta;</sub>), a<sub>ik</sub> ~ N(0,1), b<sub>jk</sub> ~ N(0, &sigma;<sub>b,k</sub>). Non-centered parameterization for MCMC efficiency.</p>
+    </div>
+  </details>
+  <details>
+    <summary>Basis functions &phi;<sub>k</sub>(N)</summary>
+    <div class="details-content">
+      <p class="footnote">The piece-count scaling basis functions, normalized over [100, 1000]. Model 2 uses &phi;<sub>0</sub> only; Model 3 uses &phi;<sub>0</sub>..<sub>2</sub>.</p>
+      <div class="chart-container"><div id="chart-basis"></div></div>
+    </div>
+  </details>
+</section>
+
+<!-- Model Comparison -->
+<section>
+  <h2>Model Comparison</h2>
+  <p>All models fitted via stochastic variational inference (SVI). Select models to compare:</p>
+  <div class="model-selector" id="model-selector"></div>
+  <div class="chart-row">
+    <div class="chart-container"><div id="chart-metrics"></div></div>
+    <div class="chart-container"><div id="chart-loss"></div></div>
+  </div>
+  <details>
+    <summary>Full metrics table</summary>
+    <div class="details-content"><table id="metrics-table"></table></div>
+  </details>
+  <details>
+    <summary>Residual analysis</summary>
+    <div class="details-content">
+      <p class="footnote">Predicted vs actual log-time on held-out test set. Points near the diagonal indicate good predictions.</p>
+      <div class="model-selector" id="residual-selector"></div>
+      <div class="chart-container"><div id="chart-residuals"></div></div>
+    </div>
+  </details>
+  <details>
+    <summary>Source effects (Model 5)</summary>
+    <div class="details-content">
+      <p class="footnote">Fixed effect &gamma; per data source. A positive difference means that source's times are systematically longer (slower) after controlling for puzzler skill and puzzle difficulty.</p>
+      <div id="source-effects"></div>
+    </div>
+  </details>
+</section>
+
+<!-- Model 4 Deep Dive -->
+<section>
+  <h2>Model 4 Deep Dive</h2>
+  <p>Model 4 (Student-t robust) achieves the best WAIC. Here we examine its learned parameters to understand what the model has discovered.</p>
+  <details open>
+    <summary>Scalar parameters</summary>
+    <div class="details-content">
+      <table id="m4-scalar-table"></table>
+    </div>
+  </details>
+  <details open>
+    <summary>Student-t vs Normal: how heavy are the tails?</summary>
+    <div class="details-content">
+      <p class="footnote">The learned degrees of freedom &nu; controls tail heaviness. Lower &nu; = heavier tails = more robust to outliers.</p>
+      <div class="chart-container"><div id="chart-student-t"></div></div>
+    </div>
+  </details>
+  <details>
+    <summary>Puzzler latent factor space</summary>
+    <div class="details-content">
+      <p class="footnote">Each puzzler has 3 latent factor loadings (a<sub>0</sub>, a<sub>1</sub>, a<sub>2</sub>) that interact with puzzle factors and basis functions. Points colored by speed (&alpha;).</p>
+      <div class="chart-row">
+        <div class="chart-container"><div id="chart-puzzler-factors-01"></div></div>
+        <div class="chart-container"><div id="chart-puzzler-factors-02"></div></div>
+      </div>
+    </div>
+  </details>
+  <details>
+    <summary>Puzzle factor loadings vs piece count</summary>
+    <div class="details-content">
+      <p class="footnote">Do puzzle factors vary systematically with piece count? Correlations here would mean the interaction terms capture piece-count-dependent structure beyond the global c&middot;log(N).</p>
+      <div class="chart-row">
+        <div class="chart-container"><div id="chart-puzzle-factor-b0"></div></div>
+        <div class="chart-container"><div id="chart-puzzle-factor-b1"></div></div>
+      </div>
+    </div>
+  </details>
+  <details>
+    <summary>Predicted time curves by puzzler type</summary>
+    <div class="details-content">
+      <p class="footnote">How predicted log-time scales with piece count for puzzlers of different skill levels (fastest, 25th percentile, median, 75th, slowest). Curves show the full model including interactions.</p>
+      <div class="chart-container"><div id="chart-response-curves"></div></div>
+    </div>
+  </details>
+</section>
+
+<!-- Learned Parameters -->
+<section>
+  <h2>Learned Parameters</h2>
+  <p>From Model 1: global intercept &mu; = <span class="metric-highlight" id="param-mu"></span>,
+     piece-count coefficient c = <span class="metric-highlight" id="param-c"></span>,
+     noise &sigma; = <span class="metric-highlight" id="param-sigma"></span></p>
+  <details open>
+    <summary>Fastest puzzlers (lowest &alpha;)</summary>
+    <div class="details-content">
+      <input type="text" class="search-box" id="puzzler-search" placeholder="Search puzzlers...">
+      <table id="puzzler-table"></table>
+      <p class="footnote">Negative &alpha; = faster than average. Uncertainty (std) is larger for puzzlers with fewer observations due to Bayesian shrinkage.</p>
+    </div>
+  </details>
+  <details>
+    <summary>Hardest puzzles (highest &beta;)</summary>
+    <div class="details-content">
+      <input type="text" class="search-box" id="puzzle-search" placeholder="Search puzzles...">
+      <table id="puzzle-table"></table>
+      <p class="footnote">Positive &beta; = harder than average. Effect is relative to piece count (which is accounted for separately).</p>
+    </div>
+  </details>
+  <details>
+    <summary>Easiest puzzles (lowest &beta;)</summary>
+    <div class="details-content">
+      <input type="text" class="search-box" id="easy-puzzle-search" placeholder="Search puzzles...">
+      <table id="easy-puzzle-table"></table>
+      <p class="footnote">Negative &beta; = easier than average. These puzzles are completed faster than expected given their piece count.</p>
+    </div>
+  </details>
+  <details>
+    <summary>Puzzler effect distribution</summary>
+    <div class="details-content">
+      <div class="chart-container"><div id="chart-alpha-dist"></div></div>
+    </div>
+  </details>
+</section>
+
+<footer>
+  <p>Data from speedpuzzling.com and USA Jigsaw Nationals. Models fitted with NumPyro (JAX). Visualization built with D3.js.</p>
+</footer>
+`;
+    buildApp(DATA);
+  })
+  .catch(err => {
+    document.getElementById('app').innerHTML =
+      '<div class="loading" style="color:var(--red)">Failed to load explorer_data.json. Serve this directory with a local server:<br><code style="font-size:14px">python -m http.server 8000</code></div>';
+  });
+
+function buildApp(DATA) {
+  const fmt = d3.format('.4f');
+  const fmt2 = d3.format('.2f');
+  const fmt1 = d3.format('.1f');
+  const fmtPct = d3.format('.1%');
+  const fmtInt = d3.format(',');
+
+  const COLORS = { model_0: '#4a7fb5', model_1: '#55a868', model_1b: '#2d8a4e', model_2: '#dd8452', model_3: '#8172b2', model_4: '#c44e52', model_5: '#e7969c' };
+  const MODEL_NAMES = {
+    model_0: 'Model 0: IRT', model_1: 'Model 1: + log(N)',
+    model_1b: 'Model 1b: + all \u03c6', model_2: 'Model 2: + K=1', model_3: 'Model 3: + K=3',
+    model_4: 'Model 4: Student-t', model_5: 'Model 5: + Source',
+  };
+  const availableModels = Object.keys(MODEL_NAMES).filter(k => DATA.models[k]);
+
+  const tooltip = d3.select('#tooltip');
+  function showTip(event, html) {
+    tooltip.html(html).style('display', 'block');
+    const r = tooltip.node().getBoundingClientRect();
+    let x = event.pageX + 12, y = event.pageY - 12;
+    if (x + r.width > window.innerWidth - 20) x = event.pageX - r.width - 12;
+    tooltip.style('left', x + 'px').style('top', y + 'px');
+  }
+  function hideTip() { tooltip.style('display', 'none'); }
+
+  function makeAxis(svg, xS, yS, w, h, m, xL, yL) {
+    svg.append('g').attr('class', 'axis')
+      .attr('transform', `translate(0,${h - m.bottom})`)
+      .call(d3.axisBottom(xS).ticks(6))
+      .append('text').attr('x', w/2).attr('y', 36)
+      .style('text-anchor', 'middle').style('font-size', '12px').style('fill', '#6e6e6e').text(xL);
+    svg.append('g').attr('class', 'axis')
+      .attr('transform', `translate(${m.left},0)`)
+      .call(d3.axisLeft(yS).ticks(5))
+      .append('text').attr('transform', 'rotate(-90)')
+      .attr('x', -h/2).attr('y', -40)
+      .style('text-anchor', 'middle').style('font-size', '12px').style('fill', '#6e6e6e').text(yL);
+  }
+
+  // --- Populate ---
+  const S = DATA.stats;
+  document.getElementById('meta-records').textContent = `${fmtInt(S.n_records)} records`;
+  document.getElementById('meta-puzzlers').textContent = `${fmtInt(S.n_puzzlers)} puzzlers`;
+  document.getElementById('meta-puzzles').textContent = `${fmtInt(S.n_puzzles)} puzzles`;
+
+  document.getElementById('stat-grid').innerHTML = [
+    { value: fmtInt(S.n_records), label: 'Total Records' },
+    { value: fmtInt(S.n_puzzlers), label: 'Unique Puzzlers' },
+    { value: fmtInt(S.n_puzzles), label: 'Unique Puzzles' },
+    { value: S.piece_counts.length, label: 'Piece Counts' },
+    { value: fmt2(S.log_time_mean), label: 'Mean log(t)' },
+    { value: fmt2(S.log_time_std), label: 'Std log(t)' },
+  ].map(s => `<div class="stat-card"><span class="value">${s.value}</span><span class="label">${s.label}</span></div>`).join('');
+
+  document.getElementById('param-mu').textContent = S.mu;
+  document.getElementById('param-c').textContent = S.c_pieces;
+  document.getElementById('param-sigma').textContent = S.sigma;
+
+  const nP = S.n_puzzlers, nPz = S.n_puzzles;
+  document.getElementById('m0-params').textContent = `~${fmtInt(nP + nPz + 4)}`;
+  document.getElementById('m1-params').textContent = `~${fmtInt(nP + nPz + 5)}`;
+  document.getElementById('m1b-params').textContent = `~${fmtInt(nP + nPz + 9)}`;
+  document.getElementById('m2-params').textContent = `~${fmtInt(2*nP + 2*nPz + 6)}`;
+  document.getElementById('m3-params').textContent = `~${fmtInt(4*nP + 4*nPz + 8)}`;
+  document.getElementById('m4-params').textContent = `~${fmtInt(4*nP + 4*nPz + 9)}`;
+  const nSrc = (S.sources || []).length || 2;
+  document.getElementById('m5-params').textContent = `~${fmtInt(4*nP + 4*nPz + 8 + nSrc)}`;
+
+  // --- Scatter ---
+  (function() {
+    const W = 400, H = 300, mg = {top: 28, right: 16, bottom: 44, left: 56};
+    const svg = d3.select('#chart-scatter').append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+    svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text('Completion Time vs Pieces');
+    const x = d3.scaleLog().domain([80, 1100]).range([mg.left, W - mg.right]);
+    const y = d3.scaleLog().domain([60, 30000]).range([H - mg.bottom, mg.top]);
+    makeAxis(svg, x, y, W, H, mg, 'Pieces', 'Time (seconds)');
+    svg.selectAll('circle').data(DATA.scatter).enter().append('circle')
+      .attr('cx', d => x(d.p)).attr('cy', d => y(d.t))
+      .attr('r', 1.5).attr('fill', '#4a7fb5').attr('opacity', 0.2);
+  })();
+
+  // --- Piece distribution ---
+  (function() {
+    const W = 400, H = 300, mg = {top: 28, right: 16, bottom: 56, left: 56};
+    const svg = d3.select('#chart-piece-dist').append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+    svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text('Records by Piece Count');
+    const data = DATA.piece_dist;
+    const x = d3.scaleBand().domain(data.map(d => d.pieces)).range([mg.left, W - mg.right]).padding(0.2);
+    const y = d3.scaleLinear().domain([0, d3.max(data, d => d.count)]).range([H - mg.bottom, mg.top]);
+    svg.append('g').attr('class', 'axis').attr('transform', `translate(0,${H - mg.bottom})`)
+      .call(d3.axisBottom(x).tickValues(data.filter((_,i) => data.length <= 10 || i % 2 === 0).map(d => d.pieces)))
+      .selectAll('text').attr('transform', 'rotate(-40)').style('text-anchor', 'end');
+    svg.append('g').attr('class', 'axis').attr('transform', `translate(${mg.left},0)`).call(d3.axisLeft(y).ticks(5));
+    svg.selectAll('.bar').data(data).enter().append('rect')
+      .attr('x', d => x(d.pieces)).attr('y', d => y(d.count))
+      .attr('width', x.bandwidth()).attr('height', d => H - mg.bottom - y(d.count))
+      .attr('fill', '#4a7fb5').attr('opacity', 0.7)
+      .on('mouseover', function(event, d) {
+        d3.select(this).attr('opacity', 1);
+        showTip(event, `<span class="tt-label">Pieces:</span> <span class="tt-value">${d.pieces}</span><br><span class="tt-label">Records:</span> <span class="tt-value">${fmtInt(d.count)}</span>`);
+      })
+      .on('mousemove', (event) => showTip(event, tooltip.html()))
+      .on('mouseout', function() { d3.select(this).attr('opacity', 0.7); hideTip(); });
+  })();
+
+  // --- Histograms ---
+  (function() {
+    const container = d3.select('#chart-histograms');
+    Object.keys(DATA.histograms).map(Number).sort((a,b)=>a-b).forEach(pc => {
+      const h = DATA.histograms[pc];
+      const W = 250, H = 160, mg = {top: 24, right: 8, bottom: 32, left: 36};
+      const div = container.append('div').style('min-width', '200px');
+      const svg = div.append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+      svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 14).attr('text-anchor', 'middle').style('font-size', '11px').text(`${pc} pcs (n=${fmtInt(h.n)})`);
+      const x = d3.scaleLinear().domain([h.edges[0], h.edges[h.edges.length-1]]).range([mg.left, W - mg.right]);
+      const y = d3.scaleLinear().domain([0, d3.max(h.counts)]).range([H - mg.bottom, mg.top]);
+      svg.append('g').attr('class', 'axis').attr('transform', `translate(0,${H - mg.bottom})`).call(d3.axisBottom(x).ticks(4).tickFormat(d3.format('.1f')));
+      svg.append('g').attr('class', 'axis').attr('transform', `translate(${mg.left},0)`).call(d3.axisLeft(y).ticks(3));
+      h.counts.forEach((c, i) => {
+        svg.append('rect').attr('x', x(h.edges[i])).attr('y', y(c))
+          .attr('width', Math.max(0, x(h.edges[i+1]) - x(h.edges[i]) - 1))
+          .attr('height', H - mg.bottom - y(c)).attr('fill', '#4a7fb5').attr('opacity', 0.7);
+      });
+    });
+  })();
+
+  // --- Puzzler frequency ---
+  (function() {
+    const freq = DATA.puzzler_freq;
+    const W = 600, H = 250, mg = {top: 28, right: 16, bottom: 44, left: 56};
+    const svg = d3.select('#chart-puzzler-freq').append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+    svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text('Puzzler Observation Frequency');
+    const bins = freq.counts.map((c, i) => ({x0: freq.edges[i], x1: freq.edges[i+1], count: c}));
+    const x = d3.scaleLinear().domain([0, freq.edges[freq.edges.length-1]]).range([mg.left, W - mg.right]);
+    const y = d3.scaleLog().domain([0.5, d3.max(freq.counts) * 1.2]).range([H - mg.bottom, mg.top]);
+    makeAxis(svg, x, y, W, H, mg, 'Number of records per puzzler', 'Count (log)');
+    svg.selectAll('.bar').data(bins).enter().append('rect')
+      .attr('x', d => x(d.x0) + 1).attr('y', d => d.count > 0 ? y(d.count) : H - mg.bottom)
+      .attr('width', d => Math.max(0, x(d.x1) - x(d.x0) - 1))
+      .attr('height', d => d.count > 0 ? H - mg.bottom - y(d.count) : 0)
+      .attr('fill', '#4a7fb5').attr('opacity', 0.7);
+  })();
+
+  // --- Model comparison ---
+  let activeModels = new Set(availableModels);
+  let activeResModel = availableModels.includes('model_1') ? 'model_1' : availableModels[0];
+
+  function renderSelector(containerId, models, active, onClick, isSet) {
+    const c = d3.select('#' + containerId); c.html('');
+    availableModels.forEach(key => {
+      const isActive = isSet ? active.has(key) : active === key;
+      c.append('button')
+        .attr('class', `model-btn ${isActive ? 'active' : ''}`)
+        .style('border-color', isActive ? COLORS[key] : null)
+        .style('background', isActive ? COLORS[key] : null)
+        .text(MODEL_NAMES[key])
+        .on('click', () => onClick(key));
+    });
+  }
+
+  function renderMetricsChart() {
+    const c = d3.select('#chart-metrics'); c.html('');
+    const mKeys = ['rmse_log', 'mae_log', 'coverage_90'];
+    const mLabels = { rmse_log: 'RMSE (log)', mae_log: 'MAE (log)', coverage_90: '90% Coverage' };
+    const models = [...activeModels].filter(m => DATA.models[m]).sort();
+    if (models.length === 0) return;
+    const W = 400, H = 280, mg = {top: 28, right: 16, bottom: 60, left: 56};
+    const svg = c.append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+    svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text('Test Set Metrics');
+    const x0 = d3.scaleBand().domain(mKeys).range([mg.left, W - mg.right]).padding(0.3);
+    const x1 = d3.scaleBand().domain(models).range([0, x0.bandwidth()]).padding(0.05);
+    const maxR = d3.max(models, m => Math.max(DATA.models[m].test_metrics.rmse_log, DATA.models[m].test_metrics.mae_log));
+    const y = d3.scaleLinear().domain([0, maxR * 1.2]).range([H - mg.bottom, mg.top]);
+    svg.append('g').attr('class', 'axis').attr('transform', `translate(0,${H - mg.bottom})`)
+      .call(d3.axisBottom(x0).tickFormat(k => mLabels[k])).selectAll('text').style('font-size', '11px');
+    svg.append('g').attr('class', 'axis').attr('transform', `translate(${mg.left},0)`).call(d3.axisLeft(y).ticks(5));
+    svg.append('line')
+      .attr('x1', x0('rmse_log')).attr('x2', x0('rmse_log') + x0.bandwidth())
+      .attr('y1', y(DATA.baselines.global_mean_rmse_log)).attr('y2', y(DATA.baselines.global_mean_rmse_log))
+      .attr('stroke', '#c44e52').attr('stroke-dasharray', '4,3').attr('stroke-width', 1.5);
+    svg.append('text').attr('x', x0('rmse_log') + x0.bandwidth() + 4)
+      .attr('y', y(DATA.baselines.global_mean_rmse_log) + 3)
+      .style('font-size', '9px').style('fill', '#c44e52').text('baseline');
+
+    mKeys.forEach(mk => {
+      models.forEach(m => {
+        let v = DATA.models[m].test_metrics[mk];
+        if (mk === 'coverage_90') v = v * maxR * 1.1;
+        svg.append('rect')
+          .attr('x', x0(mk) + x1(m)).attr('y', y(v))
+          .attr('width', x1.bandwidth()).attr('height', H - mg.bottom - y(v))
+          .attr('fill', COLORS[m]).attr('opacity', 0.8).attr('rx', 1)
+          .on('mouseover', function(event) {
+            d3.select(this).attr('opacity', 1);
+            const actual = DATA.models[m].test_metrics[mk];
+            showTip(event, `<span class="tt-label">${MODEL_NAMES[m]}</span><br><span class="tt-label">${mLabels[mk]}:</span> <span class="tt-value">${mk === 'coverage_90' ? fmtPct(actual) : fmt(actual)}</span>`);
+          })
+          .on('mousemove', (event) => showTip(event, tooltip.html()))
+          .on('mouseout', function() { d3.select(this).attr('opacity', 0.8); hideTip(); });
+      });
+    });
+    const lg = svg.append('g').attr('transform', `translate(${mg.left + 4}, ${H - 16})`);
+    models.forEach((m, i) => {
+      const g = lg.append('g').attr('transform', `translate(${i * 100}, 0)`);
+      g.append('rect').attr('width', 10).attr('height', 10).attr('fill', COLORS[m]).attr('rx', 1);
+      g.append('text').attr('x', 14).attr('y', 9).style('font-size', '10px').text(MODEL_NAMES[m].split(':')[0]);
+    });
+  }
+
+  function renderLossChart() {
+    const c = d3.select('#chart-loss'); c.html('');
+    const models = [...activeModels].filter(m => DATA.models[m]).sort();
+    if (models.length === 0) return;
+    const W = 400, H = 280, mg = {top: 28, right: 16, bottom: 44, left: 64};
+    const svg = c.append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+    svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text('Training Loss (ELBO)');
+    const allL = models.flatMap(m => DATA.models[m].loss_curve);
+    const yMin = d3.min(allL);
+    const yMax = d3.quantile(allL.slice().sort((a,b)=>a-b), 0.95);
+    const pad = (yMax - yMin) * 0.05;
+    const x = d3.scaleLinear().domain([0, 5000]).range([mg.left, W - mg.right]);
+    const y = d3.scaleLinear().domain([yMin - pad, yMax + pad]).range([H - mg.bottom, mg.top]);
+    makeAxis(svg, x, y, W, H, mg, 'SVI Step', 'ELBO Loss');
+    models.forEach(m => {
+      const line = d3.line().x((d, i) => x(i * 10)).y(d => y(d)).defined(d => d <= yMax + pad);
+      svg.append('path').datum(DATA.models[m].loss_curve)
+        .attr('d', line).attr('fill', 'none')
+        .attr('stroke', COLORS[m]).attr('stroke-width', 1.5).attr('opacity', 0.8);
+    });
+  }
+
+  function renderResiduals() {
+    const c = d3.select('#chart-residuals'); c.html('');
+    if (!DATA.models[activeResModel]) { c.append('p').text('No data available for this model.'); return; }
+    const res = DATA.models[activeResModel].residuals;
+    const W = 600, H = 400, mg = {top: 28, right: 16, bottom: 44, left: 56};
+    const svg = c.append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+    svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle')
+      .text(`${MODEL_NAMES[activeResModel]}: Predicted vs Actual (test set)`);
+    const ext = d3.extent(res.flatMap(d => [d.tr, d.pr]));
+    const pad = (ext[1] - ext[0]) * 0.05;
+    const x = d3.scaleLinear().domain([ext[0]-pad, ext[1]+pad]).range([mg.left, W - mg.right]);
+    const y = d3.scaleLinear().domain([ext[0]-pad, ext[1]+pad]).range([H - mg.bottom, mg.top]);
+    makeAxis(svg, x, y, W, H, mg, 'Actual log(time)', 'Predicted log(time)');
+    svg.append('line')
+      .attr('x1', x(ext[0]-pad)).attr('y1', y(ext[0]-pad))
+      .attr('x2', x(ext[1]+pad)).attr('y2', y(ext[1]+pad))
+      .attr('stroke', '#c44e52').attr('stroke-dasharray', '4,3').attr('opacity', 0.6);
+    const pcColor = d3.scaleOrdinal().domain([100,200,300,500,1000]).range(['#4a7fb5','#55a868','#dd8452','#8172b2','#c44e52']);
+    svg.selectAll('circle').data(res).enter().append('circle')
+      .attr('cx', d => x(d.tr)).attr('cy', d => y(d.pr))
+      .attr('r', 2.5).attr('fill', d => pcColor(d.pc)).attr('opacity', 0.35)
+      .on('mouseover', function(event, d) {
+        d3.select(this).attr('opacity', 1).attr('r', 4);
+        showTip(event,
+          `<span class="tt-label">Actual:</span> <span class="tt-value">${fmt2(d.tr)}</span> (${fmt1(Math.exp(d.tr))}s)<br>` +
+          `<span class="tt-label">Predicted:</span> <span class="tt-value">${fmt2(d.pr)}</span> (${fmt1(Math.exp(d.pr))}s)<br>` +
+          `<span class="tt-label">Pieces:</span> <span class="tt-value">${d.pc}</span><br>` +
+          `<span class="tt-label">Error:</span> <span class="tt-value">${fmt2(d.tr - d.pr)}</span>`);
+      })
+      .on('mouseout', function() { d3.select(this).attr('opacity', 0.35).attr('r', 2.5); hideTip(); });
+    const lg = svg.append('g').attr('transform', `translate(${mg.left + 8}, ${mg.top + 4})`);
+    [100,300,500,1000].forEach((pc, i) => {
+      const g = lg.append('g').attr('transform', `translate(0, ${i*16})`);
+      g.append('circle').attr('r', 3).attr('fill', pcColor(pc));
+      g.append('text').attr('x', 8).attr('y', 4).style('font-size', '10px').text(`${pc} pcs`);
+    });
+  }
+
+  function renderMetricsTable() {
+    const t = d3.select('#metrics-table'); t.html('');
+    const thead = t.append('thead').append('tr');
+    thead.append('th').text('Metric');
+    Object.keys(MODEL_NAMES).forEach(m => thead.append('th').text(MODEL_NAMES[m].split(':')[0]).attr('class', 'num'));
+    thead.append('th').text('Baseline').attr('class', 'num');
+    const metrics = [
+      { key: 'rmse_log', label: 'RMSE (log)', bl: DATA.baselines.global_mean_rmse_log },
+      { key: 'rmse_seconds', label: 'RMSE (seconds)', bl: DATA.baselines.global_mean_rmse_seconds },
+      { key: 'mae_log', label: 'MAE (log)', bl: null },
+      { key: 'coverage_90', label: '90% Coverage', bl: null, f: fmtPct },
+      { key: 'coverage_50', label: '50% Coverage', bl: null, f: fmtPct },
+    ];
+    const tbody = t.append('tbody');
+    metrics.forEach(mk => {
+      const tr = tbody.append('tr');
+      tr.append('td').text(mk.label);
+      const fn = mk.f || fmt;
+      Object.keys(MODEL_NAMES).forEach(m => {
+        const md = DATA.models[m];
+        const v = md ? md.test_metrics[mk.key] : null;
+        tr.append('td').attr('class', 'num').text(v != null ? fn(v) : '-');
+      });
+      tr.append('td').attr('class', 'num').style('color', '#c44e52').text(mk.bl != null ? (mk.f || fmt)(mk.bl) : '-');
+    });
+    const tr2 = tbody.append('tr').style('border-top', '2px solid var(--border)');
+    tr2.append('td').style('font-style', 'italic').text('Train RMSE (log)');
+    Object.keys(MODEL_NAMES).forEach(m => {
+      const md = DATA.models[m];
+      tr2.append('td').attr('class', 'num').text(md ? fmt(md.train_metrics.rmse_log) : '-');
+    });
+    tr2.append('td');
+
+    // WAIC row
+    const hasWaic = availableModels.some(m => DATA.models[m].waic != null);
+    if (hasWaic) {
+      const bestWaic = d3.min(availableModels, m => DATA.models[m].waic);
+      const trW = tbody.append('tr');
+      trW.append('td').style('font-weight', '600').text('WAIC');
+      Object.keys(MODEL_NAMES).forEach(m => {
+        const md = DATA.models[m];
+        const v = md && md.waic != null ? md.waic : null;
+        const td = trW.append('td').attr('class', 'num');
+        if (v != null) {
+          td.text(fmt1(v));
+          if (v === bestWaic) td.style('font-weight', '600').style('color', 'var(--green)');
+        } else { td.text('-'); }
+      });
+      trW.append('td');
+
+      const trP = tbody.append('tr');
+      trP.append('td').style('color', 'var(--text-light)').text('  p_waic (eff. params)');
+      Object.keys(MODEL_NAMES).forEach(m => {
+        const md = DATA.models[m];
+        trP.append('td').attr('class', 'num').style('color', 'var(--text-light)')
+          .text(md && md.p_waic != null ? fmt1(md.p_waic) : '-');
+      });
+      trP.append('td');
+
+      const trD = tbody.append('tr');
+      trD.append('td').style('color', 'var(--text-light)').text('  \u0394WAIC');
+      Object.keys(MODEL_NAMES).forEach(m => {
+        const md = DATA.models[m];
+        const v = md && md.waic != null ? md.waic - bestWaic : null;
+        trD.append('td').attr('class', 'num').style('color', 'var(--text-light)')
+          .text(v != null ? (v === 0 ? '0 (best)' : '+' + fmt1(v)) : '-');
+      });
+      trD.append('td');
+    }
+  }
+
+  function renderPuzzlerTable(filter = '') {
+    const t = d3.select('#puzzler-table'); t.html('');
+    const thead = t.append('thead').append('tr');
+    ['Rank', 'Puzzler', 'Speed Effect (\u03b1)', '\u00b1 Std', 'Obs'].forEach((h,i) =>
+      thead.append('th').text(h).attr('class', i !== 1 ? 'num' : null));
+    const filtered = DATA.puzzlers.filter(d => d.name.toLowerCase().includes(filter.toLowerCase()));
+    const tbody = t.append('tbody');
+    const maxA = d3.max(DATA.puzzlers.slice(0, 50).map(d => Math.abs(d.alpha)));
+    filtered.slice(0, 50).forEach(d => {
+      const tr = tbody.append('tr');
+      tr.append('td').attr('class', 'num').text(DATA.puzzlers.indexOf(d) + 1);
+      tr.append('td').text(d.name);
+      const td = tr.append('td').attr('class', 'num bar-cell');
+      td.append('div').attr('class', 'bar-bg').style('width', (Math.abs(d.alpha)/maxA*80) + '%')
+        .style('background', d.alpha < 0 ? 'var(--green)' : 'var(--red)');
+      td.append('span').text(fmt2(d.alpha));
+      tr.append('td').attr('class', 'num').style('color', 'var(--text-light)').text(fmt2(d.std));
+      tr.append('td').attr('class', 'num').text(d.n);
+    });
+  }
+
+  function renderPuzzleTable(filter = '') {
+    const t = d3.select('#puzzle-table'); t.html('');
+    const thead = t.append('thead').append('tr');
+    ['Rank', 'Puzzle', 'Pieces', 'Difficulty (\u03b2)', '\u00b1 Std', 'Obs'].forEach((h,i) =>
+      thead.append('th').text(h).attr('class', i !== 1 ? 'num' : null));
+    const filtered = DATA.puzzles.filter(d => d.name.toLowerCase().includes(filter.toLowerCase()));
+    const tbody = t.append('tbody');
+    const maxB = d3.max(DATA.puzzles.slice(0, 50).map(d => Math.abs(d.beta)));
+    filtered.slice(0, 50).forEach(d => {
+      const tr = tbody.append('tr');
+      tr.append('td').attr('class', 'num').text(DATA.puzzles.indexOf(d) + 1);
+      tr.append('td').text(d.name);
+      tr.append('td').attr('class', 'num').text(d.pc);
+      const td = tr.append('td').attr('class', 'num bar-cell');
+      td.append('div').attr('class', 'bar-bg').style('width', (Math.abs(d.beta)/maxB*80) + '%')
+        .style('background', d.beta > 0 ? 'var(--red)' : 'var(--green)');
+      td.append('span').text(fmt2(d.beta));
+      tr.append('td').attr('class', 'num').style('color', 'var(--text-light)').text(fmt2(d.std));
+      tr.append('td').attr('class', 'num').text(d.n);
+    });
+  }
+
+  const easyPuzzles = DATA.puzzles.slice().reverse();
+  function renderEasyPuzzleTable(filter = '') {
+    const t = d3.select('#easy-puzzle-table'); t.html('');
+    const thead = t.append('thead').append('tr');
+    ['Rank', 'Puzzle', 'Pieces', 'Difficulty (\u03b2)', '\u00b1 Std', 'Obs'].forEach((h,i) =>
+      thead.append('th').text(h).attr('class', i !== 1 ? 'num' : null));
+    const filtered = easyPuzzles.filter(d => d.name.toLowerCase().includes(filter.toLowerCase()));
+    const tbody = t.append('tbody');
+    const maxB = d3.max(easyPuzzles.slice(0, 50).map(d => Math.abs(d.beta)));
+    filtered.slice(0, 50).forEach((d, i) => {
+      const tr = tbody.append('tr');
+      tr.append('td').attr('class', 'num').text(i + 1);
+      tr.append('td').text(d.name);
+      tr.append('td').attr('class', 'num').text(d.pc);
+      const td = tr.append('td').attr('class', 'num bar-cell');
+      td.append('div').attr('class', 'bar-bg').style('width', (Math.abs(d.beta)/maxB*80) + '%')
+        .style('background', d.beta > 0 ? 'var(--red)' : 'var(--green)');
+      td.append('span').text(fmt2(d.beta));
+      tr.append('td').attr('class', 'num').style('color', 'var(--text-light)').text(fmt2(d.std));
+      tr.append('td').attr('class', 'num').text(d.n);
+    });
+  }
+
+  // --- Alpha distribution ---
+  (function() {
+    const alphas = DATA.puzzlers.map(d => d.alpha);
+    const W = 600, H = 250, mg = {top: 28, right: 16, bottom: 44, left: 56};
+    const svg = d3.select('#chart-alpha-dist').append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+    svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text('Distribution of Puzzler Speed Effects (\u03b1)');
+    const bins = d3.bin().thresholds(50)(alphas);
+    const x = d3.scaleLinear().domain([d3.min(alphas)*1.1, d3.max(alphas)*1.1]).range([mg.left, W - mg.right]);
+    const y = d3.scaleLinear().domain([0, d3.max(bins, d => d.length)]).range([H - mg.bottom, mg.top]);
+    makeAxis(svg, x, y, W, H, mg, 'Puzzler effect \u03b1 (negative = faster)', 'Count');
+    svg.selectAll('.bar').data(bins).enter().append('rect')
+      .attr('x', d => x(d.x0) + 1).attr('y', d => y(d.length))
+      .attr('width', d => Math.max(0, x(d.x1) - x(d.x0) - 1))
+      .attr('height', d => H - mg.bottom - y(d.length))
+      .attr('fill', d => (d.x0 + d.x1)/2 < 0 ? '#55a868' : '#c44e52').attr('opacity', 0.7);
+    svg.append('line').attr('x1', x(0)).attr('x2', x(0))
+      .attr('y1', mg.top).attr('y2', H - mg.bottom)
+      .attr('stroke', '#303030').attr('stroke-dasharray', '3,3');
+  })();
+
+  // --- Basis functions ---
+  (function() {
+    const W = 600, H = 280, mg = {top: 28, right: 120, bottom: 44, left: 56};
+    const svg = d3.select('#chart-basis').append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+    svg.append('text').attr('class', 'chart-title').attr('x', (W - mg.right)/2 + mg.left/2).attr('y', 16).attr('text-anchor', 'middle').text('Normalized Basis Functions');
+    const Ns = d3.range(100, 1001, 5);
+    const rawFns = [
+      { label: '\u03c6\u2080: log(N)', fn: N => Math.log(N), models: '2, 3' },
+      { label: '\u03c6\u2081: \u221aN',  fn: N => Math.sqrt(N), models: '3' },
+      { label: '\u03c6\u2082: N',      fn: N => N, models: '3' },
+      { label: '\u03c6\u2083: N\u00b7log(N)', fn: N => N * Math.log(N), models: '-' },
+      { label: '\u03c6\u2084: N\u00b2',  fn: N => N * N, models: '-' },
+    ];
+    const colors = ['#4a7fb5', '#55a868', '#dd8452', '#8172b2', '#c44e52'];
+    const series = rawFns.map((f, i) => {
+      const raw = Ns.map(n => f.fn(n));
+      const mean = d3.mean(raw), std = d3.deviation(raw);
+      return { label: f.label, models: f.models, color: colors[i], pts: Ns.map((n, j) => ({ n, v: (raw[j] - mean) / std })) };
+    });
+    const x = d3.scaleLinear().domain([100, 1000]).range([mg.left, W - mg.right]);
+    const yExt = d3.extent(series.flatMap(s => s.pts.map(p => p.v)));
+    const y = d3.scaleLinear().domain([yExt[0] * 1.1, yExt[1] * 1.1]).range([H - mg.bottom, mg.top]);
+    makeAxis(svg, x, y, W, H, mg, 'Piece count (N)', 'Normalized value');
+    const line = d3.line().x(d => x(d.n)).y(d => y(d.v));
+    series.forEach((s, i) => {
+      svg.append('path').datum(s.pts).attr('d', line)
+        .attr('fill', 'none').attr('stroke', s.color).attr('stroke-width', 2).attr('opacity', 0.8);
+      const lg = svg.append('g').attr('transform', `translate(${W - mg.right + 8}, ${mg.top + 12 + i * 20})`);
+      lg.append('line').attr('x2', 16).attr('stroke', s.color).attr('stroke-width', 2);
+      lg.append('text').attr('x', 20).attr('y', 4).style('font-size', '11px').text(s.label);
+      lg.append('text').attr('x', 20).attr('y', 16).style('font-size', '9px').style('fill', '#6e6e6e').text('M' + s.models);
+    });
+  })();
+
+  // --- Source effects ---
+  (function() {
+    const m5 = DATA.models.model_5;
+    const el = d3.select('#source-effects');
+    if (!m5 || !m5.source_effects) { el.append('p').text('No source effect data available.'); return; }
+    const effects = Object.entries(m5.source_effects).map(([name, v]) => ({name, ...v}));
+    const diff = effects.length === 2 ? Math.abs(effects[0].mean - effects[1].mean) : null;
+    const t = el.append('table');
+    const thead = t.append('thead').append('tr');
+    ['Source', '\u03b3 (mean)', '\u00b1 std', 'exp(\u03b3) multiplier'].forEach(h => thead.append('th').text(h));
+    const tbody = t.append('tbody');
+    effects.forEach(e => {
+      const tr = tbody.append('tr');
+      tr.append('td').text(e.name);
+      tr.append('td').attr('class', 'num').text(fmt(e.mean));
+      tr.append('td').attr('class', 'num').style('color', 'var(--text-light)').text(fmt(e.std));
+      tr.append('td').attr('class', 'num').text(d3.format('.1%')(Math.exp(e.mean) - 1) + ' slower than baseline');
+    });
+    if (diff != null) {
+      el.append('p').style('margin-top', '8px')
+        .html(`Source difference: <span class="metric-highlight">\u0394\u03b3 = ${fmt(diff)}</span> ` +
+          `(${d3.format('.1%')(Math.exp(diff) - 1)} multiplicative time difference between platforms)`);
+    }
+  })();
+
+  // --- Model 4 Deep Dive ---
+  if (DATA.model4_detail) {
+    const M4 = DATA.model4_detail;
+
+    // Scalar params table
+    (function() {
+      const t = d3.select('#m4-scalar-table');
+      const thead = t.append('thead').append('tr');
+      ['Parameter', 'Value', '\u00b1 Std', 'Interpretation'].forEach(h => thead.append('th').text(h));
+      const tbody = t.append('tbody');
+      const interp = {
+        mu: 'Global intercept (log-time at N=1)',
+        sigma: 'Noise scale (Student-t)',
+        nu: 'Degrees of freedom (\u221e = Normal)',
+        c_pieces: 'Global log(N) coefficient',
+        sigma_alpha: 'Puzzler effect spread',
+        sigma_beta: 'Puzzle difficulty spread',
+        sigma_b_0: 'Factor 0 puzzle loading scale',
+        sigma_b_1: 'Factor 1 puzzle loading scale',
+        sigma_b_2: 'Factor 2 puzzle loading scale',
+      };
+      const order = ['mu', 'sigma', 'nu', 'c_pieces', 'sigma_alpha', 'sigma_beta', 'sigma_b_0', 'sigma_b_1', 'sigma_b_2'];
+      order.forEach(key => {
+        const p = M4.scalar_params[key];
+        if (!p) return;
+        const tr = tbody.append('tr');
+        tr.append('td').style('font-family', "'Source Code Pro', monospace").text(key);
+        tr.append('td').attr('class', 'num').text(fmt(p.mean));
+        tr.append('td').attr('class', 'num').style('color', 'var(--text-light)').text(fmt(p.std));
+        tr.append('td').style('font-size', '13px').style('color', 'var(--text-light)').text(interp[key] || '');
+      });
+    })();
+
+    // Student-t vs Normal
+    (function() {
+      const st = M4.student_t_comparison;
+      const W = 600, H = 300, mg = {top: 32, right: 120, bottom: 44, left: 56};
+      const svg = d3.select('#chart-student-t').append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+      svg.append('text').attr('class', 'chart-title').attr('x', (W-mg.right)/2+mg.left/2).attr('y', 16).attr('text-anchor', 'middle')
+        .text(`Residual Distribution: Student-t(\u03bd=${st.nu}) vs Normal`);
+      const x = d3.scaleLinear().domain(d3.extent(st.x)).range([mg.left, W - mg.right]);
+      const yMax = d3.max([...st.student_pdf, ...st.normal_pdf]);
+      const y = d3.scaleLinear().domain([0, yMax * 1.1]).range([H - mg.bottom, mg.top]);
+      makeAxis(svg, x, y, W, H, mg, 'Residual (log-time)', 'Density');
+      const line = d3.line().x((d,i) => x(st.x[i])).y(d => y(d));
+      svg.append('path').datum(st.normal_pdf).attr('d', line)
+        .attr('fill', 'none').attr('stroke', '#4a7fb5').attr('stroke-width', 2).attr('stroke-dasharray', '6,3');
+      svg.append('path').datum(st.student_pdf).attr('d', line)
+        .attr('fill', 'none').attr('stroke', '#c44e52').attr('stroke-width', 2);
+      // Shade the tails where Student-t > Normal
+      const tailData = st.x.map((xi, i) => ({x: xi, st: st.student_pdf[i], n: st.normal_pdf[i]}))
+        .filter(d => d.st > d.n * 1.2);
+      if (tailData.length > 0) {
+        svg.selectAll('.tail').data(tailData).enter().append('rect')
+          .attr('x', d => x(d.x) - 1).attr('y', d => y(d.st))
+          .attr('width', 2).attr('height', d => y(d.n) - y(d.st))
+          .attr('fill', '#c44e52').attr('opacity', 0.15);
+      }
+      // Legend
+      const lg = svg.append('g').attr('transform', `translate(${W - mg.right + 8}, ${mg.top + 12})`);
+      lg.append('line').attr('x2', 20).attr('stroke', '#c44e52').attr('stroke-width', 2);
+      lg.append('text').attr('x', 24).attr('y', 4).style('font-size', '11px').text(`Student-t(\u03bd=${st.nu})`);
+      lg.append('line').attr('y1', 20).attr('x2', 20).attr('y2', 20).attr('stroke', '#4a7fb5').attr('stroke-width', 2).attr('stroke-dasharray', '6,3');
+      lg.append('text').attr('x', 24).attr('y', 24).style('font-size', '11px').text('Normal');
+      lg.append('text').attr('y', 48).style('font-size', '10px').style('fill', '#6e6e6e').text('Shaded: tail excess');
+    })();
+
+    // Puzzler factor scatters
+    function factorScatter(containerId, xKey, yKey, xLabel, yLabel, title) {
+      const data = M4.puzzler_factors;
+      const W = 400, H = 300, mg = {top: 28, right: 16, bottom: 44, left: 56};
+      const svg = d3.select('#' + containerId).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+      svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text(title);
+      const xExt = d3.extent(data, d => d[xKey]), yExt = d3.extent(data, d => d[yKey]);
+      const xPad = (xExt[1]-xExt[0])*0.05, yPad = (yExt[1]-yExt[0])*0.05;
+      const x = d3.scaleLinear().domain([xExt[0]-xPad, xExt[1]+xPad]).range([mg.left, W-mg.right]);
+      const y = d3.scaleLinear().domain([yExt[0]-yPad, yExt[1]+yPad]).range([H-mg.bottom, mg.top]);
+      makeAxis(svg, x, y, W, H, mg, xLabel, yLabel);
+      const color = d3.scaleSequential(d3.interpolateRdYlGn).domain(d3.extent(data, d => -d.alpha));
+      svg.selectAll('circle').data(data).enter().append('circle')
+        .attr('cx', d => x(d[xKey])).attr('cy', d => y(d[yKey]))
+        .attr('r', 2).attr('fill', d => color(-d.alpha)).attr('opacity', 0.5)
+        .on('mouseover', function(event, d) {
+          d3.select(this).attr('r', 5).attr('opacity', 1);
+          showTip(event, `<span class="tt-value">${d.name}</span><br>` +
+            `<span class="tt-label">\u03b1:</span> ${fmt2(d.alpha)} <span class="tt-label">n:</span> ${d.n}<br>` +
+            `<span class="tt-label">${xLabel}:</span> ${fmt2(d[xKey])} <span class="tt-label">${yLabel}:</span> ${fmt2(d[yKey])}`);
+        })
+        .on('mouseout', function() { d3.select(this).attr('r', 2).attr('opacity', 0.5); hideTip(); });
+      // Zero lines
+      svg.append('line').attr('x1', x(0)).attr('x2', x(0)).attr('y1', mg.top).attr('y2', H-mg.bottom)
+        .attr('stroke', '#ccc').attr('stroke-dasharray', '2,2');
+      svg.append('line').attr('x1', mg.left).attr('x2', W-mg.right).attr('y1', y(0)).attr('y2', y(0))
+        .attr('stroke', '#ccc').attr('stroke-dasharray', '2,2');
+    }
+    factorScatter('chart-puzzler-factors-01', 'a0', 'a1', 'Factor 0 (log N)', 'Factor 1 (\u221aN)', 'Puzzler Factors: a\u2080 vs a\u2081');
+    factorScatter('chart-puzzler-factors-02', 'a0', 'a2', 'Factor 0 (log N)', 'Factor 2 (N)', 'Puzzler Factors: a\u2080 vs a\u2082');
+
+    // Puzzle factor vs piece count
+    function puzzleFactorScatter(containerId, yKey, yLabel, title) {
+      const data = M4.factor_by_pieces;
+      const W = 400, H = 300, mg = {top: 28, right: 16, bottom: 44, left: 56};
+      const svg = d3.select('#' + containerId).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+      svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text(title);
+      const x = d3.scaleLog().domain([30, 15000]).range([mg.left, W-mg.right]);
+      const yExt = d3.extent(data, d => d[yKey]);
+      const yPad = (yExt[1]-yExt[0])*0.05;
+      const y = d3.scaleLinear().domain([yExt[0]-yPad, yExt[1]+yPad]).range([H-mg.bottom, mg.top]);
+      makeAxis(svg, x, y, W, H, mg, 'Piece count', yLabel);
+      svg.selectAll('circle').data(data).enter().append('circle')
+        .attr('cx', d => x(d.pc)).attr('cy', d => y(d[yKey]))
+        .attr('r', 2).attr('fill', '#8172b2').attr('opacity', 0.4);
+      svg.append('line').attr('x1', mg.left).attr('x2', W-mg.right).attr('y1', y(0)).attr('y2', y(0))
+        .attr('stroke', '#ccc').attr('stroke-dasharray', '2,2');
+    }
+    puzzleFactorScatter('chart-puzzle-factor-b0', 'b0', 'b\u2080 (log N)', 'Puzzle Factor b\u2080 vs Pieces');
+    puzzleFactorScatter('chart-puzzle-factor-b1', 'b1', 'b\u2081 (\u221aN)', 'Puzzle Factor b\u2081 vs Pieces');
+
+    // Response curves
+    (function() {
+      const curves = M4.response_curves;
+      const W = 600, H = 350, mg = {top: 28, right: 140, bottom: 44, left: 56};
+      const svg = d3.select('#chart-response-curves').append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+      svg.append('text').attr('class', 'chart-title').attr('x', (W-mg.right)/2+mg.left/2).attr('y', 16).attr('text-anchor', 'middle')
+        .text('Predicted log(time) vs Pieces by Puzzler Skill');
+      const allPts = curves.flatMap(c => c.pieces.map((p,i) => ({p, lt: c.log_time[i]})));
+      const x = d3.scaleLog().domain([d3.min(allPts, d=>d.p)*0.9, d3.max(allPts, d=>d.p)*1.1]).range([mg.left, W-mg.right]);
+      const y = d3.scaleLinear().domain([d3.min(allPts, d=>d.lt)-0.3, d3.max(allPts, d=>d.lt)+0.3]).range([H-mg.bottom, mg.top]);
+      makeAxis(svg, x, y, W, H, mg, 'Pieces', 'Predicted log(time)');
+      const colors = ['#2d8a4e', '#55a868', '#8172b2', '#dd8452', '#c44e52'];
+      const labels = ['Fastest', '25th pctile', 'Median', '75th pctile', 'Slowest'];
+      curves.forEach((c, ci) => {
+        const line = d3.line().x((d,i) => x(c.pieces[i])).y(d => y(d));
+        svg.append('path').datum(c.log_time).attr('d', line)
+          .attr('fill', 'none').attr('stroke', colors[ci]).attr('stroke-width', 2);
+        const lg = svg.append('g').attr('transform', `translate(${W-mg.right+8}, ${mg.top + 8 + ci*18})`);
+        lg.append('line').attr('x2', 14).attr('stroke', colors[ci]).attr('stroke-width', 2);
+        lg.append('text').attr('x', 18).attr('y', 4).style('font-size', '10px').text(labels[ci]);
+      });
+      // Add secondary y-axis label with actual time
+      const timeTicks = [5, 10, 30, 60, 120, 300, 600, 1800, 3600];
+      const timeLabels = ['5s','10s','30s','1m','2m','5m','10m','30m','1h'];
+      timeTicks.forEach((t, i) => {
+        const lt = Math.log(t);
+        if (lt >= y.domain()[0] && lt <= y.domain()[1]) {
+          svg.append('text').attr('x', W-mg.right+4).attr('y', y(lt)+3)
+            .style('font-size', '9px').style('fill', '#999').text(timeLabels[i]);
+        }
+      });
+    })();
+  }
+
+  // --- Wire up interactivity ---
+  function updateAll() {
+    renderSelector('model-selector', MODEL_NAMES, activeModels, key => {
+      if (activeModels.has(key)) activeModels.delete(key); else activeModels.add(key);
+      updateAll();
+    }, true);
+    renderMetricsChart();
+    renderLossChart();
+  }
+
+  function onResidualSelect(key) {
+    activeResModel = key;
+    renderSelector('residual-selector', MODEL_NAMES, activeResModel, onResidualSelect, false);
+    renderResiduals();
+  }
+  renderSelector('residual-selector', MODEL_NAMES, activeResModel, onResidualSelect, false);
+
+  document.getElementById('puzzler-search').addEventListener('input', function() { renderPuzzlerTable(this.value); });
+  document.getElementById('puzzle-search').addEventListener('input', function() { renderPuzzleTable(this.value); });
+  document.getElementById('easy-puzzle-search').addEventListener('input', function() { renderEasyPuzzleTable(this.value); });
+
+  updateAll();
+  renderResiduals();
+  renderMetricsTable();
+  renderPuzzlerTable();
+  renderPuzzleTable();
+  renderEasyPuzzleTable();
+}
+</script>
+</body>
+</html>
