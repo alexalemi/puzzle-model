@@ -1,7 +1,16 @@
 """Data loading, cleaning, and encoding for puzzle model."""
 
+import calendar
+
 import numpy as np
 import pandas as pd
+
+
+def to_fractional_year(dt) -> float:
+    """Convert a datetime/Timestamp to year + (day_of_year - 1) / days_in_year."""
+    dt = pd.Timestamp(dt)
+    days_in_year = 366 if calendar.isleap(dt.year) else 365
+    return dt.year + (dt.day_of_year - 1) / days_in_year
 
 
 def load_solo_completed(
@@ -29,9 +38,20 @@ def load_solo_completed(
     df["log_time"] = 1000.0 * np.log10(df["time_seconds"])
     df["puzzle_pieces"] = df["puzzle_pieces"].astype(int)
     if "finished_date" in df.columns:
-        df["finished_date"] = pd.to_datetime(df["finished_date"], errors="coerce")
+        df["finished_date"] = pd.to_datetime(df["finished_date"], format="mixed", errors="coerce")
     if "first_attempt" in df.columns:
         df["first_attempt"] = df["first_attempt"].fillna(True).astype(bool)
+    # Compute fractional year: use finished_date where available, else year + 0.5
+    has_date = df.get("finished_date") is not None and df["finished_date"].notna().any()
+    if has_date:
+        df["year_frac"] = df.apply(
+            lambda r: to_fractional_year(r["finished_date"])
+            if pd.notna(r.get("finished_date"))
+            else r["year"] + 0.5,
+            axis=1,
+        )
+    else:
+        df["year_frac"] = df["year"].astype(float) + 0.5
     return df.reset_index(drop=True)
 
 
@@ -145,7 +165,9 @@ def prepare_model_data(df: pd.DataFrame, mu_fixed: float | None = None) -> dict:
         "n_puzzles": df["puzzle_idx"].max() + 1,
         "mu_fixed": mu_fixed,
     }
-    if "year" in df.columns:
+    if "year_frac" in df.columns:
+        data["year"] = np.array(df["year_frac"], dtype=np.float32)
+    elif "year" in df.columns:
         data["year"] = np.array(df["year"], dtype=np.float32)
     if "first_attempt" in df.columns:
         data["first_attempt"] = np.array(df["first_attempt"], dtype=bool)
