@@ -506,7 +506,7 @@ def main():
     }
 
     # Puzzle difficulty distribution
-    puzzle_mB = beta_mean + mu_fixed
+    puzzle_mB = ELO_CENTER + beta_mean + mu_fixed
     puzzle_beta_all = {"values": [round(float(v), 3) for v in puzzle_mB],
                        "n": [int(puzzle_obs.get(i, 0)) for i in range(len(beta_mean))]}
     beta_hist_counts, beta_hist_edges = np.histogram(puzzle_mB, bins=50)
