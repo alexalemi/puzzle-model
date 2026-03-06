@@ -6,7 +6,7 @@ import pandas as pd
 
 def load_solo_completed(
     path: str = "data/processed/combined_results.csv",
-    source: str | None = "myspeedpuzzling",
+    source: str | None = None,
 ) -> pd.DataFrame:
     """Load and filter to solo, completed results with valid times and piece counts.
 

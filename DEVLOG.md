@@ -1,5 +1,26 @@
 # Development Log
 
+## 2026-03-06 (evening)
+
+### Added all data sources — no source offset needed
+
+Re-enabled all three data sources (speedpuzzling.com, myspeedpuzzling.com, mallory) after previously narrowing to MSP-only to fix the bimodal alpha issue. The question was whether competition times (SP) would show systematic bias vs self-reported times (MSP), requiring a source-specific gamma offset.
+
+**Diagnostic results**: No offset needed. Mean residuals on the test set:
+- speedpuzzling: -3.95 mB (N=1,783)
+- myspeedpuzzling: -4.35 mB (N=24,561)
+- mallory: -19.22 mB (N=14, just 1 puzzler)
+
+The <1 mB difference between SP and MSP is negligible. The model naturally handles population differences through puzzler-level alphas. SP puzzlers are systematically slower on shared puzzles (e.g. "Be Mine_300": SP mean=3468 vs MSP=3296), but this reflects the different populations, not measurement bias — and the individual alphas absorb it.
+
+SP data has notably lower noise (test RMSE 91 vs 121 mB, mean LPD -5.27 vs -5.60), consistent with controlled competition conditions vs self-reported timing.
+
+**Combined dataset**: 113K train / 26K test, 6,157 puzzlers, 16,493 puzzles. 144 shared puzzles serve as bridge puzzles for cross-source calibration.
+
+**Model performance** (all sources, model_2c): test mean LPD = -5.5905, essentially identical to MSP-only (-5.5906). Adding 11K SP observations didn't degrade fit at all.
+
+Changed `load_solo_completed` default from `source="myspeedpuzzling"` to `source=None`.
+
 ## 2026-03-06 (afternoon)
 
 ### Fixed bimodal puzzler ratings by pinning mu
