@@ -520,10 +520,12 @@
     <div class="details-content">
       <table>
         <tr><th>Model</th><th>Formula</th><th>Parameters</th><th>Description</th></tr>
-        <tr><td>Model 1t</td><td class="num">&mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub> + c&middot;log(N)</td><td class="num" id="m1t-params"></td><td>Student-t robust baseline</td></tr>
-        <tr><td>Model 2c</td><td class="num">+ log<sub>10</sub>(&Sigma;<sub>k</sub> w<sub>k</sub> g<sub>k</sub>(N)) + &delta;<sub>0</sub>t + &delta;<sub>i</sub>t</td><td class="num" id="m2c-params"></td><td>Physical basis + velocity (production)</td></tr>
+        <tr><th>Model</th><th>Formula</th><th>Parameters</th><th>Description</th><th>Data</th></tr>
+        <tr><td>Model 1t</td><td class="num">&mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub> + c&middot;log(N)</td><td class="num" id="m1t-params"></td><td>Student-t robust baseline</td><td>First-attempt</td></tr>
+        <tr><td>Model 2c</td><td class="num">+ log<sub>10</sub>(&Sigma;<sub>k</sub> w<sub>k</sub> g<sub>k</sub>(N)) + &delta;<sub>0</sub>t + &delta;<sub>i</sub>t</td><td class="num" id="m2c-params"></td><td>Physical basis + velocity (production)</td><td>First-attempt</td></tr>
+        <tr><td>Model 2r</td><td class="num">+ &gamma;&middot;log(solve_number)</td><td class="num" id="m2r-params"></td><td>Practice effect (repeat solves)</td><td>All data</td></tr>
       </table>
-      <p class="footnote">Both models use Student-t likelihood. Priors: &alpha;<sub>i</sub> ~ N(0, &sigma;<sub>&alpha;</sub>), &beta;<sub>j</sub> ~ N(0, &sigma;<sub>&beta;</sub>), log(w<sub>k</sub>) ~ N(0,5). Non-centered parameterization via SVI.</p>
+      <p class="footnote">All models use Student-t likelihood. Priors: &alpha;<sub>i</sub> ~ N(0, &sigma;<sub>&alpha;</sub>), &beta;<sub>j</sub> ~ N(0, &sigma;<sub>&beta;</sub>), log(w<sub>k</sub>) ~ N(0,5). Non-centered parameterization via SVI. Models 1t/2c use first-attempt data only; 2r uses all data including repeat solves.</p>
     </div>
   </details>
   <details>
@@ -558,40 +560,46 @@
   </details>
 </section>
 
-<!-- Model 2c Deep Dive -->
-<section>
-  <h2>Model 2c Deep Dive</h2>
-  <p>Model 2c (Student-t + velocity) is the best-fitting model. Here we examine its learned parameters.</p>
+<!-- Model 2r Deep Dive -->
+<section id="section-model2r">
+  <h2>Model 2r Deep Dive</h2>
+  <p>Model 2r is the production model: Student-t likelihood, per-puzzler velocity, physical piece-count basis, and a practice effect for repeat solves. Trained on all data.</p>
   <details open>
     <summary>Model specification (mB scale)</summary>
     <div class="details-content">
       <p>The predicted solving time in milliBels decomposes as:</p>
-      <div class="equation">mB(time<sub>ij</sub>) = D<sub>j</sub> + f(N<sub>j</sub>) &minus; R<sub>i</sub>(y) + &epsilon;</div>
+      <div class="equation">mB(time<sub>ij</sub>) = D<sub>j</sub> + f(N<sub>j</sub>) &minus; R<sub>i</sub>(y) + &gamma;&middot;log(solve#) + &epsilon;</div>
       <table>
         <tr><th>Term</th><th>Definition</th><th>Zero means</th><th>Learned scale</th></tr>
         <tr>
           <td>D<sub>j</sub></td>
           <td>Puzzle difficulty = &mu; + &beta;<sub>j</sub></td>
           <td>&beta;<sub>j</sub> = 0 &rarr; average puzzle (given its piece count)</td>
-          <td id="m2c-spec-D"></td>
+          <td id="m2r-spec-D"></td>
         </tr>
         <tr>
           <td>f(N<sub>j</sub>)</td>
           <td>Piece-count correction = 1000&middot;log<sub>10</sub>(&Sigma;<sub>k</sub> w<sub>k</sub> g<sub>k</sub>(N)) &minus; ref</td>
           <td>f = 0 at N = 500 pieces</td>
-          <td id="m2c-spec-f"></td>
+          <td id="m2r-spec-f"></td>
         </tr>
         <tr>
           <td>R<sub>i</sub>(y)</td>
           <td>Puzzler rating at year y = &alpha;&#x0303;<sub>i</sub> + v<sub>i</sub>(y &minus; 2026)</td>
           <td>R = 0 &rarr; average-speed puzzler in 2026</td>
-          <td id="m2c-spec-R"></td>
+          <td id="m2r-spec-R"></td>
+        </tr>
+        <tr>
+          <td>&gamma;&middot;log(solve#)</td>
+          <td>Practice effect (negative = faster with repetition)</td>
+          <td>solve# = 1 &rarr; no effect (first attempt)</td>
+          <td id="m2r-spec-gamma"></td>
         </tr>
         <tr>
           <td>&epsilon;</td>
           <td>Noise ~ Student-t(&nu;, 0, &sigma;)</td>
           <td>—</td>
-          <td id="m2c-spec-eps"></td>
+          <td id="m2r-spec-eps"></td>
         </tr>
       </table>
       <p class="footnote">Here &alpha;&#x0303;<sub>i</sub> = &minus;(&alpha;<sub>i</sub> + &delta;<sub>0</sub> + &delta;<sub>i</sub>) is the puzzler skill projected to 2026, and v<sub>i</sub> = &minus;(&delta;<sub>0</sub> + &delta;<sub>i</sub>) is the improvement rate in mB/yr (positive = getting faster). The sign convention: higher R = faster puzzler, higher D = harder puzzle, so predicted time = difficulty minus skill.</p>
@@ -600,7 +608,7 @@
   <details open>
     <summary>Scalar parameters</summary>
     <div class="details-content">
-      <table id="m4-scalar-table"></table>
+      <table id="m2r-scalar-table"></table>
     </div>
   </details>
   <details open>
@@ -610,11 +618,31 @@
       <div class="chart-container"><div id="chart-student-t"></div></div>
     </div>
   </details>
+  <details open>
+    <summary>Practice curve</summary>
+    <div class="details-content">
+      <p class="footnote">Expected time change from repeated solving. Each additional solve makes the puzzler faster. The shaded band shows the 80% credible interval from the &gamma; posterior.</p>
+      <div class="chart-container"><div id="chart-practice-curve"></div></div>
+    </div>
+  </details>
+  <details open>
+    <summary>Repeat statistics</summary>
+    <div class="details-content">
+      <div class="stat-grid" id="repeat-stat-grid"></div>
+    </div>
+  </details>
   <details>
     <summary>Learned piece-count correction</summary>
     <div class="details-content">
       <p class="footnote">The learned piece-count correction as a function of N. Physical processes (edge scanning, per-piece work, search, combinatorial matching) sum additively in time, then convert to mB centered at N=500. This gives sensible extrapolation: at large N, log(time) grows as at most 2·log(N). Shaded bands show posterior deciles from the log(w<sub>k</sub>) posterior.</p>
       <div class="chart-container"><div id="chart-response-curves"></div></div>
+    </div>
+  </details>
+  <details>
+    <summary>Process contributions by piece count</summary>
+    <div class="details-content">
+      <p class="footnote">Fraction of total predicted solving time attributable to each physical process. Since the model sums processes additively in time space (time = &Sigma; w<sub>k</sub> g<sub>k</sub>(N)), the fraction w<sub>k</sub> g<sub>k</sub>(N) / &Sigma;<sub>j</sub> w<sub>j</sub> g<sub>j</sub>(N) gives each process's share. At small N, edge-related work dominates; at large N, combinatorial/search effects take over.</p>
+      <div class="chart-container"><div id="chart-basis-fractions-2r"></div></div>
     </div>
   </details>
 </section>
@@ -642,6 +670,11 @@
       <label for="pred-year">Year <span class="pred-year-display" id="pred-year-val">2026.0</span></label>
       <input type="range" id="pred-year" min="2020" max="2030" step="0.5" value="2026" style="width:100%; margin-top:8px;">
     </div>
+    <div>
+      <label for="pred-solve-num">Solve # <span id="pred-solve-num-val">1</span></label>
+      <input type="range" id="pred-solve-num" min="1" max="10" step="1" value="1" style="width:100%; margin-top:8px;">
+      <p class="footnote" id="pred-practice-note" style="margin-top:4px; display:none;"></p>
+    </div>
   </div>
   <div class="pred-results" id="pred-results" style="display:none;">
     <div class="pred-summary" id="pred-summary"></div>
@@ -658,7 +691,7 @@
 <!-- Learned Parameters -->
 <section>
   <h2>Learned Parameters</h2>
-  <p>From Model 2c (velocity model): global intercept &mu; = <span class="metric-highlight" id="param-mu"></span>,
+  <p>From Model 2r: global intercept &mu; = <span class="metric-highlight" id="param-mu"></span>,
      noise &sigma; = <span class="metric-highlight" id="param-sigma"></span>,
      mean improvement = <span class="metric-highlight" id="param-delta0"></span> mB/yr,
      &sigma;<sub>v</sub> = <span class="metric-highlight" id="param-sigma-delta"></span></p>
@@ -747,6 +780,7 @@
                     model_1t: "#3a9a58",
                     model_2: "#2d8a4e",
                     model_2c: "#0e6a2e",
+                    model_2r: "#e377c2",
                     model_3: "#dd8452",
                 };
                 const MODEL_NAMES = {
@@ -755,6 +789,7 @@
                     model_1t: "Model 1t: Student-t",
                     model_2: "Model 2: + basis \u03c6",
                     model_2c: "Model 2c: + velocity",
+                    model_2r: "Model 2r: + practice",
                     model_3: "Model 3: + interaction",
                 };
                 const availableModels = Object.keys(MODEL_NAMES).filter(
@@ -810,13 +845,15 @@
                 document.getElementById("meta-puzzles").textContent =
                     `${fmtInt(S.n_puzzles)} puzzles`;
 
+                const repeatStats = DATA.model2r_detail ? DATA.model2r_detail.repeat_stats : null;
                 document.getElementById("stat-grid").innerHTML = [
                     { value: fmtInt(S.n_records), label: "Total Records" },
                     { value: fmtInt(S.n_puzzlers), label: "Unique Puzzlers" },
                     { value: fmtInt(S.n_puzzles), label: "Unique Puzzles" },
                     { value: S.piece_counts.length, label: "Piece Counts" },
                     { value: fmt2(S.log_time_mean), label: "Mean (mB)" },
-                    { value: fmt2(S.log_time_std), label: "Std (mB)" },
+                    repeatStats ? { value: fmtInt(repeatStats.n_repeat), label: "Repeat Solves" }
+                               : { value: fmt2(S.log_time_std), label: "Std (mB)" },
                 ]
                     .map(
                         (s) =>
@@ -845,6 +882,10 @@
                 // Model 2c: + 4 log_w + delta_0 + sigma_delta + delta_i per puzzler
                 document.getElementById("m2c-params").textContent =
                     `~${fmtInt(2 * nP + nPz + 12)}`;
+                // Model 2r: 2c + gamma
+                const m2rEl = document.getElementById("m2r-params");
+                if (m2rEl)
+                    m2rEl.textContent = `~${fmtInt(2 * nP + nPz + 13)}`;
 
                 // --- Scatter ---
                 (function () {
@@ -1197,8 +1238,8 @@
 
                 // --- Model comparison ---
                 let activeModels = new Set(availableModels);
-                let activeResModel = availableModels.includes("model_2c")
-                    ? "model_2c"
+                let activeResModel = availableModels.includes("model_2r")
+                    ? "model_2r"
                     : availableModels[availableModels.length - 1];
 
                 function renderSelector(
@@ -1562,6 +1603,20 @@
                     });
                     trTlppd.append("td");
 
+                    // Observation counts row
+                    const trObs = tbody.append("tr");
+                    trObs.append("td").style("color", "var(--text-light)").text("  Train / Test obs");
+                    Object.keys(MODEL_NAMES).forEach((m) => {
+                        const md = DATA.models[m];
+                        trObs.append("td").attr("class", "num")
+                            .style("color", "var(--text-light)")
+                            .style("font-size", "12px")
+                            .text(md && md.n_train != null
+                                ? fmtInt(md.n_train) + " / " + fmtInt(md.n_test)
+                                : "-");
+                    });
+                    trObs.append("td");
+
                     // Separator, then secondary metrics
                     const metrics = [
                         {
@@ -1790,18 +1845,16 @@
                 });
 
                 // Populate source filter dropdowns
-                function puzzleSource(d) {
-                    return d.name.startsWith("msp_")
-                        ? "myspeedpuzzling"
-                        : "speedpuzzling";
+                function puzzleSources(d) {
+                    return d.sources || [];
                 }
-                const puzzleSources = [
-                    ...new Set(DATA.puzzles.map(puzzleSource)),
+                const allPuzzleSources = [
+                    ...new Set(DATA.puzzles.flatMap(puzzleSources)),
                 ].sort();
                 ["puzzle-source-filter", "easy-puzzle-source-filter"].forEach(
                     (id) => {
                         const sel = document.getElementById(id);
-                        puzzleSources.forEach((s) => {
+                        allPuzzleSources.forEach((s) => {
                             const opt = document.createElement("option");
                             opt.value = s;
                             opt.textContent = s;
@@ -1841,7 +1894,7 @@
                         );
                     if (hardSourceFilter)
                         filtered = filtered.filter(
-                            (d) => puzzleSource(d) === hardSourceFilter,
+                            (d) => (d.sources || []).includes(hardSourceFilter),
                         );
                     if (filter)
                         filtered = filtered.filter((d) =>
@@ -1939,7 +1992,7 @@
                         );
                     if (easySourceFilter)
                         filtered = filtered.filter(
-                            (d) => puzzleSource(d) === easySourceFilter,
+                            (d) => (d.sources || []).includes(easySourceFilter),
                         );
                     if (filter)
                         filtered = filtered.filter((d) =>
@@ -2300,9 +2353,9 @@
 
                 // --- Physical basis component contributions ---
                 (function () {
-                    const M2C = DATA.model2c_detail;
-                    if (!M2C || !M2C.basis_components) return;
-                    const bc = M2C.basis_components;
+                    const M2R = DATA.model2r_detail;
+                    if (!M2R || !M2R.basis_components) return;
+                    const bc = M2R.basis_components;
                     const W = 600,
                         H = 300,
                         mg = { top: 28, right: 140, bottom: 44, left: 64 };
@@ -2466,11 +2519,27 @@
                     const puzzleMap = {};
                     DATA.puzzles.forEach(d => { puzzleMap[d.name] = d; });
 
+                    // Gamma from model_2r for practice effect
+                    const gamma_2r = DATA.model2r_detail && DATA.model2r_detail.scalar_params.gamma
+                        ? DATA.model2r_detail.scalar_params.gamma.mean : 0;
+
                     function renderPrediction() {
                         const puzzlerInput = document.getElementById("pred-puzzler").value.trim();
                         const puzzleInput = document.getElementById("pred-puzzle").value.trim();
                         const year = parseFloat(document.getElementById("pred-year").value);
+                        const solveNum = parseInt(document.getElementById("pred-solve-num").value) || 1;
                         document.getElementById("pred-year-val").textContent = year.toFixed(1);
+                        document.getElementById("pred-solve-num-val").textContent = solveNum;
+                        // Practice effect annotation
+                        const practiceEffect = gamma_2r * Math.log(solveNum);
+                        const practiceNote = document.getElementById("pred-practice-note");
+                        if (solveNum > 1 && gamma_2r !== 0) {
+                            const pctChange = 100 * (Math.pow(10, practiceEffect / 1000) - 1);
+                            practiceNote.textContent = `Practice: ${practiceEffect.toFixed(1)} mB (${pctChange.toFixed(1)}% time)`;
+                            practiceNote.style.display = "";
+                        } else {
+                            practiceNote.style.display = "none";
+                        }
 
                         // Resolve puzzler
                         const puzzler = puzzlerMap[puzzlerInput];
@@ -2511,7 +2580,8 @@
                         }
 
                         const fN = computeBasis(pc);
-                        const pointEst = mu + alpha_eff + beta_val + fN;
+                        const practiceAdj = gamma_2r * Math.log(solveNum);
+                        const pointEst = mu + alpha_eff + beta_val + fN + practiceAdj;
 
                         // MC sampling (10K)
                         const N_MC = 10000;
@@ -2520,7 +2590,7 @@
                             const a = alpha_eff + alpha_std * randn();
                             const b = beta_val + beta_std_val * randn();
                             const noise = sampleStudentT(nu, sigma);
-                            samples[i] = mu + a + b + fN + noise;
+                            samples[i] = mu + a + b + fN + practiceAdj + noise;
                         }
                         samples.sort();
 
@@ -2641,6 +2711,7 @@
                             { term: "Velocity effect", mB: velEffect, std: velEffectStd, desc: vel != null ? (vel > 0 ? "+" : "") + vel.toFixed(1) + " mB/yr" : "—" },
                             { term: "Puzzle difficulty (β)", mB: beta_val, std: beta_std_val, desc: puzzleLabel },
                             { term: "Piece-count f(N)", mB: fN, std: null, desc: pc + " pieces" },
+                            { term: "Practice effect (γ)", mB: practiceAdj, std: null, desc: solveNum > 1 ? "Solve #" + solveNum : "First attempt (no effect)" },
                             { term: "= Point estimate", mB: pointEst, std: totalParamStd, desc: mBtoTime(pointEst) },
                             { term: "Noise σ", mB: sigma, std: null, desc: "Student-t, ν=" + nu.toFixed(1) },
                         ];
@@ -2660,7 +2731,7 @@
                     }
 
                     // Event listeners
-                    ["pred-puzzler", "pred-puzzle", "pred-year", "pred-pieces"].forEach(id => {
+                    ["pred-puzzler", "pred-puzzle", "pred-year", "pred-pieces", "pred-solve-num"].forEach(id => {
                         const el = document.getElementById(id);
                         if (el) el.addEventListener("input", renderPrediction);
                     });
@@ -2669,13 +2740,13 @@
                     renderPrediction();
                 })();
 
-                // --- Model 2c Deep Dive ---
-                if (DATA.model2c_detail) {
-                    const M2C = DATA.model2c_detail;
+                // --- Model 2r Deep Dive ---
+                if (DATA.model2r_detail) {
+                    const M2R = DATA.model2r_detail;
 
                     // Model specification table (mB scale)
                     (function () {
-                        const sp = M2C.scalar_params;
+                        const sp = M2R.scalar_params;
                         const mu = sp.mu.mean,
                             sig_b = sp.sigma_beta.mean;
                         const sig_a = sp.sigma_alpha.mean;
@@ -2683,31 +2754,36 @@
                             sigma = sp.sigma.mean;
                         const d0 = sp.delta_0.mean,
                             sd = sp.sigma_delta.mean;
+                        const gamma = sp.gamma ? sp.gamma.mean : 0;
                         const el = (id, html) => {
                             const e = document.getElementById(id);
                             if (e) e.innerHTML = html;
                         };
                         el(
-                            "m2c-spec-D",
+                            "m2r-spec-D",
                             `&mu; = ${mu.toFixed(0)} mB, &sigma;<sub>&beta;</sub> = ${sig_b.toFixed(0)} mB`,
                         );
                         el(
-                            "m2c-spec-f",
+                            "m2r-spec-f",
                             `4 physical basis functions, centered at N=500`,
                         );
                         el(
-                            "m2c-spec-R",
+                            "m2r-spec-R",
                             `&sigma;<sub>&alpha;</sub> = ${sig_a.toFixed(0)} mB, v&#x0305; &asymp; ${(-d0).toFixed(1)} &pm; ${sd.toFixed(1)} mB/yr`,
                         );
                         el(
-                            "m2c-spec-eps",
+                            "m2r-spec-gamma",
+                            `&gamma; = ${gamma.toFixed(1)} mB/log(solve#)`,
+                        );
+                        el(
+                            "m2r-spec-eps",
                             `&nu; = ${nu.toFixed(1)}, &sigma; = ${sigma.toFixed(1)} mB`,
                         );
                     })();
 
                     // Scalar params table
                     (function () {
-                        const t = d3.select("#m4-scalar-table");
+                        const t = d3.select("#m2r-scalar-table");
                         const thead = t.append("thead").append("tr");
                         [
                             "Parameter",
@@ -2724,6 +2800,7 @@
                             sigma_beta: "Puzzle difficulty spread",
                             delta_0: "Population trend (mB/yr)",
                             sigma_delta: "Individual velocity spread",
+                            gamma: "Practice effect (mB per log-solve)",
                             log_w_0: "Log-weight: \u221aN (edge scanning)",
                             log_w_1: "Log-weight: N (per-piece work)",
                             log_w_2: "Log-weight: N\u00b7log(N) (search)",
@@ -2737,15 +2814,17 @@
                             "sigma_beta",
                             "delta_0",
                             "sigma_delta",
+                            "gamma",
                             "log_w_0",
                             "log_w_1",
                             "log_w_2",
                             "log_w_3",
                         ];
                         order.forEach((key) => {
-                            const p = M2C.scalar_params[key];
+                            const p = M2R.scalar_params[key];
                             if (!p) return;
                             const tr = tbody.append("tr");
+                            if (key === "gamma") tr.style("font-weight", "600").style("background", "rgba(227,119,194,0.08)");
                             tr.append("td")
                                 .style(
                                     "font-family",
@@ -2768,7 +2847,8 @@
 
                     // Student-t vs Normal
                     (function () {
-                        const st = M2C.student_t_comparison;
+                        if (!M2R.student_t_comparison) return;
+                        const st = M2R.student_t_comparison;
                         const W = 600,
                             H = 300,
                             mg = { top: 32, right: 120, bottom: 44, left: 56 };
@@ -2879,7 +2959,8 @@
 
                     // Basis correction: main curve + uncertainty zoom (stacked vertically)
                     (function () {
-                        const bc = M2C.basis_correction;
+                        if (!M2R.basis_correction) return;
+                        const bc = M2R.basis_correction;
                         const color = "#4a7fb5";
                         const W = 600,
                             H1 = 280,
@@ -3060,6 +3141,244 @@
                             .style("font-size", "9px")
                             .text("Nested deciles: 90/80/60/40/20% CI");
                     })();
+
+                    // Practice curve chart
+                    (function () {
+                        const pc = M2R.practice_curve;
+                        if (!pc) return;
+                        const W = 600, H = 300;
+                        const mg = { top: 32, right: 80, bottom: 44, left: 56 };
+                        const svg = d3.select("#chart-practice-curve")
+                            .append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("width", "100%");
+                        svg.append("text").attr("class", "chart-title")
+                            .attr("x", (W - mg.right + mg.left) / 2).attr("y", 16)
+                            .attr("text-anchor", "middle").text("Practice Effect: Time Change by Solve Number");
+
+                        const x = d3.scaleLinear()
+                            .domain([1, 10]).range([mg.left, W - mg.right]);
+                        const allY = [...pc.q10_mB, ...pc.q90_mB];
+                        const yMin = d3.min(allY) * 1.1, yMax = d3.max(allY) * 0.1;
+                        const y = d3.scaleLinear()
+                            .domain([yMin, Math.max(yMax, 5)]).range([H - mg.bottom, mg.top]);
+
+                        svg.append("line")
+                            .attr("x1", mg.left).attr("x2", W - mg.right)
+                            .attr("y1", y(0)).attr("y2", y(0))
+                            .attr("stroke", "#aaa").attr("stroke-width", 1);
+
+                        const area = d3.area()
+                            .x((d, i) => x(pc.solve_numbers[i]))
+                            .y0((d, i) => y(pc.q10_mB[i]))
+                            .y1((d, i) => y(pc.q90_mB[i]))
+                            .curve(d3.curveMonotoneX);
+                        svg.append("path").datum(pc.solve_numbers)
+                            .attr("d", area)
+                            .attr("fill", "#e377c2").attr("opacity", 0.2);
+
+                        const line = d3.line()
+                            .x((d, i) => x(pc.solve_numbers[i]))
+                            .y((d, i) => y(pc.mean_mB[i]))
+                            .curve(d3.curveMonotoneX);
+                        svg.append("path").datum(pc.solve_numbers)
+                            .attr("d", line)
+                            .attr("fill", "none").attr("stroke", "#e377c2").attr("stroke-width", 2.5);
+
+                        pc.solve_numbers.forEach((n, i) => {
+                            if (i === 0) return;
+                            svg.append("circle")
+                                .attr("cx", x(n)).attr("cy", y(pc.mean_mB[i]))
+                                .attr("r", 4).attr("fill", "#e377c2")
+                                .on("mouseover", (event) => showTip(event,
+                                    `<b>Solve #${n}</b><br>${pc.mean_mB[i].toFixed(1)} mB (${pc.mean_pct[i].toFixed(1)}%)`))
+                                .on("mouseout", hideTip);
+                        });
+
+                        const ann = [
+                            { n: 2, label: `2nd: ${pc.mean_pct[1].toFixed(1)}%` },
+                            { n: 10, label: `10th: ${pc.mean_pct[9].toFixed(1)}%` },
+                        ];
+                        ann.forEach(a => {
+                            const i = a.n - 1;
+                            svg.append("text")
+                                .attr("x", x(a.n) + 6).attr("y", y(pc.mean_mB[i]) - 8)
+                                .style("font-size", "11px").style("fill", "#666")
+                                .text(a.label);
+                        });
+
+                        svg.append("g").attr("class", "axis")
+                            .attr("transform", `translate(0,${H - mg.bottom})`)
+                            .call(d3.axisBottom(x).ticks(10).tickFormat(d => d))
+                            .append("text").attr("x", (W - mg.right + mg.left) / 2).attr("y", 36)
+                            .style("text-anchor", "middle").style("font-size", "12px").style("fill", "#6e6e6e")
+                            .text("Solve Number");
+                        svg.append("g").attr("class", "axis")
+                            .attr("transform", `translate(${mg.left},0)`)
+                            .call(d3.axisLeft(y).ticks(6))
+                            .append("text").attr("transform", "rotate(-90)")
+                            .attr("x", -H / 2).attr("y", -40)
+                            .style("text-anchor", "middle").style("font-size", "12px").style("fill", "#6e6e6e")
+                            .text("Δ mB (negative = faster)");
+
+                        const yPct = d3.scaleLinear()
+                            .domain([100 * (Math.pow(10, yMin / 1000) - 1), 100 * (Math.pow(10, Math.max(yMax, 5) / 1000) - 1)])
+                            .range([H - mg.bottom, mg.top]);
+                        svg.append("g").attr("class", "axis")
+                            .attr("transform", `translate(${W - mg.right},0)`)
+                            .call(d3.axisRight(yPct).ticks(6).tickFormat(d => d.toFixed(0) + "%"))
+                            .append("text").attr("transform", "rotate(-90)")
+                            .attr("x", -H / 2).attr("y", 50)
+                            .style("text-anchor", "middle").style("font-size", "12px").style("fill", "#6e6e6e")
+                            .text("% time change");
+
+                        const lg = svg.append("g").attr("transform", `translate(${mg.left + 8}, ${mg.top + 4})`);
+                        lg.append("rect").attr("width", 14).attr("height", 10).attr("fill", "#e377c2").attr("opacity", 0.4);
+                        lg.append("text").attr("x", 18).attr("y", 9).style("font-size", "10px").text("80% credible interval");
+                    })();
+
+                    // Repeat statistics grid
+                    (function () {
+                        const rs = M2R.repeat_stats;
+                        if (!rs) return;
+                        const stats = [
+                            { value: fmtInt(rs.n_total), label: "Total Observations" },
+                            { value: fmtInt(rs.n_first_attempt), label: "First-Attempt" },
+                            { value: fmtInt(rs.n_repeat), label: "Repeat Solves" },
+                            { value: fmtInt(rs.n_puzzlers_with_repeats), label: "Puzzlers w/ Repeats" },
+                            { value: rs.max_solve_number, label: "Max Solve Number" },
+                            { value: rs.median_solve_number_repeats || "—", label: "Median (Repeats)" },
+                        ];
+                        document.getElementById("repeat-stat-grid").innerHTML = stats.map(s =>
+                            `<div class="stat-card"><span class="value">${s.value}</span><span class="label">${s.label}</span></div>`
+                        ).join("");
+                    })();
+
+                    // Basis fractions stacked area
+                    (function () {
+                        if (!M2R.basis_fractions) return;
+                        renderBasisFractions("#chart-basis-fractions-2r", M2R.basis_fractions, "Process Contributions to Solving Time");
+                    })();
+                } else {
+                    document.getElementById("section-model2r").style.display = "none";
+                }
+
+                // --- Shared: basis fractions stacked area chart ---
+                function renderBasisFractions(selector, bf, title) {
+                    const labels = [
+                        { key: "sqrt_N", label: "\u221aN (edge scanning)", color: "#4a7fb5" },
+                        { key: "N", label: "N (per-piece work)", color: "#55a868" },
+                        { key: "N_log_N", label: "N\u00b7log(N) (search)", color: "#dd8452" },
+                        { key: "N_sq", label: "N\u00b2 (combinatorial)", color: "#8172b2" },
+                    ];
+                    const pieces = bf.pieces;
+                    const W = 600, H = 320;
+                    const mg = { top: 32, right: 140, bottom: 44, left: 56 };
+                    const svg = d3.select(selector).append("svg")
+                        .attr("viewBox", `0 0 ${W} ${H}`).attr("width", "100%");
+                    svg.append("text").attr("class", "chart-title")
+                        .attr("x", (W - mg.right + mg.left) / 2).attr("y", 16)
+                        .attr("text-anchor", "middle").text(title);
+
+                    const x = d3.scaleLog()
+                        .domain([d3.min(pieces) * 0.9, d3.max(pieces) * 1.1])
+                        .range([mg.left, W - mg.right]);
+                    const y = d3.scaleLinear()
+                        .domain([0, 1])
+                        .range([H - mg.bottom, mg.top]);
+
+                    // Build stacked data: cumulative fractions
+                    const n = pieces.length;
+                    const cumBottom = new Array(n).fill(0);
+
+                    labels.forEach((l, li) => {
+                        const vals = bf[l.key].mean;
+                        const tops = vals.map((v, i) => cumBottom[i] + v);
+
+                        // Stacked area band
+                        const area = d3.area()
+                            .x((d, i) => x(pieces[i]))
+                            .y0((d, i) => y(cumBottom[i]))
+                            .y1((d, i) => y(tops[i]))
+                            .curve(d3.curveMonotoneX);
+                        svg.append("path").datum(vals)
+                            .attr("d", area)
+                            .attr("fill", l.color).attr("opacity", 0.7)
+                            .attr("stroke", l.color).attr("stroke-width", 0.5);
+
+                        // Label line at midpoint of band
+                        const midY = vals.map((v, i) => (cumBottom[i] + tops[i]) / 2);
+
+                        // Update cumulative
+                        tops.forEach((v, i) => { cumBottom[i] = v; });
+                    });
+
+                    // N_REF marker
+                    const nRef = 500;
+                    svg.append("line")
+                        .attr("x1", x(nRef)).attr("x2", x(nRef))
+                        .attr("y1", mg.top).attr("y2", H - mg.bottom)
+                        .attr("stroke", "#fff").attr("stroke-width", 1)
+                        .attr("stroke-dasharray", "3,3").attr("opacity", 0.6);
+                    svg.append("text")
+                        .attr("x", x(nRef) + 4).attr("y", mg.top + 12)
+                        .style("font-size", "9px").style("fill", "#999")
+                        .text("N=500");
+
+                    // Axes
+                    svg.append("g").attr("class", "axis")
+                        .attr("transform", `translate(0,${H - mg.bottom})`)
+                        .call(d3.axisBottom(x).ticks(6))
+                        .append("text").attr("x", W / 2).attr("y", 36)
+                        .style("text-anchor", "middle").style("font-size", "12px").style("fill", "#6e6e6e")
+                        .text("Piece count (N)");
+                    svg.append("g").attr("class", "axis")
+                        .attr("transform", `translate(${mg.left},0)`)
+                        .call(d3.axisLeft(y).ticks(5).tickFormat(d => (d * 100).toFixed(0) + "%"))
+                        .append("text").attr("transform", "rotate(-90)")
+                        .attr("x", -H / 2).attr("y", -40)
+                        .style("text-anchor", "middle").style("font-size", "12px").style("fill", "#6e6e6e")
+                        .text("Fraction of solving time");
+
+                    // Legend
+                    const lg = svg.append("g")
+                        .attr("transform", `translate(${W - mg.right + 8}, ${mg.top + 8})`);
+                    labels.forEach((l, i) => {
+                        const g = lg.append("g").attr("transform", `translate(0, ${i * 18})`);
+                        g.append("rect").attr("width", 14).attr("height", 12)
+                            .attr("fill", l.color).attr("opacity", 0.7);
+                        g.append("text").attr("x", 18).attr("y", 10)
+                            .style("font-size", "10px").text(l.label);
+                    });
+
+                    // Tooltip: show percentages at each piece count
+                    const overlay = svg.append("rect")
+                        .attr("x", mg.left).attr("y", mg.top)
+                        .attr("width", W - mg.left - mg.right)
+                        .attr("height", H - mg.top - mg.bottom)
+                        .attr("fill", "transparent");
+
+                    const tipLine = svg.append("line")
+                        .attr("y1", mg.top).attr("y2", H - mg.bottom)
+                        .attr("stroke", "#666").attr("stroke-width", 1)
+                        .attr("stroke-dasharray", "2,2").style("display", "none");
+
+                    overlay.on("mousemove", function(event) {
+                        const [mx] = d3.pointer(event);
+                        const nVal = x.invert(mx);
+                        // Find nearest piece count
+                        let closest = 0;
+                        let minDist = Infinity;
+                        pieces.forEach((p, i) => {
+                            const d = Math.abs(Math.log(p) - Math.log(nVal));
+                            if (d < minDist) { minDist = d; closest = i; }
+                        });
+                        tipLine.attr("x1", x(pieces[closest])).attr("x2", x(pieces[closest]))
+                            .style("display", null);
+                        const pcts = labels.map(l => `<b style="color:${l.color}">${l.label}</b>: ${(bf[l.key].mean[closest] * 100).toFixed(1)}%`);
+                        showTip(event, `<b>N = ${pieces[closest]}</b><br>` + pcts.join("<br>"));
+                    }).on("mouseout", function() {
+                        tipLine.style("display", "none");
+                        hideTip();
+                    });
                 }
 
                 // --- Wire up interactivity ---

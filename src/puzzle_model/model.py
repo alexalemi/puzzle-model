@@ -115,9 +115,73 @@ def model_2c(
         numpyro.sample("log_time", dist.StudentT(nu, mean, sigma), obs=log_time)
 
 
+def model_2r(
+    puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles,
+    mu_fixed=None, year=None, log_time=None,
+    solve_number=None, **kwargs,
+):
+    """Physical basis + velocity + log-practice effect (no forgetting).
+
+    Extends model_2c with:
+        repeat_effect = gamma * log(solve_number)
+
+    solve_number is computed from observed data sequences, with a floor of 2
+    for rows where MSP reports first_attempt=False but we lack the prior solve.
+    For first attempts: solve_number=1 → log(1)=0, so the effect vanishes.
+    """
+    mu = numpyro.deterministic("mu", jnp.float32(mu_fixed))
+    sigma = numpyro.sample("sigma", dist.HalfNormal(500.0))
+    nu = numpyro.sample("nu", dist.Gamma(2.0, 0.1))
+    sigma_alpha = numpyro.sample("sigma_alpha", dist.HalfNormal(300.0))
+    sigma_beta = numpyro.sample("sigma_beta", dist.HalfNormal(300.0))
+
+    # Physical basis weights
+    log_w = numpyro.sample("log_w", dist.Normal(0, 5.0).expand([4]))
+
+    # Velocity
+    delta_0 = numpyro.sample("delta_0", dist.Normal(0, 100.0))
+    sigma_delta = numpyro.sample("sigma_delta", dist.HalfNormal(100.0))
+
+    # Practice effect (global)
+    gamma = numpyro.sample("gamma", dist.Normal(0, 200.0))
+
+    with numpyro.plate("puzzlers", n_puzzlers):
+        alpha = numpyro.sample("alpha", dist.Normal(0, sigma_alpha))
+        delta = numpyro.sample("delta", dist.Normal(0, sigma_delta))
+
+    with numpyro.plate("puzzles", n_puzzles):
+        beta = numpyro.sample("beta", dist.Normal(0, sigma_beta))
+
+    # Physical basis correction (same as 2c)
+    N = jnp.asarray(pieces, dtype=jnp.float32)
+    g = jnp.column_stack([jnp.sqrt(N), N, N * jnp.log(N), N ** 2])
+    g_ref = jnp.array([jnp.sqrt(N_REF), N_REF, N_REF * jnp.log(N_REF), N_REF ** 2])
+    w = jnp.exp(log_w)
+    time_contrib = jnp.dot(g, w)
+    time_ref = jnp.dot(g_ref, w)
+    mB_scale = 1000.0 / jnp.log(10.0)
+    piece_correction = mB_scale * (jnp.log(time_contrib) - jnp.log(time_ref))
+
+    # Velocity
+    t = jnp.asarray(year, dtype=jnp.float32) - YEAR_CENTER if year is not None else 0.0
+    velocity_effect = (delta_0 + delta[puzzler_idx]) * t
+
+    # Practice: log(solve_number), zero for first attempts
+    sn = jnp.asarray(solve_number, dtype=jnp.float32) if solve_number is not None else jnp.ones(len(puzzler_idx))
+    repeat_effect = gamma * jnp.log(sn)
+
+    mean = mu + alpha[puzzler_idx] + beta[puzzle_idx] + piece_correction + velocity_effect + repeat_effect
+    with numpyro.plate("obs", len(puzzler_idx)):
+        numpyro.sample("log_time", dist.StudentT(nu, mean, sigma), obs=log_time)
+
+
 # Non-centered versions for SVI/MCMC efficiency
 model_1t_nc = reparam(model_1t, config={"alpha": LocScaleReparam(0), "beta": LocScaleReparam(0)})
 model_2c_nc = reparam(model_2c, config={
+    "alpha": LocScaleReparam(0), "beta": LocScaleReparam(0),
+    "delta": LocScaleReparam(0),
+})
+model_2r_nc = reparam(model_2r, config={
     "alpha": LocScaleReparam(0), "beta": LocScaleReparam(0),
     "delta": LocScaleReparam(0),
 })
@@ -125,4 +189,5 @@ model_2c_nc = reparam(model_2c, config={
 MODELS = {
     "model_1t": model_1t_nc,
     "model_2c": model_2c_nc,
+    "model_2r": model_2r_nc,
 }

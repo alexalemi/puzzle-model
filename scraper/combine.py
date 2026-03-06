@@ -27,6 +27,29 @@ MALLORY_PATH = PROJECT_ROOT / "data" / "MalloryPuzzleData.csv"
 OUTPUT_PATH = PROJECT_ROOT / "data" / "processed" / "combined_results.csv"
 
 
+# Manual overrides for SP puzzle names -> canonical MSP names.
+# Used when the naming difference can't be resolved by automatic normalization
+# (case, unicode apostrophes, "(exclusive)" suffix stripping).
+# Maps (sp_name, pieces) -> msp_name.
+SP_TO_MSP_OVERRIDES: dict[tuple[str, int], str] = {
+    # Series prefixes in MSP
+    ("Dutch Welfare State", 500): "Velvet Soft Touch: Dutch Welfare State",
+    ("Fresh Pie Tonight", 300): "Green Acres: Fresh Pie Tonight",
+    ("In Search of the Child", 500): 'Star Wars: The Mandalorian "In Search of The Child"',
+    ("Picnic Raiders", 300): "Adorable Animals Picnic Raiders",
+    ("Quarantine Moods", 500): "Velvet Soft Touch: Quarantine Moods",
+    ("The Wild North", 500): "Amazing Nature: The Wild North",
+    ("Trading Cards", 500): "Star Wars Trading Cards",
+    ("Campside - Oceanside Camping", 300): "Oceanside camping",
+    ("Coca Cola Barn Dance", 300): "Barn Dance",
+    # Renames / typos
+    ("Beechcraft Scatterwing", 500): "Beechcraft Staggerwing",
+    ("Ellen Shershow Photography", 500): "Dogs by Ellen Shershow",
+    # Comma difference
+    ("My Hair, My Crown", 300): "My Hair My crown",
+}
+
+
 # Manual overrides for Mallory's puzzle names -> canonical existing names.
 # Maps (mallory_name, pieces) -> existing puzzle name (or None to force no match).
 MALLORY_OVERRIDES: dict[tuple[str, int], str | None] = {
@@ -168,6 +191,78 @@ def load_mallory(existing_puzzles: pd.DataFrame) -> pd.DataFrame:
     })
 
 
+def _normalize_for_matching(name: str) -> str:
+    """Normalize a puzzle name for cross-source matching.
+
+    Lowercases, strips whitespace, normalizes unicode, and maps
+    curly quotes/apostrophes to ASCII equivalents.
+    """
+    import unicodedata
+
+    name = unicodedata.normalize("NFKC", name).lower().strip()
+    # Map curly single quotes to ASCII apostrophe
+    name = name.replace("\u2018", "'").replace("\u2019", "'")
+    # Map curly double quotes to ASCII
+    name = name.replace("\u201c", '"').replace("\u201d", '"')
+    return name
+
+
+def normalize_sp_to_msp(sp: pd.DataFrame, msp: pd.DataFrame) -> pd.DataFrame:
+    """Rename SP puzzle names to match MSP canonical names where possible.
+
+    Handles: case differences, unicode apostrophes, "(exclusive)" suffix,
+    and manual overrides for series prefixes / renames.
+    """
+    sp = sp.copy()
+
+    # Build MSP lookup: (normalized_name, pieces) -> original_name
+    msp_lookup: dict[tuple[str, int], str] = {}
+    for _, row in (
+        msp[["puzzle_name", "puzzle_pieces"]]
+        .dropna(subset=["puzzle_name"])
+        .drop_duplicates()
+        .iterrows()
+    ):
+        name = str(row["puzzle_name"])
+        pieces = int(row["puzzle_pieces"])
+        norm = _normalize_for_matching(name)
+        msp_lookup[(norm, pieces)] = name
+
+    renamed = 0
+    for idx, row in sp.iterrows():
+        if pd.isna(row.get("puzzle_name")) or pd.isna(row.get("puzzle_pieces")):
+            continue
+        sp_name = str(row["puzzle_name"])
+        pieces = int(row["puzzle_pieces"])
+
+        # 1. Check manual overrides first
+        if (sp_name, pieces) in SP_TO_MSP_OVERRIDES:
+            sp.at[idx, "puzzle_name"] = SP_TO_MSP_OVERRIDES[(sp_name, pieces)]
+            renamed += 1
+            continue
+
+        # 2. Normalize and try exact match (handles case + unicode apostrophes)
+        norm = _normalize_for_matching(sp_name)
+        if (norm, pieces) in msp_lookup:
+            msp_name = msp_lookup[(norm, pieces)]
+            if msp_name != sp_name:
+                sp.at[idx, "puzzle_name"] = msp_name
+                renamed += 1
+            continue
+
+        # 3. Strip "(exclusive)" suffix and try again
+        if "(exclusive)" in sp_name.lower():
+            stripped = sp_name.replace(" (exclusive)", "").replace(" (Exclusive)", "")
+            norm_stripped = _normalize_for_matching(stripped)
+            if (norm_stripped, pieces) in msp_lookup:
+                sp.at[idx, "puzzle_name"] = msp_lookup[(norm_stripped, pieces)]
+                renamed += 1
+                continue
+
+    print(f"  SP->MSP name normalization: {renamed} rows renamed")
+    return sp
+
+
 def load_myspeedpuzzling() -> pd.DataFrame:
     """Load and normalize myspeedpuzzling.com data to the shared schema.
 
@@ -176,9 +271,6 @@ def load_myspeedpuzzling() -> pd.DataFrame:
     """
     puzzles = pd.read_csv(MSP_PUZZLES_PATH)
     times = pd.read_csv(MSP_TIMES_PATH)
-
-    # Only keep first-attempt solves (repeat solves would bias the model)
-    times = times[times["first_attempt"] == True]
 
     # Join to get puzzle metadata
     df = times.merge(
@@ -193,8 +285,9 @@ def load_myspeedpuzzling() -> pd.DataFrame:
         df["player_name"] + " (msp:" + df["player_id"].str[:8] + ")"
     )
 
-    # Extract year from finished_date
-    df["year"] = pd.to_datetime(df["finished_date"], errors="coerce").dt.year
+    # Parse finished_date and extract year
+    df["finished_date_parsed"] = pd.to_datetime(df["finished_date"], errors="coerce")
+    df["year"] = df["finished_date_parsed"].dt.year
 
     # Use the MSP puzzle_id as the event_id (each puzzle is its own "event")
     # Prefix with msp_ to avoid collisions with SP event IDs
@@ -217,6 +310,7 @@ def load_myspeedpuzzling() -> pd.DataFrame:
         "puzzle_name": df["name"],
         "time_limit_seconds": None,
         "first_attempt": df["first_attempt"],
+        "finished_date": df["finished_date_parsed"],
     })
 
 
@@ -250,6 +344,14 @@ def combine() -> pd.DataFrame:
     else:
         print(f"WARNING: myspeedpuzzling data not found, skipping")
 
+    # Normalize SP puzzle names toward MSP canonical names
+    if len(frames) >= 2:
+        # frames[0] is SP, find MSP frame
+        sp_idx = next((i for i, f in enumerate(frames) if f["source"].iloc[0] == "speedpuzzling"), None)
+        msp_idx = next((i for i, f in enumerate(frames) if f["source"].iloc[0] == "myspeedpuzzling"), None)
+        if sp_idx is not None and msp_idx is not None:
+            frames[sp_idx] = normalize_sp_to_msp(frames[sp_idx], frames[msp_idx])
+
     # mallory (personal solve log, matched against existing puzzles)
     if MALLORY_PATH.exists():
         existing = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
@@ -279,3 +381,5 @@ if __name__ == "__main__":
     print(f"\nUnique puzzlers: {combined['competitor_name'].nunique()}")
     print(f"Unique puzzle names: {combined['puzzle_name'].nunique()}")
     print(f"Rows with first_attempt=True: {combined['first_attempt'].sum()}")
+    print(f"Rows with first_attempt=False: {(~combined['first_attempt']).sum()}")
+    print(f"Rows with finished_date: {combined['finished_date'].notna().sum()}")

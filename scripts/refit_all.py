@@ -20,6 +20,7 @@ from puzzle_model.data import (
     encode_indices,
     train_test_split,
     prepare_model_data,
+    add_repeat_features,
 )
 from puzzle_model.model import MODELS, N_REF, PHYS_BASIS_NAMES
 from puzzle_model.inference import run_svi
@@ -46,30 +47,49 @@ def main():
     # ── Load and prepare data ──
     df = load_solo_completed()
     df = create_puzzle_id(df)
+    df = add_repeat_features(df)
     df, puzzler_lookup, puzzle_lookup = encode_indices(df)
     train_df, test_df = train_test_split(df)
 
-    train_data = prepare_model_data(train_df)
-    mu_fixed = train_data["mu_fixed"]
-    test_data = prepare_model_data(test_df, mu_fixed=mu_fixed)
+    n_first = df["first_attempt"].sum() if "first_attempt" in df.columns else len(df)
+    n_repeat = len(df) - n_first
+    print(f"First-attempt: {n_first:,}, Repeat: {n_repeat:,}")
+
+    # Full data (all observations, for model_2r)
+    train_data_all = prepare_model_data(train_df)
+    mu_fixed = train_data_all["mu_fixed"]
+    test_data_all = prepare_model_data(test_df, mu_fixed=mu_fixed)
+
+    # First-attempt only data (for models 1t, 2c — preserves their original behavior)
+    train_fa = train_df[train_df["first_attempt"]].reset_index(drop=True)
+    test_fa = test_df[test_df["first_attempt"]].reset_index(drop=True)
+    train_data_fa = prepare_model_data(train_fa, mu_fixed=mu_fixed)
+    test_data_fa = prepare_model_data(test_fa, mu_fixed=mu_fixed)
+    # Ensure plate sizes cover all puzzlers/puzzles (some may only appear in repeats)
+    train_data_fa["n_puzzlers"] = train_data_all["n_puzzlers"]
+    train_data_fa["n_puzzles"] = train_data_all["n_puzzles"]
+    test_data_fa["n_puzzlers"] = test_data_all["n_puzzlers"]
+    test_data_fa["n_puzzles"] = test_data_all["n_puzzles"]
+
     print(f"mu_fixed = {mu_fixed:.3f} mB")
 
-    n_puzzlers = int(train_data["n_puzzlers"])
-    n_puzzles = int(train_data["n_puzzles"])
+    n_puzzlers = int(train_data_all["n_puzzlers"])
+    n_puzzles = int(train_data_all["n_puzzles"])
     n_train = len(train_df)
     n_test = len(test_df)
+    print(f"First-attempt train: {len(train_fa):,}, test: {len(test_fa):,}")
 
     print(f"Train: {n_train:,} obs, Test: {n_test:,} obs")
     print(f"Puzzlers: {n_puzzlers:,}, Puzzles: {n_puzzles:,}")
 
     # ── Baselines ──
     baselines = naive_baselines(
-        np.array(train_data["log_time"]),
-        np.array(test_data["log_time"]),
+        np.array(train_data_fa["log_time"]),
+        np.array(test_data_fa["log_time"]),
     )
 
     # ── Fit all models ──
-    model_names = ["model_1t", "model_2c"]
+    model_names = ["model_1t", "model_2c", "model_2r"]
     model_results = {}
 
     for name in model_names:
@@ -77,8 +97,13 @@ def main():
         print(f"Fitting {name}...")
         model_fn = MODELS[name]
 
-        tr = dict(train_data)
-        te = dict(test_data)
+        # model_2p/2r use all data (with repeat features); 1t/2c use first-attempt only
+        if name == "model_2r":
+            tr = dict(train_data_all)
+            te = dict(test_data_all)
+        else:
+            tr = dict(train_data_fa)
+            te = dict(test_data_fa)
 
         # Fit via SVI
         guide, svi_result = run_svi(model_fn, tr, num_steps=5000, lr=0.005, seed=0)
@@ -95,7 +120,7 @@ def main():
         pred_test = predictive(jax.random.PRNGKey(1), **te_no_obs)
         test_metrics = evaluate_predictions(
             np.array(pred_test["log_time"]),
-            np.array(test_data["log_time"]),
+            np.array(te["log_time"]),
         )
 
         # Train predictions
@@ -103,7 +128,7 @@ def main():
         pred_train = predictive(jax.random.PRNGKey(2), **tr_no_obs)
         train_metrics = evaluate_predictions(
             np.array(pred_train["log_time"]),
-            np.array(train_data["log_time"]),
+            np.array(tr["log_time"]),
         )
 
         # WAIC (train)
@@ -121,10 +146,12 @@ def main():
 
         # Residuals (subsample)
         pred_mean = np.mean(np.array(pred_test["log_time"]), axis=0)
-        true_log = np.array(test_data["log_time"])
-        pieces_arr = np.array(test_data["pieces"])
-        puzzler_names = test_df["competitor_name"].values
-        puzzle_names = test_df["puzzle_id"].values
+        true_log = np.array(te["log_time"])
+        pieces_arr = np.array(te["pieces"])
+        # Use the appropriate test dataframe for names
+        te_df = test_df if name in ("model_2p", "model_2r") else test_fa
+        puzzler_names = te_df["competitor_name"].values
+        puzzle_names = te_df["puzzle_id"].values
         rng_np = np.random.default_rng(42)
         idx = rng_np.choice(len(true_log), size=min(500, len(true_log)), replace=False)
         idx.sort()
@@ -139,6 +166,10 @@ def main():
 
         print(f"  Test mean lpd: {mean_lpd:.4f}  WAIC: {waic_result['waic']:.1f}")
 
+        # Per-model observation counts
+        n_tr = len(tr["log_time"])
+        n_te = len(te["log_time"])
+
         model_results[name] = {
             "test_metrics": {k: round(v, 4) for k, v in test_metrics.items()},
             "train_metrics": {k: round(v, 4) for k, v in train_metrics.items()},
@@ -150,10 +181,18 @@ def main():
             "waic_se": round(waic_result["se"], 1),
             "test_lppd": round(lppd_test, 1),
             "test_mean_lpd": round(mean_lpd, 4),
+            "n_train": n_tr,
+            "n_test": n_te,
+            "data_subset": "all" if name == "model_2r" else "first-attempt",
         }
-        # Save model_2c posterior for rankings (velocity-aware)
-        if name == "model_2c":
+        # Save model_2r posterior for rankings and deep dive
+        if name == "model_2r":
             ranking_samples = posterior_samples
+            gamma_vals = np.array(posterior_samples["gamma"])
+            model_results[name]["repeat_params"] = {
+                "gamma": {"mean": round(float(np.mean(gamma_vals)), 3),
+                          "std": round(float(np.std(gamma_vals)), 3)},
+            }
 
     # ── Model comparison ──
     print(f"\n{'='*60}")
@@ -170,7 +209,7 @@ def main():
     log_times = np.array(df["log_time"])
     piece_counts = sorted(df["puzzle_pieces"].unique())
 
-    # Use Model 2c posterior (velocity-aware) for rankings
+    # Use Model 2r posterior for rankings
     from puzzle_model.model import YEAR_CENTER
     RANKING_YEAR = 2026
     params_1 = ranking_samples
@@ -237,7 +276,7 @@ def main():
         "edges": [round(float(e), 1) for e in freq_edges],
     }
 
-    # Puzzler rankings (from model_2c posterior, projected to RANKING_YEAR)
+    # Puzzler rankings (from model_2r posterior, projected to RANKING_YEAR)
     ELO_SCALE = 1
     alpha_samples = np.array(params_1["alpha"])  # (500, n_puzzlers)
     delta_samples = np.array(params_1["delta"])  # (500, n_puzzlers)
@@ -294,7 +333,7 @@ def main():
     img_by_prefix = {}
     if img_dir.is_dir():
         for f in img_dir.iterdir():
-            if f.suffix in (".jpg", ".jpeg", ".png"):
+            if f.suffix in (".jpg", ".jpeg", ".png", ".webp"):
                 prefix = f.name.split("-")[0]
                 img_by_prefix[prefix] = f"puzzle_images/{f.name}"
     img_lookup = {}
@@ -303,6 +342,8 @@ def main():
         m = re.match(r"msp_([0-9a-f]+)", eid)
         if m and m.group(1) in img_by_prefix:
             img_lookup[row["puzzle_id"]] = img_by_prefix[m.group(1)]
+
+    puzzle_sources = df.groupby("puzzle_idx")["source"].apply(lambda s: sorted(s.unique().tolist())).to_dict()
 
     mu_float = mu_fixed
     puzzles_list = []
@@ -321,16 +362,17 @@ def main():
             "elo_easy": round(p_elo_easy),
             "pc": int(puzzle_pieces.get(i, 0)),
             "n": int(puzzle_obs.get(i, 0)),
+            "sources": puzzle_sources.get(i, []),
         }
         if inv_puzzle[i] in img_lookup:
             entry["img"] = img_lookup[inv_puzzle[i]]
         puzzles_list.append(entry)
 
-    # ── Model 2c Deep Dive data ──
+    # ── Model 2r Deep Dive data ──
     from scipy import stats as sp_stats
 
     # Scalar params with mean/std
-    scalar_names = ["mu", "sigma", "nu", "sigma_alpha", "sigma_beta", "delta_0", "sigma_delta"]
+    scalar_names = ["mu", "sigma", "nu", "sigma_alpha", "sigma_beta", "delta_0", "sigma_delta", "gamma"]
     scalar_params = {}
     for name in scalar_names:
         vals = np.array(params_1[name])
@@ -408,11 +450,56 @@ def main():
         basis_components[bname] = [round(float(v), 2) for v in component_mB]
     basis_components["pieces"] = pieces_range.tolist()
 
-    model2c_detail = {
+    # Basis fraction: what % of total time is each process at each N?
+    # frac_k(N) = w_k * g_k(N) / Σ_j w_j * g_j(N), computed per posterior sample
+    component_times = w_samples[:, None, :] * g_curve[None, :, :]  # (500, n_pieces, 4)
+    total_time = component_times.sum(axis=2, keepdims=True)  # (500, n_pieces, 1)
+    fractions = component_times / total_time  # (500, n_pieces, 4)
+    basis_fractions = {"pieces": pieces_range.tolist()}
+    for k, bname in enumerate(PHYS_BASIS_NAMES):
+        frac_k = fractions[:, :, k]  # (500, n_pieces)
+        basis_fractions[bname] = {
+            "mean": [round(float(v), 4) for v in np.mean(frac_k, axis=0)],
+            "p10": [round(float(v), 4) for v in np.percentile(frac_k, 10, axis=0)],
+            "p90": [round(float(v), 4) for v in np.percentile(frac_k, 90, axis=0)],
+        }
+
+    # Practice curve: predicted mB change vs solve_number (1-10)
+    gamma_samples = np.array(params_1["gamma"])
+    solve_numbers = list(range(1, 11))
+    log_n = np.log(np.array(solve_numbers))  # (10,)
+    practice_curves = gamma_samples[:, None] * log_n[None, :]
+    practice_mean = np.mean(practice_curves, axis=0)
+    practice_q10 = np.percentile(practice_curves, 10, axis=0)
+    practice_q90 = np.percentile(practice_curves, 90, axis=0)
+    practice_pct = [round(100 * (10 ** (v / 1000) - 1), 2) for v in practice_mean]
+
+    practice_curve = {
+        "solve_numbers": solve_numbers,
+        "mean_mB": [round(float(v), 2) for v in practice_mean],
+        "q10_mB": [round(float(v), 2) for v in practice_q10],
+        "q90_mB": [round(float(v), 2) for v in practice_q90],
+        "mean_pct": practice_pct,
+    }
+
+    # Repeat statistics
+    repeat_stats = {
+        "n_total": len(df),
+        "n_first_attempt": int(df["first_attempt"].sum()) if "first_attempt" in df.columns else len(df),
+        "n_repeat": int((~df["first_attempt"]).sum()) if "first_attempt" in df.columns else 0,
+        "n_puzzlers_with_repeats": int(df[df["solve_number"] > 1]["puzzler_idx"].nunique()) if "solve_number" in df.columns else 0,
+        "max_solve_number": int(df["solve_number"].max()) if "solve_number" in df.columns else 1,
+        "median_solve_number_repeats": round(float(df[df["solve_number"] > 1]["solve_number"].median()), 1) if "solve_number" in df.columns and (df["solve_number"] > 1).any() else None,
+    }
+
+    model2r_detail = {
         "scalar_params": scalar_params,
         "student_t_comparison": student_t_comparison,
         "basis_correction": basis_correction,
         "basis_components": basis_components,
+        "basis_fractions": basis_fractions,
+        "practice_curve": practice_curve,
+        "repeat_stats": repeat_stats,
     }
 
     # Puzzle difficulty distribution
@@ -441,7 +528,7 @@ def main():
         "puzzler_freq": puzzler_freq,
         "puzzlers": puzzlers_list,
         "puzzles": puzzles_list,
-        "model2c_detail": model2c_detail,
+        "model2r_detail": model2r_detail,
         "puzzle_beta_dist": puzzle_beta_dist,
     }
 
