@@ -21,10 +21,9 @@ from puzzle_model.data import (
     train_test_split,
     prepare_model_data,
 )
-from puzzle_model.model import MODELS
+from puzzle_model.model import MODELS, N_REF, PHYS_BASIS_NAMES
 from puzzle_model.inference import run_svi
 from puzzle_model.evaluate import evaluate_predictions, naive_baselines
-from puzzle_model.basis import compute_basis, normalize_basis
 
 
 def compute_waic(pointwise_log_lik: np.ndarray) -> dict:
@@ -55,10 +54,6 @@ def main():
     test_data = prepare_model_data(test_df, mu_fixed=mu_fixed)
     print(f"mu_fixed = {mu_fixed:.3f} mB")
 
-    # Basis normalization
-    phi_train = compute_basis(train_data["pieces"])
-    _, basis_mean, basis_std = normalize_basis(phi_train)
-
     n_puzzlers = int(train_data["n_puzzlers"])
     n_puzzles = int(train_data["n_puzzles"])
     n_train = len(train_df)
@@ -74,8 +69,7 @@ def main():
     )
 
     # ── Fit all models ──
-    model_names = ["model_1t", "model_2", "model_2c"]
-    needs_basis = {"model_2", "model_2c"}
+    model_names = ["model_1t", "model_2c"]
     model_results = {}
 
     for name in model_names:
@@ -83,14 +77,8 @@ def main():
         print(f"Fitting {name}...")
         model_fn = MODELS[name]
 
-        # Prepare data dicts with basis if needed
         tr = dict(train_data)
         te = dict(test_data)
-        if name in needs_basis:
-            tr["basis_mean"] = basis_mean
-            tr["basis_std"] = basis_std
-            te["basis_mean"] = basis_mean
-            te["basis_std"] = basis_std
 
         # Fit via SVI
         guide, svi_result = run_svi(model_fn, tr, num_steps=5000, lr=0.005, seed=0)
@@ -126,11 +114,9 @@ def main():
         # Held-out predictive log-likelihood
         ll_test = log_likelihood(model_fn, posterior_samples, **te)
         ll_test_matrix = np.array(ll_test["log_time"])  # (500, n_test)
-        # lppd_test = sum_i log( mean_s exp(ll_is) )
         n_samples = ll_test_matrix.shape[0]
         lppd_test_i = np.logaddexp.reduce(ll_test_matrix, axis=0) - np.log(n_samples)
         lppd_test = float(np.sum(lppd_test_i))
-        # Per-observation for reporting
         mean_lpd = float(np.mean(lppd_test_i))
 
         # Residuals (subsample)
@@ -189,10 +175,14 @@ def main():
     RANKING_YEAR = 2026
     params_1 = ranking_samples
     sigma_val = round(float(np.mean(np.array(params_1["sigma"]))), 3)
-    c_basis_mean = np.mean(np.array(params_1["c_basis"]), axis=0)
-    c_basis_vals = [round(float(v), 4) for v in c_basis_mean]
     delta_0_val = round(float(np.mean(np.array(params_1["delta_0"]))), 4)
     sigma_delta_val = round(float(np.mean(np.array(params_1["sigma_delta"]))), 4)
+
+    # Physical basis: log_w posterior means
+    log_w_samples = np.array(params_1["log_w"])  # (500, 4)
+    log_w_mean = np.mean(log_w_samples, axis=0)
+    log_w_vals = [round(float(v), 4) for v in log_w_mean]
+
     stats = {
         "n_records": len(df),
         "n_puzzlers": n_puzzlers,
@@ -201,14 +191,14 @@ def main():
         "log_time_mean": round(float(np.mean(log_times)), 3),
         "log_time_std": round(float(np.std(log_times)), 3),
         "mu": round(mu_fixed, 3),
-        "c_basis": c_basis_vals,
+        "log_w": log_w_vals,
+        "N_REF": N_REF,
+        "phys_basis_names": PHYS_BASIS_NAMES,
         "sigma": sigma_val,
         "delta_0": delta_0_val,
         "sigma_delta": sigma_delta_val,
         "year_center": YEAR_CENTER,
         "ranking_year": RANKING_YEAR,
-        "basis_mean": [round(float(v), 6) for v in basis_mean],
-        "basis_std": [round(float(v), 6) for v in basis_std],
         "sigma_alpha": round(float(np.mean(np.array(params_1["sigma_alpha"]))), 3),
         "sigma_beta": round(float(np.mean(np.array(params_1["sigma_beta"]))), 3),
         "nu": round(float(np.mean(np.array(params_1["nu"]))), 3),
@@ -248,8 +238,7 @@ def main():
     }
 
     # Puzzler rankings (from model_2c posterior, projected to RANKING_YEAR)
-    # With fixed mu, alpha and beta are centered by construction — no post-hoc centering needed
-    ELO_SCALE = 1  # params are already in mB (1000 * log10)
+    ELO_SCALE = 1
     alpha_samples = np.array(params_1["alpha"])  # (500, n_puzzlers)
     delta_samples = np.array(params_1["delta"])  # (500, n_puzzlers)
     delta_0_samples = np.array(params_1["delta_0"])  # (500,)
@@ -258,19 +247,15 @@ def main():
     stats["mu"] = mu_val
 
     dt = RANKING_YEAR - YEAR_CENTER
-    # Projected alpha per sample: alpha + (delta_0 + delta) * dt
     projected = alpha_samples + (delta_0_samples[:, None] + delta_samples) * dt
     proj_mean = np.mean(projected, axis=0)
     proj_std = np.std(projected, axis=0)
-    proj_upper = proj_mean + 3 * proj_std  # Wilson bound for ranking
-    # With centered alphas, median proj ≈ 0, so ELO_CENTER ≈ 1500
+    proj_upper = proj_mean + 3 * proj_std
     ELO_CENTER = round(1500 + float(np.median(proj_mean)))
     stats["elo_center"] = ELO_CENTER
 
-    # Alpha and velocity stats for display
-    # velocity v_i = -(delta_0 + delta_i): positive = getting faster (lower mB/yr)
     alpha_mean = np.mean(alpha_samples, axis=0)
-    velocity_samples = -(delta_0_samples[:, None] + delta_samples)  # (500, n_puzzlers)
+    velocity_samples = -(delta_0_samples[:, None] + delta_samples)
     velocity_mean = np.mean(velocity_samples, axis=0)
     velocity_std = np.std(velocity_samples, axis=0)
 
@@ -295,8 +280,7 @@ def main():
             "yr_max": int(year_range.loc[i, "max"]) if i in year_range.index else 0,
         })
 
-    # Puzzle rankings (centered beta from above)
-    # Sort by Wilson-style lower bound: beta - 3*std (descending = confidently hardest)
+    # Puzzle rankings
     beta_mean = np.mean(beta_samples_raw, axis=0)
     beta_std = np.std(beta_samples_raw, axis=0)
     beta_lower = beta_mean - 3 * beta_std
@@ -305,7 +289,7 @@ def main():
     puzzle_pieces = df.groupby("puzzle_idx")["puzzle_pieces"].first()
     beta_upper = beta_mean + 3 * beta_std
 
-    # Build image lookup: puzzle_id → relative path via msp event_id hex prefix
+    # Build image lookup
     img_dir = Path(__file__).resolve().parent.parent / "puzzle_images"
     img_by_prefix = {}
     if img_dir.is_dir():
@@ -320,10 +304,6 @@ def main():
         if m and m.group(1) in img_by_prefix:
             img_lookup[row["puzzle_id"]] = img_by_prefix[m.group(1)]
 
-    # Puzzle mB: fold mu into puzzle score so differences give mB
-    # Puzzler: rating = ELO_CENTER - alpha
-    # Puzzle:  rating = ELO_CENTER + mu + beta
-    # puzzle_rating - puzzler_rating = mu + alpha + beta ≈ mB(time)
     mu_float = mu_fixed
     puzzles_list = []
     for i in np.argsort(-beta_lower):
@@ -342,7 +322,6 @@ def main():
             "pc": int(puzzle_pieces.get(i, 0)),
             "n": int(puzzle_obs.get(i, 0)),
         }
-        # Match puzzle to image via lookup
         if inv_puzzle[i] in img_lookup:
             entry["img"] = img_lookup[inv_puzzle[i]]
         puzzles_list.append(entry)
@@ -355,18 +334,23 @@ def main():
     scalar_params = {}
     for name in scalar_names:
         vals = np.array(params_1[name])
-        # mu is fixed (deterministic), so std=0
         if name == "mu":
             scalar_params[name] = {"mean": round(mu_fixed, 4), "std": 0.0}
             continue
         scalar_params[name] = {"mean": round(float(np.mean(vals)), 4), "std": round(float(np.std(vals)), 4)}
-    # Add individual c_basis coefficients
-    c_basis_samples = np.array(params_1["c_basis"])  # (500, 5)
-    for k in range(5):
-        scalar_params[f"c_basis_{k}"] = {
-            "mean": round(float(np.mean(c_basis_samples[:, k])), 4),
-            "std": round(float(np.std(c_basis_samples[:, k])), 4),
+    # Add individual log_w coefficients
+    for k in range(4):
+        scalar_params[f"log_w_{k}"] = {
+            "mean": round(float(np.mean(log_w_samples[:, k])), 4),
+            "std": round(float(np.std(log_w_samples[:, k])), 4),
         }
+        # Also store exponentiated weight for display
+        w_samples_k = np.exp(log_w_samples[:, k])
+        scalar_params[f"w_{k}"] = {
+            "mean": round(float(np.mean(w_samples_k)), 4),
+            "std": round(float(np.std(w_samples_k)), 4),
+        }
+
     # Student-t vs Normal comparison
     nu_mean = float(np.mean(np.array(params_1["nu"])))
     sigma_mean = float(np.mean(np.array(params_1["sigma"])))
@@ -381,32 +365,58 @@ def main():
         "normal_pdf": [round(float(v), 6) for v in normal_pdf],
     }
 
-    # Basis correction curve: Σ_k c_k φ_k(N) as a function of piece count
-    # One curve with decile bands from the c_basis posterior
-    pieces_range = np.array([100, 150, 200, 300, 500, 750, 1000, 1500, 2000])
-    phi_curve = compute_basis(pieces_range)
-    phi_curve, _, _ = normalize_basis(phi_curve, basis_mean, basis_std)
-    # Basis correction per posterior sample: (500, n_pieces)
-    basis_contrib_samples = (phi_curve @ c_basis_samples.T).T  # (500, n_pieces)
-    basis_mean_curve = np.mean(basis_contrib_samples, axis=0)
+    # Basis correction curve using physical basis
+    # Extended range since extrapolation is now sane
+    pieces_range = np.array([50, 100, 150, 200, 300, 500, 750, 1000, 1500, 2000, 3000, 5000, 8000, 13500])
+    mB_scale = 1000.0 / np.log(10.0)
+
+    # Per-sample correction: (500, n_pieces)
+    w_samples = np.exp(log_w_samples)  # (500, 4)
+    g_curve = np.column_stack([
+        np.sqrt(pieces_range), pieces_range,
+        pieces_range * np.log(pieces_range), pieces_range ** 2,
+    ])  # (n_pieces, 4)
+    g_ref = np.array([np.sqrt(N_REF), N_REF, N_REF * np.log(N_REF), N_REF ** 2])
+
+    time_curve = g_curve @ w_samples.T  # (n_pieces, 500)
+    time_ref = g_ref @ w_samples.T      # (500,)
+    correction_samples = mB_scale * (np.log(time_curve) - np.log(time_ref[None, :]))  # (n_pieces, 500)
+    correction_samples = correction_samples.T  # (500, n_pieces)
+
+    basis_mean_curve = np.mean(correction_samples, axis=0)
     deciles = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95]
     quantile_data = {}
     for q in deciles:
-        quantile_data[f"p{q}"] = [round(float(v), 2) for v in np.percentile(basis_contrib_samples, q, axis=0)]
+        quantile_data[f"p{q}"] = [round(float(v), 2) for v in np.percentile(correction_samples, q, axis=0)]
     basis_correction = {
         "pieces": pieces_range.tolist(),
         "mean": [round(float(v), 2) for v in basis_mean_curve],
         "quantiles": quantile_data,
     }
 
+    # Per-component mB contribution curves (for the basis chart)
+    basis_components = {}
+    for k, bname in enumerate(PHYS_BASIS_NAMES):
+        # Contribution of component k alone, averaged over posterior
+        w_k_mean = float(np.mean(w_samples[:, k]))
+        g_k = g_curve[:, k]  # (n_pieces,)
+        g_k_ref = g_ref[k]
+        # Component contribution in mB (relative to N_REF)
+        component_mB = mB_scale * (np.log(w_k_mean * g_k) - np.log(w_k_mean * g_k_ref))
+        # Simplifies to mB_scale * (log(g_k) - log(g_k_ref)) — weight cancels!
+        # But we keep it explicit for clarity
+        basis_components[bname] = [round(float(v), 2) for v in component_mB]
+    basis_components["pieces"] = pieces_range.tolist()
+
     model2c_detail = {
         "scalar_params": scalar_params,
         "student_t_comparison": student_t_comparison,
         "basis_correction": basis_correction,
+        "basis_components": basis_components,
     }
 
-    # Puzzle difficulty distribution (mu + beta histogram in mB, split by n)
-    puzzle_mB = beta_mean + mu_fixed  # shift to mB scale
+    # Puzzle difficulty distribution
+    puzzle_mB = beta_mean + mu_fixed
     puzzle_beta_all = {"values": [round(float(v), 3) for v in puzzle_mB],
                        "n": [int(puzzle_obs.get(i, 0)) for i in range(len(beta_mean))]}
     beta_hist_counts, beta_hist_edges = np.histogram(puzzle_mB, bins=50)
@@ -414,7 +424,6 @@ def main():
         "counts": beta_hist_counts.tolist(),
         "edges": [round(float(e), 3) for e in beta_hist_edges],
     }
-    # Also split by observation count
     for label, nmin, nmax in [("n1", 1, 1), ("n2_5", 2, 5), ("n6plus", 6, 999999)]:
         mask = np.array([(nmin <= int(puzzle_obs.get(i, 0)) <= nmax) for i in range(len(beta_mean))])
         if mask.any():

@@ -514,26 +514,22 @@
 <section>
   <h2>Model Specification</h2>
   <p>Each model decomposes log-completion-time additively:</p>
-  <div class="equation">log(t<sub>ij</sub>) = &mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub> + c&middot;log(N<sub>j</sub>) + &Sigma;<sub>k</sub> a<sub>ik</sub> b<sub>jk</sub> &phi;<sub>k</sub>(N<sub>j</sub>) + &epsilon;</div>
+  <div class="equation">mB(t<sub>ij</sub>) = &mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub> + 1000&middot;log<sub>10</sub>(&Sigma;<sub>k</sub> w<sub>k</sub> g<sub>k</sub>(N)) + &delta;<sub>i</sub>&middot;t + &epsilon;</div>
   <details>
     <summary>Model hierarchy details</summary>
     <div class="details-content">
       <table>
         <tr><th>Model</th><th>Formula</th><th>Parameters</th><th>Description</th></tr>
-        <tr><td>Model 0</td><td class="num">&mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub></td><td class="num" id="m0-params"></td><td>Normal baseline IRT</td></tr>
-        <tr><td>Model 1</td><td class="num">+ c&middot;log(N)</td><td class="num" id="m1-params"></td><td>Normal + global piece-count</td></tr>
-        <tr><td>Model 1t</td><td class="num">Student-t(&nu;)</td><td class="num" id="m1t-params"></td><td>Student-t robust baseline</td></tr>
-        <tr><td>Model 2</td><td class="num">+ &Sigma;<sub>k</sub> c<sub>k</sub>&phi;<sub>k</sub>(N)</td><td class="num" id="m2-params"></td><td>Student-t + global basis coefficients</td></tr>
-        <tr><td>Model 2c</td><td class="num">+ &delta;<sub>0</sub>t + &delta;<sub>i</sub>t</td><td class="num" id="m2c-params"></td><td>Model 2 + velocity (used for rankings)</td></tr>
-        <tr><td>Model 3</td><td class="num">+ &Sigma;<sub>k</sub> a<sub>ik</sub>b<sub>jk</sub>&phi;<sub>k</sub>(N)</td><td class="num" id="m3-params"></td><td>Student-t + full interaction</td></tr>
+        <tr><td>Model 1t</td><td class="num">&mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub> + c&middot;log(N)</td><td class="num" id="m1t-params"></td><td>Student-t robust baseline</td></tr>
+        <tr><td>Model 2c</td><td class="num">+ log<sub>10</sub>(&Sigma;<sub>k</sub> w<sub>k</sub> g<sub>k</sub>(N)) + &delta;<sub>0</sub>t + &delta;<sub>i</sub>t</td><td class="num" id="m2c-params"></td><td>Physical basis + velocity (production)</td></tr>
       </table>
-      <p class="footnote">All models after 1t use Student-t likelihood. Priors: &alpha;<sub>i</sub> ~ N(0, &sigma;<sub>&alpha;</sub>), &beta;<sub>j</sub> ~ N(0, &sigma;<sub>&beta;</sub>), a<sub>ik</sub> ~ N(0,1), b<sub>jk</sub> ~ N(0, &sigma;<sub>b,k</sub>). Non-centered parameterization.</p>
+      <p class="footnote">Both models use Student-t likelihood. Priors: &alpha;<sub>i</sub> ~ N(0, &sigma;<sub>&alpha;</sub>), &beta;<sub>j</sub> ~ N(0, &sigma;<sub>&beta;</sub>), log(w<sub>k</sub>) ~ N(0,5). Non-centered parameterization via SVI.</p>
     </div>
   </details>
   <details>
-    <summary>Basis functions &phi;<sub>k</sub>(N)</summary>
+    <summary>Physical basis components g<sub>k</sub>(N)</summary>
     <div class="details-content">
-      <p class="footnote">The piece-count scaling basis functions, normalized over [100, 1000]. Model 2 uses &phi;<sub>0</sub> only; Model 3 uses &phi;<sub>0</sub>..<sub>2</sub>.</p>
+      <p class="footnote">Model 2c sums physical processes additively in time space: time(N) = &Sigma;<sub>k</sub> w<sub>k</sub> g<sub>k</sub>(N), then converts to mB. Each curve shows one component's contribution (mB relative to N=500). The dominant process at each piece count determines the scaling behavior.</p>
       <div class="chart-container"><div id="chart-basis"></div></div>
     </div>
   </details>
@@ -581,8 +577,8 @@
         </tr>
         <tr>
           <td>f(N<sub>j</sub>)</td>
-          <td>Piece-count correction = &Sigma;<sub>k</sub> c<sub>k</sub>&phi;<sub>k</sub>(N)</td>
-          <td>Normalized so f &approx; 0 at the average piece count</td>
+          <td>Piece-count correction = 1000&middot;log<sub>10</sub>(&Sigma;<sub>k</sub> w<sub>k</sub> g<sub>k</sub>(N)) &minus; ref</td>
+          <td>f = 0 at N = 500 pieces</td>
           <td id="m2c-spec-f"></td>
         </tr>
         <tr>
@@ -617,7 +613,7 @@
   <details>
     <summary>Learned piece-count correction</summary>
     <div class="details-content">
-      <p class="footnote">The learned basis correction Σ<sub>k</sub> c<sub>k</sub>φ<sub>k</sub>(N) as a function of piece count. This is the model's learned scaling law for how puzzle difficulty grows with size, independent of individual puzzler or puzzle effects. Shaded bands show posterior deciles (5th–95th) from the c<sub>k</sub> coefficient posterior.</p>
+      <p class="footnote">The learned piece-count correction as a function of N. Physical processes (edge scanning, per-piece work, search, combinatorial matching) sum additively in time, then convert to mB centered at N=500. This gives sensible extrapolation: at large N, log(time) grows as at most 2·log(N). Shaded bands show posterior deciles from the log(w<sub>k</sub>) posterior.</p>
       <div class="chart-container"><div id="chart-response-curves"></div></div>
     </div>
   </details>
@@ -843,19 +839,12 @@
 
                 const nP = S.n_puzzlers,
                     nPz = S.n_puzzles;
-                document.getElementById("m0-params").textContent =
-                    `~${fmtInt(nP + nPz + 4)}`;
-                document.getElementById("m1-params").textContent =
-                    `~${fmtInt(nP + nPz + 5)}`;
+                // Model 1t: mu(fixed) + sigma + nu + sigma_alpha + sigma_beta + c_pieces + alpha_i + beta_j
                 document.getElementById("m1t-params").textContent =
                     `~${fmtInt(nP + nPz + 6)}`;
-                document.getElementById("m2-params").textContent =
-                    `~${fmtInt(nP + nPz + 10)}`;
-                // Model 2c: Model 2 + delta_0 + sigma_delta + delta_i per puzzler
+                // Model 2c: + 4 log_w + delta_0 + sigma_delta + delta_i per puzzler
                 document.getElementById("m2c-params").textContent =
                     `~${fmtInt(2 * nP + nPz + 12)}`;
-                document.getElementById("m3-params").textContent =
-                    `~${fmtInt(4 * nP + 4 * nPz + 9)}`;
 
                 // --- Scatter ---
                 (function () {
@@ -2309,11 +2298,14 @@
                     });
                 })();
 
-                // --- Basis functions ---
+                // --- Physical basis component contributions ---
                 (function () {
+                    const M2C = DATA.model2c_detail;
+                    if (!M2C || !M2C.basis_components) return;
+                    const bc = M2C.basis_components;
                     const W = 600,
-                        H = 280,
-                        mg = { top: 28, right: 120, bottom: 44, left: 56 };
+                        H = 300,
+                        mg = { top: 28, right: 140, bottom: 44, left: 64 };
                     const svg = d3
                         .select("#chart-basis")
                         .append("svg")
@@ -2324,106 +2316,60 @@
                         .attr("x", (W - mg.right) / 2 + mg.left / 2)
                         .attr("y", 16)
                         .attr("text-anchor", "middle")
-                        .text("Normalized Basis Functions");
-                    const Ns = d3.range(100, 1001, 5);
-                    const rawFns = [
-                        {
-                            label: "\u03c6\u2080: log(N)",
-                            fn: (N) => Math.log(N),
-                            models: "2, 3",
-                        },
-                        {
-                            label: "\u03c6\u2081: \u221aN",
-                            fn: (N) => Math.sqrt(N),
-                            models: "3",
-                        },
-                        { label: "\u03c6\u2082: N", fn: (N) => N, models: "3" },
-                        {
-                            label: "\u03c6\u2083: N\u00b7log(N)",
-                            fn: (N) => N * Math.log(N),
-                            models: "-",
-                        },
-                        {
-                            label: "\u03c6\u2084: N\u00b2",
-                            fn: (N) => N * N,
-                            models: "-",
-                        },
+                        .text("Physical Basis Component Contributions (mB)");
+                    const labels = [
+                        { key: "sqrt_N", label: "\u221aN (edge scanning)", color: "#4a7fb5" },
+                        { key: "N", label: "N (per-piece work)", color: "#55a868" },
+                        { key: "N_log_N", label: "N\u00b7log(N) (search)", color: "#dd8452" },
+                        { key: "N_sq", label: "N\u00b2 (combinatorial)", color: "#8172b2" },
                     ];
-                    const colors = [
-                        "#4a7fb5",
-                        "#55a868",
-                        "#dd8452",
-                        "#8172b2",
-                        "#c44e52",
-                    ];
-                    const series = rawFns.map((f, i) => {
-                        const raw = Ns.map((n) => f.fn(n));
-                        const mean = d3.mean(raw),
-                            std = d3.deviation(raw);
-                        return {
-                            label: f.label,
-                            models: f.models,
-                            color: colors[i],
-                            pts: Ns.map((n, j) => ({
-                                n,
-                                v: (raw[j] - mean) / std,
-                            })),
-                        };
-                    });
-                    const x = d3
-                        .scaleLinear()
-                        .domain([100, 1000])
+                    const pieces = bc.pieces;
+                    const allVals = labels.flatMap(l => bc[l.key]);
+                    const x = d3.scaleLog()
+                        .domain([d3.min(pieces) * 0.9, d3.max(pieces) * 1.1])
                         .range([mg.left, W - mg.right]);
-                    const yExt = d3.extent(
-                        series.flatMap((s) => s.pts.map((p) => p.v)),
-                    );
-                    const y = d3
-                        .scaleLinear()
-                        .domain([yExt[0] * 1.1, yExt[1] * 1.1])
+                    const yExt = d3.extent(allVals);
+                    const yPad = (yExt[1] - yExt[0]) * 0.05;
+                    const y = d3.scaleLinear()
+                        .domain([yExt[0] - yPad, yExt[1] + yPad])
                         .range([H - mg.bottom, mg.top]);
-                    makeAxis(
-                        svg,
-                        x,
-                        y,
-                        W,
-                        H,
-                        mg,
-                        "Piece count (N)",
-                        "Normalized value",
-                    );
-                    const line = d3
-                        .line()
-                        .x((d) => x(d.n))
-                        .y((d) => y(d.v));
-                    series.forEach((s, i) => {
+                    makeAxis(svg, x, y, W, H, mg, "Piece count (N)", "Component contribution (mB)");
+                    // Zero line
+                    if (y.domain()[0] < 0 && y.domain()[1] > 0) {
+                        svg.append("line")
+                            .attr("x1", mg.left).attr("x2", W - mg.right)
+                            .attr("y1", y(0)).attr("y2", y(0))
+                            .attr("stroke", "#ccc").attr("stroke-width", 1)
+                            .attr("stroke-dasharray", "4,3");
+                    }
+                    // N_REF marker
+                    const nRef = DATA.stats.N_REF || 500;
+                    svg.append("line")
+                        .attr("x1", x(nRef)).attr("x2", x(nRef))
+                        .attr("y1", mg.top).attr("y2", H - mg.bottom)
+                        .attr("stroke", "#aaa").attr("stroke-width", 1)
+                        .attr("stroke-dasharray", "3,3");
+                    svg.append("text")
+                        .attr("x", x(nRef) + 4).attr("y", mg.top + 12)
+                        .style("font-size", "9px").style("fill", "#999")
+                        .text("N=500");
+                    const mkLine = d3.line()
+                        .x((d, i) => x(pieces[i]))
+                        .y(d => y(d));
+                    labels.forEach((l, i) => {
                         svg.append("path")
-                            .datum(s.pts)
-                            .attr("d", line)
+                            .datum(bc[l.key])
+                            .attr("d", mkLine)
                             .attr("fill", "none")
-                            .attr("stroke", s.color)
+                            .attr("stroke", l.color)
                             .attr("stroke-width", 2)
                             .attr("opacity", 0.8);
-                        const lg = svg
-                            .append("g")
-                            .attr(
-                                "transform",
-                                `translate(${W - mg.right + 8}, ${mg.top + 12 + i * 20})`,
-                            );
-                        lg.append("line")
-                            .attr("x2", 16)
-                            .attr("stroke", s.color)
-                            .attr("stroke-width", 2);
-                        lg.append("text")
-                            .attr("x", 20)
-                            .attr("y", 4)
-                            .style("font-size", "11px")
-                            .text(s.label);
-                        lg.append("text")
-                            .attr("x", 20)
-                            .attr("y", 16)
-                            .style("font-size", "9px")
-                            .style("fill", "#6e6e6e")
-                            .text("M" + s.models);
+                        const lg = svg.append("g")
+                            .attr("transform", `translate(${W - mg.right + 8}, ${mg.top + 12 + i * 22})`);
+                        lg.append("line").attr("x2", 16)
+                            .attr("stroke", l.color).attr("stroke-width", 2);
+                        lg.append("text").attr("x", 20).attr("y", 4)
+                            .style("font-size", "11px").text(l.label);
                     });
                 })();
 
@@ -2437,9 +2383,8 @@
                     const sigma_beta = S.sigma_beta || 200;
                     const delta_0 = S.delta_0 || 0;
                     const sigma_delta = S.sigma_delta || 0;
-                    const c_basis = S.c_basis || [];
-                    const basis_mean = S.basis_mean || [];
-                    const basis_std = S.basis_std || [];
+                    const log_w = S.log_w || [];
+                    const N_REF = S.N_REF || 500;
                     const YEAR_CENTER = S.year_center || 2024;
 
                     // Box-Muller normal sampling
@@ -2472,16 +2417,19 @@
                         return randn() * sigma / Math.sqrt(chi2 / nu);
                     }
 
-                    // Compute f(N) = sum_k c_k * (phi_k(N) - mean_k) / std_k
+                    // Compute f(N) = 1000/ln(10) * log(sum w_k g_k(N) / sum w_k g_k(N_REF))
                     function computeBasis(pc) {
-                        if (!c_basis.length || !basis_mean.length) return 0;
+                        if (!log_w.length) return 0;
                         const N = pc;
-                        const phi = [Math.log(N), Math.sqrt(N), N, N * Math.log(N), N * N];
-                        let total = 0;
-                        for (let k = 0; k < 5; k++) {
-                            total += c_basis[k] * (phi[k] - basis_mean[k]) / basis_std[k];
+                        const g = [Math.sqrt(N), N, N * Math.log(N), N * N];
+                        const g_ref = [Math.sqrt(N_REF), N_REF, N_REF * Math.log(N_REF), N_REF * N_REF];
+                        let time_N = 0, time_ref = 0;
+                        for (let k = 0; k < 4; k++) {
+                            const w_k = Math.exp(log_w[k]);
+                            time_N += w_k * g[k];
+                            time_ref += w_k * g_ref[k];
                         }
-                        return total;
+                        return 1000 / Math.LN10 * (Math.log(time_N) - Math.log(time_ref));
                     }
 
                     // Convert mB to human-readable time string
@@ -2745,7 +2693,7 @@
                         );
                         el(
                             "m2c-spec-f",
-                            `5 basis functions (see correction curve below)`,
+                            `4 physical basis functions, centered at N=500`,
                         );
                         el(
                             "m2c-spec-R",
@@ -2776,11 +2724,10 @@
                             sigma_beta: "Puzzle difficulty spread",
                             delta_0: "Population trend (mB/yr)",
                             sigma_delta: "Individual velocity spread",
-                            c_basis_0: "Basis coeff: log(N)",
-                            c_basis_1: "Basis coeff: \u221aN",
-                            c_basis_2: "Basis coeff: N",
-                            c_basis_3: "Basis coeff: N\u00b7log(N)",
-                            c_basis_4: "Basis coeff: N\u00b2",
+                            log_w_0: "Log-weight: \u221aN (edge scanning)",
+                            log_w_1: "Log-weight: N (per-piece work)",
+                            log_w_2: "Log-weight: N\u00b7log(N) (search)",
+                            log_w_3: "Log-weight: N\u00b2 (combinatorial)",
                         };
                         const order = [
                             "mu",
@@ -2790,11 +2737,10 @@
                             "sigma_beta",
                             "delta_0",
                             "sigma_delta",
-                            "c_basis_0",
-                            "c_basis_1",
-                            "c_basis_2",
-                            "c_basis_3",
-                            "c_basis_4",
+                            "log_w_0",
+                            "log_w_1",
+                            "log_w_2",
+                            "log_w_3",
                         ];
                         order.forEach((key) => {
                             const p = M2C.scalar_params[key];
@@ -2952,7 +2898,7 @@
                             .attr("x", (W - mg.right + mg.left) / 2)
                             .attr("y", 16)
                             .attr("text-anchor", "middle")
-                            .text("Learned Piece-Count Correction  Σ cₖφₖ(N)");
+                            .text("Learned Piece-Count Correction (Physical Basis)");
                         const allQ = [...bc.quantiles.p5, ...bc.quantiles.p95];
                         const yPad = (d3.max(allQ) - d3.min(allQ)) * 0.05;
                         const x1 = d3

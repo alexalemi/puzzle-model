@@ -1,5 +1,59 @@
 # Development Log
 
+## 2026-03-06 (late night)
+
+### Physical basis model promoted to production
+
+Replaced the old 5-basis model (which added [log(N), √N, N, N·log(N), N²] in log-time space) with a physically-motivated model that sums processes additively in time space, then takes log₁₀. The old approach caused time to grow as 10^(c·N²) — catastrophically wrong for extrapolation.
+
+**New model**: time(N) = Σ w_k g_k(N) where g = [√N, N, N·log(N), N²], weights positive via w = exp(log_w). Piece correction centered at N_REF=500. At large N, log(time) grows as at most 2·log(N) — physically sensible.
+
+**Results**: Test mean LPD improved from -5.59 (old basis) to -5.49 (physical). Model 1t baseline: -5.66.
+
+**Changes made**:
+- `model.py`: Removed model_2, _compute_phi, basis imports. Added N_REF=500, PHYS_BASIS_NAMES, physical model_2c with log_w parameter.
+- `refit_all.py`: Removed basis normalization. Stats now has `log_w`, `N_REF`, `phys_basis_names` instead of `c_basis`/`basis_mean`/`basis_std`. Added `basis_components` for per-component mB curves.
+- `explorer.html`: Updated model table (2 models), basis chart (physical components), prediction calculator (physical formula), scalar params (log_w_0..3), correction curve title, model spec text.
+- `basis.py`: Marked deprecated (retained for backward compat with old scripts).
+
+Learned log_w values: [√N: 0.99, N: 4.04, N·log(N): 3.28, N²: -1.25]. The dominant process is N (per-piece work), with N·log(N) (search) secondary. N² is suppressed (log_w ≈ -1.25, so w ≈ 0.29).
+
+## 2026-03-06 (night)
+
+### Model 3 experiment: more latent factors hurt
+
+Fitted model_3 (K=3 latent puzzler×puzzle interactions through basis functions) to see if richer interactions improve on model_2's K=1. Result: worse across the board.
+
+- **Test mean LPD**: -5.7078 (model_2: -5.6599)
+- **Test RMSE**: 146 mB (model_2: 134 mB)
+- **Test MAE**: 72 mB (model_2: 68 mB)
+
+The ~70K extra parameters (3× the latent loadings and factors) overwhelm the available signal. Puzzle identity via beta_j already captures most puzzle-specific variation, leaving little for additional latent dimensions to explain. Model 3 is removed from the active set.
+
+### Survey of potential model improvements
+
+Investigated six directions for improving on model_2c. Recording findings here for future reference — none implemented yet.
+
+**1. Heteroscedastic σ(N) — most promising**
+Noise clearly varies with puzzle size and source. SP test RMSE = 91 mB vs MSP = 121 mB; large puzzles are noisier than small ones. Parameterize as `log(σ) = σ_0 + σ_pieces * log(N)`, giving piece-count-dependent noise without per-puzzle σ parameters. Most likely to improve LPD since the current model uses a single global σ (plus Student-t df).
+
+**2. Brand random effect**
+Hierarchical structure: `beta_j ~ Normal(gamma_brand, sigma_within)`. 1,099 distinct brands in the data, but highly imbalanced — Ravensburger alone is 49% of observations (74K obs). Other top brands: Trefl (4.3%), Buffalo Games (3.5%). ICC = 0.055 (brand explains ~5.5% of puzzle difficulty variance). At 500 pieces, brand effects range from -30 to +75 mB (Educa hardest, Schmidt/Trefl easiest). Small overall effect but helps cold-start predictions for new puzzles. Prerequisite: normalize brand names ("Masterpieces" vs "MasterPieces" etc.).
+
+**3. Source-specific σ**
+Fit one sigma per source (SP, MSP, mallory). Simple to implement but overlaps with σ(N) since source and piece-count distribution are confounded. Could combine: `log(σ) = σ_source + σ_pieces * log(N)`.
+
+**4. Discrimination parameter (2PL IRT)**
+Replace `alpha_i + beta_j` with `a_j * alpha_i + beta_j` — some puzzles are more skill-revealing than others. Adds N_puzzle parameters and creates identifiability risk (a_j and alpha_i can trade off). Standard in psychometrics but harder to fit with SVI.
+
+**5. Mixture IRT**
+Detect latent subpopulations (e.g., casual vs competitive puzzlers) with different skill distributions. Complex inference — mixture models are hard with SVI's AutoNormal guide (mode-seeking, label switching). Would need custom guide or MCMC.
+
+**6. Non-linear learning curves**
+Power law or exponential decay instead of current linear velocity (delta_i). Theoretically more realistic, but current per-puzzler data is too sparse to reliably fit non-linear curves. Linear velocity is a reasonable approximation given the data.
+
+**Decision**: None implemented for now. Model 2c remains the best model (test mean LPD = -5.5905). Heteroscedastic σ(N) is the most promising next step when we revisit model improvements.
+
 ## 2026-03-06 (evening)
 
 ### Added all data sources — no source offset needed
