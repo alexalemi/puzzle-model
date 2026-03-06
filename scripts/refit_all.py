@@ -262,10 +262,12 @@ def main():
     ELO_CENTER = round(1500 + float(np.median(proj_mean)))
     stats["elo_center"] = ELO_CENTER
 
-    # Alpha and delta stats for display
+    # Alpha and velocity stats for display
+    # velocity v_i = -(delta_0 + delta_i): positive = getting faster (lower mB/yr)
     alpha_mean = np.mean(alpha_samples, axis=0)
-    delta_mean = np.mean(delta_samples, axis=0)
-    delta_std = np.std(delta_samples, axis=0)
+    velocity_samples = -(delta_0_samples[:, None] + delta_samples)  # (500, n_puzzlers)
+    velocity_mean = np.mean(velocity_samples, axis=0)
+    velocity_std = np.std(velocity_samples, axis=0)
 
     inv_puzzler = {v: k for k, v in puzzler_lookup.items()}
     obs_counts = df.groupby("puzzler_idx").size()
@@ -279,8 +281,8 @@ def main():
             "alpha": round(float(alpha_mean[i]), 3),
             "alpha_proj": round(float(proj_mean[i]), 3),
             "std": round(float(proj_std[i]), 3),
-            "delta": round(float(delta_mean[i]), 4),
-            "delta_std": round(float(delta_std[i]), 4),
+            "velocity": round(float(velocity_mean[i]), 4),
+            "velocity_std": round(float(velocity_std[i]), 4),
             "elo": round(elo),
             "elo_wilson": round(elo_wilson),
             "n": int(obs_counts.get(i, 0)),

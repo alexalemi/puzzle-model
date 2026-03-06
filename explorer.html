@@ -309,6 +309,41 @@ fetch('explorer_data.json')
   <h2>Model 2c Deep Dive</h2>
   <p>Model 2c (Student-t + velocity) is the best-fitting model. Here we examine its learned parameters.</p>
   <details open>
+    <summary>Model specification (mB scale)</summary>
+    <div class="details-content">
+      <p>The predicted solving time in milliBels decomposes as:</p>
+      <div class="equation">mB(time<sub>ij</sub>) = D<sub>j</sub> + f(N<sub>j</sub>) &minus; R<sub>i</sub>(y) + &epsilon;</div>
+      <table>
+        <tr><th>Term</th><th>Definition</th><th>Zero means</th><th>Learned scale</th></tr>
+        <tr>
+          <td>D<sub>j</sub></td>
+          <td>Puzzle difficulty = &mu; + &beta;<sub>j</sub></td>
+          <td>&beta;<sub>j</sub> = 0 &rarr; average puzzle (given its piece count)</td>
+          <td id="m2c-spec-D"></td>
+        </tr>
+        <tr>
+          <td>f(N<sub>j</sub>)</td>
+          <td>Piece-count correction = &Sigma;<sub>k</sub> c<sub>k</sub>&phi;<sub>k</sub>(N)</td>
+          <td>Normalized so f &approx; 0 at the average piece count</td>
+          <td id="m2c-spec-f"></td>
+        </tr>
+        <tr>
+          <td>R<sub>i</sub>(y)</td>
+          <td>Puzzler rating at year y = &alpha;&#x0303;<sub>i</sub> + v<sub>i</sub>(y &minus; 2026)</td>
+          <td>R = 0 &rarr; average-speed puzzler in 2026</td>
+          <td id="m2c-spec-R"></td>
+        </tr>
+        <tr>
+          <td>&epsilon;</td>
+          <td>Noise ~ Student-t(&nu;, 0, &sigma;)</td>
+          <td>—</td>
+          <td id="m2c-spec-eps"></td>
+        </tr>
+      </table>
+      <p class="footnote">Here &alpha;&#x0303;<sub>i</sub> = &minus;(&alpha;<sub>i</sub> + &delta;<sub>0</sub> + &delta;<sub>i</sub>) is the puzzler skill projected to 2026, and v<sub>i</sub> = &minus;(&delta;<sub>0</sub> + &delta;<sub>i</sub>) is the improvement rate in mB/yr (positive = getting faster). The sign convention: higher R = faster puzzler, higher D = harder puzzle, so predicted time = difficulty minus skill.</p>
+    </div>
+  </details>
+  <details open>
     <summary>Scalar parameters</summary>
     <div class="details-content">
       <table id="m4-scalar-table"></table>
@@ -335,8 +370,8 @@ fetch('explorer_data.json')
   <h2>Learned Parameters</h2>
   <p>From Model 2c (velocity model): global intercept &mu; = <span class="metric-highlight" id="param-mu"></span>,
      noise &sigma; = <span class="metric-highlight" id="param-sigma"></span>,
-     population trend = <span class="metric-highlight" id="param-delta0"></span> mB/yr,
-     &sigma;<sub>&delta;</sub> = <span class="metric-highlight" id="param-sigma-delta"></span></p>
+     mean improvement = <span class="metric-highlight" id="param-delta0"></span> mB/yr,
+     &sigma;<sub>v</sub> = <span class="metric-highlight" id="param-sigma-delta"></span></p>
   <details open>
     <summary>Puzzler rankings (projected to <span id="ranking-year">2026</span>)</summary>
     <div class="details-content">
@@ -380,17 +415,17 @@ fetch('explorer_data.json')
     </div>
   </details>
   <details>
-    <summary>Puzzler velocity distribution (&delta;<sub>i</sub>)</summary>
+    <summary>Puzzler velocity distribution (v<sub>i</sub>)</summary>
     <div class="details-content">
       <div class="chart-container"><div id="chart-velocity-dist"></div></div>
-      <p class="footnote">&Delta;mB/yr measures yearly mB change per puzzler. Positive = improving. Population trend shown as dashed line. Only puzzlers with 2+ years of data have meaningful velocity estimates.</p>
+      <p class="footnote">v<sub>i</sub> = total improvement rate in mB/yr (positive = getting faster). Includes the population trend. Only puzzlers with 2+ years of data have meaningful velocity estimates.</p>
     </div>
   </details>
   <details>
     <summary>Most improved puzzlers</summary>
     <div class="details-content">
       <table id="improved-table"></table>
-      <p class="footnote">Puzzlers with the most negative &delta; (biggest improvement per year), filtered to those with data spanning 2+ years.</p>
+      <p class="footnote">Puzzlers with the highest total velocity (biggest improvement per year), filtered to those with data spanning 2+ years.</p>
     </div>
   </details>
 </section>
@@ -468,7 +503,7 @@ function buildApp(DATA) {
   document.getElementById('param-mu').textContent = S.mu;
   document.getElementById('param-sigma').textContent = S.sigma;
   if (S.delta_0 != null) document.getElementById('param-delta0').textContent = Math.round(-S.delta_0);
-  if (S.sigma_delta != null) document.getElementById('param-sigma-delta').textContent = S.sigma_delta;
+  if (S.sigma_delta != null) document.getElementById('param-sigma-delta').textContent = S.sigma_delta.toFixed(1);
   if (S.ranking_year) document.querySelectorAll('#ranking-year, .ranking-year-label').forEach(el => el.textContent = S.ranking_year);
 
   const nP = S.n_puzzlers, nPz = S.n_puzzles;
@@ -828,11 +863,11 @@ function buildApp(DATA) {
         .style('background', elo > 1500 ? 'var(--green)' : 'var(--red)');
       td.append('span').text(fmtInt(elo));
       tr.append('td').attr('class', 'num').style('font-weight', '600').text(fmtInt(eloW));
-      // Velocity: delta is already in mB/yr. Negative delta = getting faster = positive display
-      const delta = d.delta != null ? d.delta : 0;
-      const deltaElo = Math.round(-delta);
-      const deltaColor = deltaElo > 0 ? 'var(--green)' : deltaElo < 0 ? 'var(--red)' : 'var(--text-light)';
-      tr.append('td').attr('class', 'num').style('color', deltaColor).text(delta !== 0 ? (deltaElo > 0 ? '+' : '') + deltaElo : '—');
+      // Velocity: v_i in mB/yr, positive = getting faster
+      const vel = d.velocity != null ? d.velocity : null;
+      const velRound = vel != null ? Math.round(vel) : null;
+      const velColor = velRound > 0 ? 'var(--green)' : velRound < 0 ? 'var(--red)' : 'var(--text-light)';
+      tr.append('td').attr('class', 'num').style('color', velColor).text(velRound != null ? (velRound > 0 ? '+' : '') + velRound : '—');
       const years = (d.yr_min && d.yr_max && d.yr_min !== d.yr_max) ? `${d.yr_min}-${d.yr_max}` : (d.yr_max || '—');
       tr.append('td').attr('class', 'num').style('color', 'var(--text-light)').text(years);
       tr.append('td').attr('class', 'num').text(d.n);
@@ -995,15 +1030,15 @@ function buildApp(DATA) {
 
   // --- Velocity distribution ---
   (function() {
-    const deltaElos = DATA.puzzlers.filter(d => d.delta != null).map(d => Math.round(-d.delta));
-    if (deltaElos.length === 0) return;
+    const velocities = DATA.puzzlers.filter(d => d.velocity != null).map(d => Math.round(d.velocity));
+    if (velocities.length === 0) return;
     const W = 600, H = 250, mg = {top: 28, right: 16, bottom: 44, left: 56};
     const svg = d3.select('#chart-velocity-dist').append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
-    svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text('Distribution of Puzzler \u0394mB per Year');
-    const bins = d3.bin().thresholds(50)(deltaElos);
-    const x = d3.scaleLinear().domain([d3.min(deltaElos)*1.1, d3.max(deltaElos)*1.1]).range([mg.left, W - mg.right]);
+    svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text('Distribution of Puzzler Velocity (mB/yr)');
+    const bins = d3.bin().thresholds(50)(velocities);
+    const x = d3.scaleLinear().domain([d3.min(velocities)*1.1, d3.max(velocities)*1.1]).range([mg.left, W - mg.right]);
     const y = d3.scaleLinear().domain([0, d3.max(bins, d => d.length)]).range([H - mg.bottom, mg.top]);
-    makeAxis(svg, x, y, W, H, mg, '\u0394mB/yr (positive = improving)', 'Count');
+    makeAxis(svg, x, y, W, H, mg, 'v\u1D62 (mB/yr, positive = improving)', 'Count');
     svg.selectAll('.bar').data(bins).enter().append('rect')
       .attr('x', d => x(d.x0) + 1).attr('y', d => y(d.length))
       .attr('width', d => Math.max(0, x(d.x1) - x(d.x0) - 1))
@@ -1013,37 +1048,35 @@ function buildApp(DATA) {
     svg.append('line').attr('x1', x(0)).attr('x2', x(0))
       .attr('y1', mg.top).attr('y2', H - mg.bottom)
       .attr('stroke', '#303030').attr('stroke-dasharray', '3,3');
-    // Population trend delta_0 in mB units
-    const d0Elo = Math.round(-(DATA.stats.delta_0 || 0));
-    if (d0Elo !== 0 && x(d0Elo) > mg.left && x(d0Elo) < W - mg.right) {
-      svg.append('line').attr('x1', x(d0Elo)).attr('x2', x(d0Elo))
+    // Mean velocity annotation
+    const meanVel = Math.round(d3.mean(velocities));
+    if (meanVel !== 0 && x(meanVel) > mg.left && x(meanVel) < W - mg.right) {
+      svg.append('line').attr('x1', x(meanVel)).attr('x2', x(meanVel))
         .attr('y1', mg.top).attr('y2', H - mg.bottom)
         .attr('stroke', '#6a6a9f').attr('stroke-dasharray', '5,3').attr('opacity', 0.8);
-      svg.append('text').attr('x', x(d0Elo) + 4).attr('y', mg.top + 10)
+      svg.append('text').attr('x', x(meanVel) + 4).attr('y', mg.top + 10)
         .attr('text-anchor', 'start').style('font-size', '9px').style('fill', '#6a6a9f')
-        .text(`Pop. trend: +${d0Elo} mB/yr`);
+        .text(`Mean: +${meanVel} mB/yr`);
     }
   })();
 
   // --- Most improved table ---
   (function() {
-    const multi = DATA.puzzlers.filter(d => d.delta != null && d.yr_min && d.yr_max && d.yr_max > d.yr_min);
-    const improving = multi.slice().sort((a, b) => a.delta - b.delta);
-    const declining = multi.slice().sort((a, b) => b.delta - a.delta);
+    const multi = DATA.puzzlers.filter(d => d.velocity != null && d.yr_min && d.yr_max && d.yr_max > d.yr_min);
+    const improving = multi.slice().sort((a, b) => b.velocity - a.velocity);
     const t = d3.select('#improved-table'); t.html('');
     const thead = t.append('thead').append('tr');
-    ['Rank', 'Puzzler', 'mB', '\u03b4/yr', '\u0394mB/yr', 'Years', 'Obs'].forEach((h,i) =>
+    ['Rank', 'Puzzler', 'mB', 'v (mB/yr)', 'Years', 'Obs'].forEach((h,i) =>
       thead.append('th').text(h).attr('class', i !== 1 ? 'num' : null));
     const tbody = t.append('tbody');
     improving.slice(0, 30).forEach((d, i) => {
       const elo = d.elo || Math.round((DATA.stats.elo_center||1500) - d.alpha);
-      const deltaElo = Math.round(-d.delta);  // negative delta → positive mB gain
+      const velRound = Math.round(d.velocity);
       const tr = tbody.append('tr');
       tr.append('td').attr('class', 'num').text(i + 1);
       tr.append('td').text(d.name);
       tr.append('td').attr('class', 'num').text(fmtInt(elo));
-      tr.append('td').attr('class', 'num').style('color', 'var(--green)').text(d.delta.toFixed(3));
-      tr.append('td').attr('class', 'num').style('color', 'var(--green)').style('font-weight', '600').text('+' + deltaElo);
+      tr.append('td').attr('class', 'num').style('color', 'var(--green)').style('font-weight', '600').text('+' + velRound);
       tr.append('td').attr('class', 'num').style('color', 'var(--text-light)').text(`${d.yr_min}-${d.yr_max}`);
       tr.append('td').attr('class', 'num').text(d.n);
     });
@@ -1086,6 +1119,20 @@ function buildApp(DATA) {
   // --- Model 2c Deep Dive ---
   if (DATA.model2c_detail) {
     const M2C = DATA.model2c_detail;
+
+    // Model specification table (mB scale)
+    (function() {
+      const sp = M2C.scalar_params;
+      const mu = sp.mu.mean, sig_b = sp.sigma_beta.mean;
+      const sig_a = sp.sigma_alpha.mean;
+      const nu = sp.nu.mean, sigma = sp.sigma.mean;
+      const d0 = sp.delta_0.mean, sd = sp.sigma_delta.mean;
+      const el = (id, html) => { const e = document.getElementById(id); if (e) e.innerHTML = html; };
+      el('m2c-spec-D', `&mu; = ${mu.toFixed(0)} mB, &sigma;<sub>&beta;</sub> = ${sig_b.toFixed(0)} mB`);
+      el('m2c-spec-f', `5 basis functions (see correction curve below)`);
+      el('m2c-spec-R', `&sigma;<sub>&alpha;</sub> = ${sig_a.toFixed(0)} mB, v&#x0305; &asymp; ${(-d0).toFixed(1)} &pm; ${sd.toFixed(1)} mB/yr`);
+      el('m2c-spec-eps', `&nu; = ${nu.toFixed(1)}, &sigma; = ${sigma.toFixed(1)} mB`);
+    })();
 
     // Scalar params table
     (function() {
