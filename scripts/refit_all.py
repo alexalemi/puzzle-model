@@ -207,6 +207,11 @@ def main():
         "sigma_delta": sigma_delta_val,
         "year_center": YEAR_CENTER,
         "ranking_year": RANKING_YEAR,
+        "basis_mean": [round(float(v), 6) for v in basis_mean],
+        "basis_std": [round(float(v), 6) for v in basis_std],
+        "sigma_alpha": round(float(np.mean(np.array(params_1["sigma_alpha"]))), 3),
+        "sigma_beta": round(float(np.mean(np.array(params_1["sigma_beta"]))), 3),
+        "nu": round(float(np.mean(np.array(params_1["nu"]))), 3),
     }
 
     # Scatter (subsample)
