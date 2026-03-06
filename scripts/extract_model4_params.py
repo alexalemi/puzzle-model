@@ -36,9 +36,9 @@ def main():
     puzzler_obs = train_df.groupby("puzzler_idx").size()
     puzzle_obs = train_df.groupby("puzzle_idx").size()
 
-    # Fit Model 4
-    print("Fitting Model 4...")
-    model_fn = MODELS["model_4"]
+    # Fit Model 3 (Student-t + full interaction)
+    print("Fitting Model 3...")
+    model_fn = MODELS["model_3"]
     guide, svi_result = run_svi(model_fn, train_data, num_steps=5000, lr=0.005, seed=0)
 
     # Sample posterior
@@ -175,7 +175,7 @@ def main():
     json_path = Path(__file__).resolve().parent.parent / "explorer_data.json"
     data = json.loads(json_path.read_text())
 
-    data["model4_detail"] = {
+    data["model3_detail"] = {
         "scalar_params": scalar_params,
         "student_t_comparison": student_t_comparison,
         "puzzler_factors": puzzler_factors,
@@ -186,7 +186,7 @@ def main():
 
     output = json.dumps(data, separators=(",", ":"))
     json_path.write_text(output)
-    print(f"\nWrote model4_detail to {json_path} ({len(output):,} bytes)")
+    print(f"\nWrote model3_detail to {json_path} ({len(output):,} bytes)")
 
 
 if __name__ == "__main__":

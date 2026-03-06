@@ -89,6 +89,10 @@ Models 0-4, incrementally complex:
 
 Uses non-centered parameterization via `LocScaleReparam`. Factor dimensions use separate plates per k.
 
+## DEVLOG.md
+
+A lab-notebook-style development log. Newer entries at the top, organized by date. Records decisions, observations, hypotheses, and plans as they happen. When asked to add notes, record what was said faithfully (fixing grammar/spelling/readability) without making things up or editorializing. Include motivations and reasoning, not just bare facts.
+
 ## Tools & Commands
 
 - **Python >=3.14**, managed with `uv`

@@ -10,9 +10,9 @@ def rmse_log(pred_log_time: np.ndarray, true_log_time: np.ndarray) -> float:
 
 
 def rmse_original(pred_log_time: np.ndarray, true_log_time: np.ndarray) -> float:
-    """RMSE on original (seconds) scale."""
-    pred = np.exp(pred_log_time)
-    true = np.exp(true_log_time)
+    """RMSE on original (seconds) scale. Input is in mB (1000*log10)."""
+    pred = 10.0 ** (pred_log_time / 1000.0)
+    true = 10.0 ** (true_log_time / 1000.0)
     return float(np.sqrt(np.mean((pred - true) ** 2)))
 
 
