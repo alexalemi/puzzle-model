@@ -111,14 +111,13 @@ def load_mallory(existing_puzzles: pd.DataFrame) -> pd.DataFrame:
     """
     df = pd.read_csv(MALLORY_PATH)
 
-    # Filter to first attempts only
-    df = df[df["Attempt"] == 1].copy()
-
     # Compute time in seconds from Hour, Min, Sec columns
     df["time_seconds"] = df["Hour"] * 3600 + df["Min"] * 60 + df["Sec"]
 
-    # Parse year from Date column
-    df["year"] = pd.to_datetime(df["Date"], format="mixed").dt.year
+    # Parse date for year and finished_date (needed for repeat-solve features)
+    df["parsed_date"] = pd.to_datetime(df["Date"], format="mixed")
+    df["year"] = df["parsed_date"].dt.year
+    df["finished_date"] = df["parsed_date"].dt.strftime("%Y-%m-%d")
 
     # Build lookup of existing puzzles: (normalized_name, pieces) -> (event_id, original_name)
     existing = {}
@@ -187,7 +186,8 @@ def load_mallory(existing_puzzles: pd.DataFrame) -> pd.DataFrame:
         "puzzle_brand": df["Manufactorer"],
         "puzzle_name": df["matched_puzzle_name"],
         "time_limit_seconds": None,
-        "first_attempt": True,
+        "first_attempt": df["Attempt"] == 1,
+        "finished_date": df["finished_date"],
     })
 
 
