@@ -11,6 +11,7 @@ def load_solo_completed(
     """Load and filter to solo, completed results with valid times and piece counts.
 
     If source is given, filter to that source only.
+    Preserves finished_date and first_attempt columns.
     """
     df = pd.read_csv(path, low_memory=False)
     mask = (
@@ -27,6 +28,10 @@ def load_solo_completed(
     df = df[mask].copy()
     df["log_time"] = 1000.0 * np.log10(df["time_seconds"])
     df["puzzle_pieces"] = df["puzzle_pieces"].astype(int)
+    if "finished_date" in df.columns:
+        df["finished_date"] = pd.to_datetime(df["finished_date"], errors="coerce")
+    if "first_attempt" in df.columns:
+        df["first_attempt"] = df["first_attempt"].fillna(True).astype(bool)
     return df.reset_index(drop=True)
 
 
@@ -80,6 +85,48 @@ def train_test_split(
     return df[~test_mask].reset_index(drop=True), df[test_mask].reset_index(drop=True)
 
 
+def add_repeat_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Add repeat-solve features for each (competitor, puzzle) group.
+
+    Adds columns:
+      solve_number: 1-indexed (1 = first attempt)
+      days_since_last: days since previous solve of same puzzle (0 for first)
+      days_since_first: days since first solve of same puzzle (0 for first)
+
+    Rows without finished_date get solve_number=1, days=0.
+    """
+    df = df.copy()
+    df["solve_number"] = 1
+    df["days_since_last"] = 0.0
+    df["days_since_first"] = 0.0
+
+    has_date = df["finished_date"].notna() if "finished_date" in df.columns else pd.Series(False, index=df.index)
+    if not has_date.any():
+        return df
+
+    # Only compute for rows with dates, grouped by (competitor, puzzle)
+    dated = df[has_date].copy()
+    for (comp, puz), group in dated.groupby(["competitor_name", "puzzle_id"]):
+        if len(group) <= 1:
+            continue
+        sorted_idx = group.sort_values("finished_date").index
+        dates = df.loc[sorted_idx, "finished_date"]
+        df.loc[sorted_idx, "solve_number"] = range(1, len(sorted_idx) + 1)
+        first_date = dates.iloc[0]
+        df.loc[sorted_idx, "days_since_first"] = (dates - first_date).dt.days.astype(float)
+        days_diff = dates.diff().dt.days.fillna(0).astype(float)
+        df.loc[sorted_idx, "days_since_last"] = days_diff.values
+
+    # Reconcile with first_attempt flag: if MSP says it's a repeat but we
+    # only see one solve, bump to solve_number=2 (they solved it at least once before).
+    # Our observed sequence takes priority when we have multiple solves.
+    if "first_attempt" in df.columns:
+        unseen_repeat = (~df["first_attempt"]) & (df["solve_number"] == 1)
+        df.loc[unseen_repeat, "solve_number"] = 2
+
+    return df
+
+
 def prepare_model_data(df: pd.DataFrame, mu_fixed: float | None = None) -> dict:
     """Convert a DataFrame into the dict of arrays needed by NumPyro models.
 
@@ -100,4 +147,12 @@ def prepare_model_data(df: pd.DataFrame, mu_fixed: float | None = None) -> dict:
     }
     if "year" in df.columns:
         data["year"] = np.array(df["year"], dtype=np.float32)
+    if "first_attempt" in df.columns:
+        data["first_attempt"] = np.array(df["first_attempt"], dtype=bool)
+    if "solve_number" in df.columns:
+        data["solve_number"] = np.array(df["solve_number"], dtype=np.float32)
+    if "days_since_last" in df.columns:
+        data["days_since_last"] = np.array(df["days_since_last"], dtype=np.float32)
+    if "days_since_first" in df.columns:
+        data["days_since_first"] = np.array(df["days_since_first"], dtype=np.float32)
     return data
