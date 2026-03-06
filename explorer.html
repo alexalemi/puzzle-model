@@ -109,6 +109,15 @@
   td { padding: 6px 12px; border-bottom: 1px solid var(--border); }
   tr:hover td { background: var(--bg-alt); }
   .num { font-family: 'Source Code Pro', monospace; text-align: right; }
+  .puzzle-thumb {
+    width: 48px; height: 48px; object-fit: contain; border-radius: 4px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer; position: relative; z-index: 1;
+  }
+  .puzzle-thumb:hover {
+    transform: scale(5); z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
   .bar-cell { position: relative; padding-right: 60px; }
   .bar-bg {
     position: absolute; left: 0; top: 2px; bottom: 2px;
@@ -226,9 +235,9 @@ fetch('explorer_data.json')
     <div class="chart-container"><div id="chart-piece-dist"></div></div>
   </div>
   <details>
-    <summary>Log-time distributions by piece count</summary>
+    <summary>Time distributions by piece count (mB)</summary>
     <div class="details-content">
-      <p class="footnote">Log-transformed completion times are approximately normal within each piece count, supporting the log-normal likelihood assumption.</p>
+      <p class="footnote">Completion times in milliBels (1000·log₁₀) are approximately normal within each piece count, supporting the log-normal likelihood assumption.</p>
       <div id="chart-histograms" class="chart-row" style="grid-template-columns: repeat(3, 1fr);"></div>
     </div>
   </details>
@@ -239,6 +248,8 @@ fetch('explorer_data.json')
       <div class="chart-container"><div id="chart-puzzler-freq"></div></div>
     </div>
   </details>
+
+
 </section>
 
 <!-- Model -->
@@ -251,15 +262,14 @@ fetch('explorer_data.json')
     <div class="details-content">
       <table>
         <tr><th>Model</th><th>Formula</th><th>Parameters</th><th>Description</th></tr>
-        <tr><td>Model 0</td><td class="num">&mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub></td><td class="num" id="m0-params"></td><td>Basic IRT: puzzler speed + puzzle difficulty</td></tr>
-        <tr><td>Model 1</td><td class="num">+ c&middot;log(N)</td><td class="num" id="m1-params"></td><td>Add global piece-count scaling</td></tr>
-        <tr><td>Model 1b</td><td class="num">+ &Sigma;<sub>k</sub> c<sub>k</sub>&phi;<sub>k</sub>(N)</td><td class="num" id="m1b-params"></td><td>Global coeff. for all 5 basis functions</td></tr>
-        <tr><td>Model 2</td><td class="num">+ a<sub>i</sub>b<sub>j</sub>&phi;(N)</td><td class="num" id="m2-params"></td><td>Single interaction dimension (K=1)</td></tr>
-        <tr><td>Model 3</td><td class="num">+ &Sigma;<sub>k=1..3</sub></td><td class="num" id="m3-params"></td><td>Three interaction dimensions (K=3)</td></tr>
-        <tr><td>Model 4</td><td class="num">Student-t(&nu;)</td><td class="num" id="m4-params"></td><td>Robust likelihood (heavy tails)</td></tr>
-        <tr><td>Model 5</td><td class="num">+ &gamma;<sub>source</sub></td><td class="num" id="m5-params"></td><td>Model 3 + source fixed effect</td></tr>
+        <tr><td>Model 0</td><td class="num">&mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub></td><td class="num" id="m0-params"></td><td>Normal baseline IRT</td></tr>
+        <tr><td>Model 1</td><td class="num">+ c&middot;log(N)</td><td class="num" id="m1-params"></td><td>Normal + global piece-count</td></tr>
+        <tr><td>Model 1t</td><td class="num">Student-t(&nu;)</td><td class="num" id="m1t-params"></td><td>Student-t robust baseline</td></tr>
+        <tr><td>Model 2</td><td class="num">+ &Sigma;<sub>k</sub> c<sub>k</sub>&phi;<sub>k</sub>(N)</td><td class="num" id="m2-params"></td><td>Student-t + global basis coefficients</td></tr>
+        <tr><td>Model 2c</td><td class="num">+ &delta;<sub>0</sub>t + &delta;<sub>i</sub>t</td><td class="num" id="m2c-params"></td><td>Model 2 + velocity (used for rankings)</td></tr>
+        <tr><td>Model 3</td><td class="num">+ &Sigma;<sub>k</sub> a<sub>ik</sub>b<sub>jk</sub>&phi;<sub>k</sub>(N)</td><td class="num" id="m3-params"></td><td>Student-t + full interaction</td></tr>
       </table>
-      <p class="footnote">Priors: &alpha;<sub>i</sub> ~ N(0, &sigma;<sub>&alpha;</sub>), &beta;<sub>j</sub> ~ N(0, &sigma;<sub>&beta;</sub>), a<sub>ik</sub> ~ N(0,1), b<sub>jk</sub> ~ N(0, &sigma;<sub>b,k</sub>). Non-centered parameterization for MCMC efficiency.</p>
+      <p class="footnote">All models after 1t use Student-t likelihood. Priors: &alpha;<sub>i</sub> ~ N(0, &sigma;<sub>&alpha;</sub>), &beta;<sub>j</sub> ~ N(0, &sigma;<sub>&beta;</sub>), a<sub>ik</sub> ~ N(0,1), b<sub>jk</sub> ~ N(0, &sigma;<sub>b,k</sub>). Non-centered parameterization.</p>
     </div>
   </details>
   <details>
@@ -287,24 +297,17 @@ fetch('explorer_data.json')
   <details>
     <summary>Residual analysis</summary>
     <div class="details-content">
-      <p class="footnote">Predicted vs actual log-time on held-out test set. Points near the diagonal indicate good predictions.</p>
+      <p class="footnote">Predicted vs actual time (mB) on held-out test set. Points near the diagonal indicate good predictions.</p>
       <div class="model-selector" id="residual-selector"></div>
       <div class="chart-container"><div id="chart-residuals"></div></div>
     </div>
   </details>
-  <details>
-    <summary>Source effects (Model 5)</summary>
-    <div class="details-content">
-      <p class="footnote">Fixed effect &gamma; per data source. A positive difference means that source's times are systematically longer (slower) after controlling for puzzler skill and puzzle difficulty.</p>
-      <div id="source-effects"></div>
-    </div>
-  </details>
 </section>
 
-<!-- Model 4 Deep Dive -->
+<!-- Model 2c Deep Dive -->
 <section>
-  <h2>Model 4 Deep Dive</h2>
-  <p>Model 4 (Student-t robust) achieves the best WAIC. Here we examine its learned parameters to understand what the model has discovered.</p>
+  <h2>Model 2c Deep Dive</h2>
+  <p>Model 2c (Student-t + velocity) is the best-fitting model. Here we examine its learned parameters.</p>
   <details open>
     <summary>Scalar parameters</summary>
     <div class="details-content">
@@ -319,29 +322,9 @@ fetch('explorer_data.json')
     </div>
   </details>
   <details>
-    <summary>Puzzler latent factor space</summary>
+    <summary>Learned piece-count correction</summary>
     <div class="details-content">
-      <p class="footnote">Each puzzler has 3 latent factor loadings (a<sub>0</sub>, a<sub>1</sub>, a<sub>2</sub>) that interact with puzzle factors and basis functions. Points colored by speed (&alpha;).</p>
-      <div class="chart-row">
-        <div class="chart-container"><div id="chart-puzzler-factors-01"></div></div>
-        <div class="chart-container"><div id="chart-puzzler-factors-02"></div></div>
-      </div>
-    </div>
-  </details>
-  <details>
-    <summary>Puzzle factor loadings vs piece count</summary>
-    <div class="details-content">
-      <p class="footnote">Do puzzle factors vary systematically with piece count? Correlations here would mean the interaction terms capture piece-count-dependent structure beyond the global c&middot;log(N).</p>
-      <div class="chart-row">
-        <div class="chart-container"><div id="chart-puzzle-factor-b0"></div></div>
-        <div class="chart-container"><div id="chart-puzzle-factor-b1"></div></div>
-      </div>
-    </div>
-  </details>
-  <details>
-    <summary>Predicted time curves by puzzler type</summary>
-    <div class="details-content">
-      <p class="footnote">How predicted log-time scales with piece count for puzzlers of different skill levels (fastest, 25th percentile, median, 75th, slowest). Curves show the full model including interactions.</p>
+      <p class="footnote">The learned basis correction Σ<sub>k</sub> c<sub>k</sub>φ<sub>k</sub>(N) as a function of piece count. This is the model's learned scaling law for how puzzle difficulty grows with size, independent of individual puzzler or puzzle effects. Shaded bands show posterior deciles (5th–95th) from the c<sub>k</sub> coefficient posterior.</p>
       <div class="chart-container"><div id="chart-response-curves"></div></div>
     </div>
   </details>
@@ -350,21 +333,24 @@ fetch('explorer_data.json')
 <!-- Learned Parameters -->
 <section>
   <h2>Learned Parameters</h2>
-  <p>From Model 1: global intercept &mu; = <span class="metric-highlight" id="param-mu"></span>,
-     piece-count coefficient c = <span class="metric-highlight" id="param-c"></span>,
-     noise &sigma; = <span class="metric-highlight" id="param-sigma"></span></p>
+  <p>From Model 2c (velocity model): global intercept &mu; = <span class="metric-highlight" id="param-mu"></span>,
+     noise &sigma; = <span class="metric-highlight" id="param-sigma"></span>,
+     population trend = <span class="metric-highlight" id="param-delta0"></span> mB/yr,
+     &sigma;<sub>&delta;</sub> = <span class="metric-highlight" id="param-sigma-delta"></span></p>
   <details open>
-    <summary>Fastest puzzlers (lowest &alpha;)</summary>
+    <summary>Puzzler rankings (projected to <span id="ranking-year">2026</span>)</summary>
     <div class="details-content">
       <input type="text" class="search-box" id="puzzler-search" placeholder="Search puzzlers...">
       <table id="puzzler-table"></table>
-      <p class="footnote">Negative &alpha; = faster than average. Uncertainty (std) is larger for puzzlers with fewer observations due to Bayesian shrinkage.</p>
+      <p class="footnote">Rating projected to <span class="ranking-year-label">2026</span> using per-puzzler velocity. &Delta;mB/yr shows individual yearly improvement (positive = getting faster). Wilson bound uses projected &alpha; + 3&sigma;.</p>
     </div>
   </details>
   <details>
     <summary>Hardest puzzles (highest &beta;)</summary>
     <div class="details-content">
-      <input type="text" class="search-box" id="puzzle-search" placeholder="Search puzzles...">
+      <input type="text" class="search-box" id="puzzle-search" placeholder="Search puzzles..." style="display:inline-block; width:auto;">
+      <select id="puzzle-pc-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="0">All pieces</option></select>
+      <select id="puzzle-source-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="">All sources</option></select>
       <table id="puzzle-table"></table>
       <p class="footnote">Positive &beta; = harder than average. Effect is relative to piece count (which is accounted for separately).</p>
     </div>
@@ -372,15 +358,39 @@ fetch('explorer_data.json')
   <details>
     <summary>Easiest puzzles (lowest &beta;)</summary>
     <div class="details-content">
-      <input type="text" class="search-box" id="easy-puzzle-search" placeholder="Search puzzles...">
+      <input type="text" class="search-box" id="easy-puzzle-search" placeholder="Search puzzles..." style="display:inline-block; width:auto;">
+      <select id="easy-puzzle-pc-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="0">All pieces</option></select>
+      <select id="easy-puzzle-source-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="">All sources</option></select>
       <table id="easy-puzzle-table"></table>
       <p class="footnote">Negative &beta; = easier than average. These puzzles are completed faster than expected given their piece count.</p>
     </div>
   </details>
   <details>
-    <summary>Puzzler effect distribution</summary>
+    <summary>Puzzle difficulty distribution (&beta;)</summary>
     <div class="details-content">
+      <p class="footnote">Distribution of puzzle difficulty parameters from Model 2c. More positive = harder. Colored by observation count to show shrinkage effects.</p>
+      <div class="chart-container"><div id="chart-beta-dist"></div></div>
+    </div>
+  </details>
+  <details>
+    <summary>Puzzler rating distribution (&alpha;)</summary>
+    <div class="details-content">
+      <p class="footnote">Distribution of puzzler skill parameters from Model 2c. More negative = faster. Colored by observation count.</p>
       <div class="chart-container"><div id="chart-alpha-dist"></div></div>
+    </div>
+  </details>
+  <details>
+    <summary>Puzzler velocity distribution (&delta;<sub>i</sub>)</summary>
+    <div class="details-content">
+      <div class="chart-container"><div id="chart-velocity-dist"></div></div>
+      <p class="footnote">&Delta;mB/yr measures yearly mB change per puzzler. Positive = improving. Population trend shown as dashed line. Only puzzlers with 2+ years of data have meaningful velocity estimates.</p>
+    </div>
+  </details>
+  <details>
+    <summary>Most improved puzzlers</summary>
+    <div class="details-content">
+      <table id="improved-table"></table>
+      <p class="footnote">Puzzlers with the most negative &delta; (biggest improvement per year), filtered to those with data spanning 2+ years.</p>
     </div>
   </details>
 </section>
@@ -392,8 +402,11 @@ fetch('explorer_data.json')
     buildApp(DATA);
   })
   .catch(err => {
+    console.error('Explorer load error:', err);
     document.getElementById('app').innerHTML =
-      '<div class="loading" style="color:var(--red)">Failed to load explorer_data.json. Serve this directory with a local server:<br><code style="font-size:14px">python -m http.server 8000</code></div>';
+      '<div class="loading" style="color:var(--red)">Failed to load explorer_data.json:<br><pre style="font-size:12px;text-align:left;max-width:800px;margin:1em auto;white-space:pre-wrap">' +
+      (err.stack || err.message || String(err)) +
+      '</pre><br>Serve this directory with a local server:<br><code style="font-size:14px">python -m http.server 8000</code></div>';
   });
 
 function buildApp(DATA) {
@@ -403,11 +416,13 @@ function buildApp(DATA) {
   const fmtPct = d3.format('.1%');
   const fmtInt = d3.format(',');
 
-  const COLORS = { model_0: '#4a7fb5', model_1: '#55a868', model_1b: '#2d8a4e', model_2: '#dd8452', model_3: '#8172b2', model_4: '#c44e52', model_5: '#e7969c' };
+  const COLORS = { model_0: '#4a7fb5', model_1: '#55a868', model_1t: '#3a9a58', model_2: '#2d8a4e', model_2c: '#0e6a2e', model_3: '#dd8452' };
   const MODEL_NAMES = {
     model_0: 'Model 0: IRT', model_1: 'Model 1: + log(N)',
-    model_1b: 'Model 1b: + all \u03c6', model_2: 'Model 2: + K=1', model_3: 'Model 3: + K=3',
-    model_4: 'Model 4: Student-t', model_5: 'Model 5: + Source',
+    model_1t: 'Model 1t: Student-t',
+    model_2: 'Model 2: + basis \u03c6',
+    model_2c: 'Model 2c: + velocity',
+    model_3: 'Model 3: + interaction',
   };
   const availableModels = Object.keys(MODEL_NAMES).filter(k => DATA.models[k]);
 
@@ -446,23 +461,24 @@ function buildApp(DATA) {
     { value: fmtInt(S.n_puzzlers), label: 'Unique Puzzlers' },
     { value: fmtInt(S.n_puzzles), label: 'Unique Puzzles' },
     { value: S.piece_counts.length, label: 'Piece Counts' },
-    { value: fmt2(S.log_time_mean), label: 'Mean log(t)' },
-    { value: fmt2(S.log_time_std), label: 'Std log(t)' },
+    { value: fmt2(S.log_time_mean), label: 'Mean (mB)' },
+    { value: fmt2(S.log_time_std), label: 'Std (mB)' },
   ].map(s => `<div class="stat-card"><span class="value">${s.value}</span><span class="label">${s.label}</span></div>`).join('');
 
   document.getElementById('param-mu').textContent = S.mu;
-  document.getElementById('param-c').textContent = S.c_pieces;
   document.getElementById('param-sigma').textContent = S.sigma;
+  if (S.delta_0 != null) document.getElementById('param-delta0').textContent = Math.round(-S.delta_0);
+  if (S.sigma_delta != null) document.getElementById('param-sigma-delta').textContent = S.sigma_delta;
+  if (S.ranking_year) document.querySelectorAll('#ranking-year, .ranking-year-label').forEach(el => el.textContent = S.ranking_year);
 
   const nP = S.n_puzzlers, nPz = S.n_puzzles;
   document.getElementById('m0-params').textContent = `~${fmtInt(nP + nPz + 4)}`;
   document.getElementById('m1-params').textContent = `~${fmtInt(nP + nPz + 5)}`;
-  document.getElementById('m1b-params').textContent = `~${fmtInt(nP + nPz + 9)}`;
-  document.getElementById('m2-params').textContent = `~${fmtInt(2*nP + 2*nPz + 6)}`;
-  document.getElementById('m3-params').textContent = `~${fmtInt(4*nP + 4*nPz + 8)}`;
-  document.getElementById('m4-params').textContent = `~${fmtInt(4*nP + 4*nPz + 9)}`;
-  const nSrc = (S.sources || []).length || 2;
-  document.getElementById('m5-params').textContent = `~${fmtInt(4*nP + 4*nPz + 8 + nSrc)}`;
+  document.getElementById('m1t-params').textContent = `~${fmtInt(nP + nPz + 6)}`;
+  document.getElementById('m2-params').textContent = `~${fmtInt(nP + nPz + 10)}`;
+  // Model 2c: Model 2 + delta_0 + sigma_delta + delta_i per puzzler
+  document.getElementById('m2c-params').textContent = `~${fmtInt(2*nP + nPz + 12)}`;
+  document.getElementById('m3-params').textContent = `~${fmtInt(4*nP + 4*nPz + 9)}`;
 
   // --- Scatter ---
   (function() {
@@ -483,15 +499,25 @@ function buildApp(DATA) {
     const svg = d3.select('#chart-piece-dist').append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
     svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text('Records by Piece Count');
     const data = DATA.piece_dist;
-    const x = d3.scaleBand().domain(data.map(d => d.pieces)).range([mg.left, W - mg.right]).padding(0.2);
+    // Log-scaled x axis: position bars by log(pieces), width from gap to next value
+    const pcs = data.map(d => d.pieces);
+    const x = d3.scaleLog().domain([d3.min(pcs) * 0.85, d3.max(pcs) * 1.15]).range([mg.left, W - mg.right]);
     const y = d3.scaleLinear().domain([0, d3.max(data, d => d.count)]).range([H - mg.bottom, mg.top]);
     svg.append('g').attr('class', 'axis').attr('transform', `translate(0,${H - mg.bottom})`)
-      .call(d3.axisBottom(x).tickValues(data.filter((_,i) => data.length <= 10 || i % 2 === 0).map(d => d.pieces)))
+      .call(d3.axisBottom(x).tickValues([100, 200, 300, 500, 750, 1000, 1500, 2000, 3000]).tickFormat(d3.format('d')))
       .selectAll('text').attr('transform', 'rotate(-40)').style('text-anchor', 'end');
     svg.append('g').attr('class', 'axis').attr('transform', `translate(${mg.left},0)`).call(d3.axisLeft(y).ticks(5));
+    // Bar width: half the log-space gap to nearest neighbor, clamped
+    const barW = (d, i) => {
+      const lo = i > 0 ? (x(d.pieces) - x(pcs[i-1])) / 2 : (x(pcs[1]) - x(d.pieces)) / 2;
+      const hi = i < pcs.length-1 ? (x(pcs[i+1]) - x(d.pieces)) / 2 : lo;
+      return Math.max(1, Math.min(lo + hi, 20));
+    };
     svg.selectAll('.bar').data(data).enter().append('rect')
-      .attr('x', d => x(d.pieces)).attr('y', d => y(d.count))
-      .attr('width', x.bandwidth()).attr('height', d => H - mg.bottom - y(d.count))
+      .attr('x', (d, i) => { const w = barW(d, i); return x(d.pieces) - w/2; })
+      .attr('y', d => y(d.count))
+      .attr('width', (d, i) => barW(d, i))
+      .attr('height', d => H - mg.bottom - y(d.count))
       .attr('fill', '#4a7fb5').attr('opacity', 0.7)
       .on('mouseover', function(event, d) {
         d3.select(this).attr('opacity', 1);
@@ -539,9 +565,45 @@ function buildApp(DATA) {
       .attr('fill', '#4a7fb5').attr('opacity', 0.7);
   })();
 
+  // (Puzzler alpha distribution is drawn below in the Rankings section)
+
+  // --- Puzzle beta distribution ---
+  (function() {
+    if (!DATA.puzzle_beta_dist) return;
+    const dist = DATA.puzzle_beta_dist;
+    const W = 600, H = 250, mg = {top: 28, right: 16, bottom: 44, left: 56};
+    const svg = d3.select('#chart-beta-dist').append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+    svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text('Puzzle Difficulty Distribution');
+    const bins = dist.counts.map((c, i) => ({x0: dist.edges[i], x1: dist.edges[i+1], count: c}));
+    const x = d3.scaleLinear().domain([dist.edges[0], dist.edges[dist.edges.length-1]]).range([mg.left, W - mg.right]);
+    const y = d3.scaleLinear().domain([0, d3.max(dist.counts) * 1.1]).range([H - mg.bottom, mg.top]);
+    makeAxis(svg, x, y, W, H, mg, 'Puzzle difficulty (mB, higher = harder)', 'Count');
+    // Stacked bars by observation count
+    const groups = [{label: 'n=1', key: 'n1', color: '#c44e52'},
+                    {label: 'n=2-5', key: 'n2_5', color: '#e8a838'},
+                    {label: 'n≥6', key: 'n6plus', color: '#4a7fb5'}];
+    bins.forEach((b, i) => {
+      let cumul = 0;
+      groups.forEach(g => {
+        const count = dist[g.key] ? dist[g.key][i] : 0;
+        svg.append('rect')
+          .attr('x', x(b.x0) + 1).attr('y', y(cumul + count))
+          .attr('width', Math.max(0, x(b.x1) - x(b.x0) - 1))
+          .attr('height', y(cumul) - y(cumul + count))
+          .attr('fill', g.color).attr('opacity', 0.7);
+        cumul += count;
+      });
+    });
+    const lg = svg.append('g').attr('transform', `translate(${W - mg.right - 160}, ${mg.top + 5})`);
+    groups.forEach((g, i) => {
+      lg.append('rect').attr('x', 0).attr('y', i * 16).attr('width', 10).attr('height', 10).attr('fill', g.color).attr('opacity', 0.7);
+      lg.append('text').attr('x', 14).attr('y', i * 16 + 9).style('font-size', '11px').text(g.label);
+    });
+  })();
+
   // --- Model comparison ---
   let activeModels = new Set(availableModels);
-  let activeResModel = availableModels.includes('model_1') ? 'model_1' : availableModels[0];
+  let activeResModel = availableModels.includes('model_2c') ? 'model_2c' : availableModels[availableModels.length - 1];
 
   function renderSelector(containerId, models, active, onClick, isSet) {
     const c = d3.select('#' + containerId); c.html('');
@@ -558,50 +620,41 @@ function buildApp(DATA) {
 
   function renderMetricsChart() {
     const c = d3.select('#chart-metrics'); c.html('');
-    const mKeys = ['rmse_log', 'mae_log', 'coverage_90'];
-    const mLabels = { rmse_log: 'RMSE (log)', mae_log: 'MAE (log)', coverage_90: '90% Coverage' };
     const models = [...activeModels].filter(m => DATA.models[m]).sort();
     if (models.length === 0) return;
-    const W = 400, H = 280, mg = {top: 28, right: 16, bottom: 60, left: 56};
+    const W = 400, H = 280, mg = {top: 28, right: 16, bottom: 60, left: 72};
     const svg = c.append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
-    svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text('Test Set Metrics');
-    const x0 = d3.scaleBand().domain(mKeys).range([mg.left, W - mg.right]).padding(0.3);
-    const x1 = d3.scaleBand().domain(models).range([0, x0.bandwidth()]).padding(0.05);
-    const maxR = d3.max(models, m => Math.max(DATA.models[m].test_metrics.rmse_log, DATA.models[m].test_metrics.mae_log));
-    const y = d3.scaleLinear().domain([0, maxR * 1.2]).range([H - mg.bottom, mg.top]);
+    svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle')
+      .text('Test Set: Mean Predictive Log-Density');
+    // Higher (less negative) is better
+    const vals = models.map(m => DATA.models[m].test_mean_lpd || 0);
+    const yMin = d3.min(vals);
+    const yMax = d3.max(vals);
+    const pad = Math.max((yMax - yMin) * 0.15, 0.1);
+    const x = d3.scaleBand().domain(models).range([mg.left, W - mg.right]).padding(0.3);
+    const y = d3.scaleLinear().domain([yMin - pad, yMax + pad]).range([H - mg.bottom, mg.top]);
     svg.append('g').attr('class', 'axis').attr('transform', `translate(0,${H - mg.bottom})`)
-      .call(d3.axisBottom(x0).tickFormat(k => mLabels[k])).selectAll('text').style('font-size', '11px');
-    svg.append('g').attr('class', 'axis').attr('transform', `translate(${mg.left},0)`).call(d3.axisLeft(y).ticks(5));
-    svg.append('line')
-      .attr('x1', x0('rmse_log')).attr('x2', x0('rmse_log') + x0.bandwidth())
-      .attr('y1', y(DATA.baselines.global_mean_rmse_log)).attr('y2', y(DATA.baselines.global_mean_rmse_log))
-      .attr('stroke', '#c44e52').attr('stroke-dasharray', '4,3').attr('stroke-width', 1.5);
-    svg.append('text').attr('x', x0('rmse_log') + x0.bandwidth() + 4)
-      .attr('y', y(DATA.baselines.global_mean_rmse_log) + 3)
-      .style('font-size', '9px').style('fill', '#c44e52').text('baseline');
+      .call(d3.axisBottom(x).tickFormat(m => MODEL_NAMES[m].split(':')[0])).selectAll('text')
+      .style('font-size', '10px').attr('transform', 'rotate(-30)').style('text-anchor', 'end');
+    svg.append('g').attr('class', 'axis').attr('transform', `translate(${mg.left},0)`)
+      .call(d3.axisLeft(y).ticks(6).tickFormat(d3.format('.2f')));
+    svg.append('text').attr('transform', 'rotate(-90)').attr('x', -(mg.top + H - mg.bottom)/2)
+      .attr('y', 14).attr('text-anchor', 'middle').style('font-size', '11px').text('mean log p(y_test | θ)');
 
-    mKeys.forEach(mk => {
-      models.forEach(m => {
-        let v = DATA.models[m].test_metrics[mk];
-        if (mk === 'coverage_90') v = v * maxR * 1.1;
-        svg.append('rect')
-          .attr('x', x0(mk) + x1(m)).attr('y', y(v))
-          .attr('width', x1.bandwidth()).attr('height', H - mg.bottom - y(v))
-          .attr('fill', COLORS[m]).attr('opacity', 0.8).attr('rx', 1)
-          .on('mouseover', function(event) {
-            d3.select(this).attr('opacity', 1);
-            const actual = DATA.models[m].test_metrics[mk];
-            showTip(event, `<span class="tt-label">${MODEL_NAMES[m]}</span><br><span class="tt-label">${mLabels[mk]}:</span> <span class="tt-value">${mk === 'coverage_90' ? fmtPct(actual) : fmt(actual)}</span>`);
-          })
-          .on('mousemove', (event) => showTip(event, tooltip.html()))
-          .on('mouseout', function() { d3.select(this).attr('opacity', 0.8); hideTip(); });
-      });
-    });
-    const lg = svg.append('g').attr('transform', `translate(${mg.left + 4}, ${H - 16})`);
-    models.forEach((m, i) => {
-      const g = lg.append('g').attr('transform', `translate(${i * 100}, 0)`);
-      g.append('rect').attr('width', 10).attr('height', 10).attr('fill', COLORS[m]).attr('rx', 1);
-      g.append('text').attr('x', 14).attr('y', 9).style('font-size', '10px').text(MODEL_NAMES[m].split(':')[0]);
+    const bestLpd = d3.max(vals);
+    models.forEach(m => {
+      const v = DATA.models[m].test_mean_lpd || 0;
+      svg.append('rect')
+        .attr('x', x(m)).attr('y', y(Math.max(v, y.domain()[0])))
+        .attr('width', x.bandwidth())
+        .attr('height', Math.max(0, y(y.domain()[0]) - y(Math.max(v, y.domain()[0]))))
+        .attr('fill', COLORS[m]).attr('opacity', v === bestLpd ? 1 : 0.7).attr('rx', 2)
+        .on('mouseover', function(event) {
+          d3.select(this).attr('opacity', 1);
+          showTip(event, `<span class="tt-label">${MODEL_NAMES[m]}</span><br><span class="tt-label">Mean LPD:</span> <span class="tt-value">${v.toFixed(4)}</span>`);
+        })
+        .on('mousemove', (event) => showTip(event, tooltip.html()))
+        .on('mouseout', function() { d3.select(this).attr('opacity', v === bestLpd ? 1 : 0.7); hideTip(); });
     });
   }
 
@@ -639,7 +692,7 @@ function buildApp(DATA) {
     const pad = (ext[1] - ext[0]) * 0.05;
     const x = d3.scaleLinear().domain([ext[0]-pad, ext[1]+pad]).range([mg.left, W - mg.right]);
     const y = d3.scaleLinear().domain([ext[0]-pad, ext[1]+pad]).range([H - mg.bottom, mg.top]);
-    makeAxis(svg, x, y, W, H, mg, 'Actual log(time)', 'Predicted log(time)');
+    makeAxis(svg, x, y, W, H, mg, 'Actual (mB)', 'Predicted (mB)');
     svg.append('line')
       .attr('x1', x(ext[0]-pad)).attr('y1', y(ext[0]-pad))
       .attr('x2', x(ext[1]+pad)).attr('y2', y(ext[1]+pad))
@@ -651,8 +704,10 @@ function buildApp(DATA) {
       .on('mouseover', function(event, d) {
         d3.select(this).attr('opacity', 1).attr('r', 4);
         showTip(event,
-          `<span class="tt-label">Actual:</span> <span class="tt-value">${fmt2(d.tr)}</span> (${fmt1(Math.exp(d.tr))}s)<br>` +
-          `<span class="tt-label">Predicted:</span> <span class="tt-value">${fmt2(d.pr)}</span> (${fmt1(Math.exp(d.pr))}s)<br>` +
+          (d.puzzler ? `<span class="tt-label">Puzzler:</span> <span class="tt-value">${d.puzzler}</span><br>` : '') +
+          (d.puzzle ? `<span class="tt-label">Puzzle:</span> <span class="tt-value">${d.puzzle}</span><br>` : '') +
+          `<span class="tt-label">Actual:</span> <span class="tt-value">${fmt2(d.tr)} mB</span> (${fmt1(Math.pow(10, d.tr/1000))}s)<br>` +
+          `<span class="tt-label">Predicted:</span> <span class="tt-value">${fmt2(d.pr)} mB</span> (${fmt1(Math.pow(10, d.pr/1000))}s)<br>` +
           `<span class="tt-label">Pieces:</span> <span class="tt-value">${d.pc}</span><br>` +
           `<span class="tt-label">Error:</span> <span class="tt-value">${fmt2(d.tr - d.pr)}</span>`);
       })
@@ -671,14 +726,38 @@ function buildApp(DATA) {
     thead.append('th').text('Metric');
     Object.keys(MODEL_NAMES).forEach(m => thead.append('th').text(MODEL_NAMES[m].split(':')[0]).attr('class', 'num'));
     thead.append('th').text('Baseline').attr('class', 'num');
+    const tbody = t.append('tbody');
+
+    // Test predictive log-likelihood (primary metric)
+    const bestLpd = d3.max(Object.keys(MODEL_NAMES).map(m => DATA.models[m] && DATA.models[m].test_mean_lpd).filter(v => v != null));
+    const trLpd = tbody.append('tr').style('font-weight', '600');
+    trLpd.append('td').text('Test Mean LPD');
+    Object.keys(MODEL_NAMES).forEach(m => {
+      const md = DATA.models[m];
+      const v = md ? md.test_mean_lpd : null;
+      const td = trLpd.append('td').attr('class', 'num');
+      if (v != null) {
+        td.text(v.toFixed(4));
+        if (v === bestLpd) td.style('color', 'var(--green)');
+      } else { td.text('-'); }
+    });
+    trLpd.append('td');
+
+    const trTlppd = tbody.append('tr');
+    trTlppd.append('td').style('color', 'var(--text-light)').text('  Total Test LPPD');
+    Object.keys(MODEL_NAMES).forEach(m => {
+      const md = DATA.models[m];
+      trTlppd.append('td').attr('class', 'num').style('color', 'var(--text-light)')
+        .text(md && md.test_lppd != null ? fmt1(md.test_lppd) : '-');
+    });
+    trTlppd.append('td');
+
+    // Separator, then secondary metrics
     const metrics = [
-      { key: 'rmse_log', label: 'RMSE (log)', bl: DATA.baselines.global_mean_rmse_log },
-      { key: 'rmse_seconds', label: 'RMSE (seconds)', bl: DATA.baselines.global_mean_rmse_seconds },
-      { key: 'mae_log', label: 'MAE (log)', bl: null },
       { key: 'coverage_90', label: '90% Coverage', bl: null, f: fmtPct },
       { key: 'coverage_50', label: '50% Coverage', bl: null, f: fmtPct },
+      { key: 'mae_log', label: 'MAE (mB)', bl: null },
     ];
-    const tbody = t.append('tbody');
     metrics.forEach(mk => {
       const tr = tbody.append('tr');
       tr.append('td').text(mk.label);
@@ -688,15 +767,8 @@ function buildApp(DATA) {
         const v = md ? md.test_metrics[mk.key] : null;
         tr.append('td').attr('class', 'num').text(v != null ? fn(v) : '-');
       });
-      tr.append('td').attr('class', 'num').style('color', '#c44e52').text(mk.bl != null ? (mk.f || fmt)(mk.bl) : '-');
+      tr.append('td');
     });
-    const tr2 = tbody.append('tr').style('border-top', '2px solid var(--border)');
-    tr2.append('td').style('font-style', 'italic').text('Train RMSE (log)');
-    Object.keys(MODEL_NAMES).forEach(m => {
-      const md = DATA.models[m];
-      tr2.append('td').attr('class', 'num').text(md ? fmt(md.train_metrics.rmse_log) : '-');
-    });
-    tr2.append('td');
 
     // WAIC row
     const hasWaic = availableModels.some(m => DATA.models[m].waic != null);
@@ -739,87 +811,242 @@ function buildApp(DATA) {
   function renderPuzzlerTable(filter = '') {
     const t = d3.select('#puzzler-table'); t.html('');
     const thead = t.append('thead').append('tr');
-    ['Rank', 'Puzzler', 'Speed Effect (\u03b1)', '\u00b1 Std', 'Obs'].forEach((h,i) =>
+    ['Rank', 'Puzzler', 'mB', 'mB (Wilson)', '\u0394mB/yr', 'Years', 'Obs'].forEach((h,i) =>
       thead.append('th').text(h).attr('class', i !== 1 ? 'num' : null));
     const filtered = DATA.puzzlers.filter(d => d.name.toLowerCase().includes(filter.toLowerCase()));
     const tbody = t.append('tbody');
-    const maxA = d3.max(DATA.puzzlers.slice(0, 50).map(d => Math.abs(d.alpha)));
+    const maxElo = d3.max(DATA.puzzlers.slice(0, 50).map(d => d.elo || ((DATA.stats.elo_center||1500) - d.alpha)));
+    const minElo = d3.min(DATA.puzzlers.slice(0, 50).map(d => d.elo || ((DATA.stats.elo_center||1500) - d.alpha)));
     filtered.slice(0, 50).forEach(d => {
+      const elo = d.elo != null ? d.elo : Math.round((DATA.stats.elo_center||1500) - d.alpha);
+      const eloW = d.elo_wilson != null ? d.elo_wilson : Math.round((DATA.stats.elo_center||1500) - (d.alpha + 3*d.std));
       const tr = tbody.append('tr');
       tr.append('td').attr('class', 'num').text(DATA.puzzlers.indexOf(d) + 1);
       tr.append('td').text(d.name);
       const td = tr.append('td').attr('class', 'num bar-cell');
-      td.append('div').attr('class', 'bar-bg').style('width', (Math.abs(d.alpha)/maxA*80) + '%')
-        .style('background', d.alpha < 0 ? 'var(--green)' : 'var(--red)');
-      td.append('span').text(fmt2(d.alpha));
-      tr.append('td').attr('class', 'num').style('color', 'var(--text-light)').text(fmt2(d.std));
+      td.append('div').attr('class', 'bar-bg').style('width', ((elo - 1500)/(maxElo - 1500)*80) + '%')
+        .style('background', elo > 1500 ? 'var(--green)' : 'var(--red)');
+      td.append('span').text(fmtInt(elo));
+      tr.append('td').attr('class', 'num').style('font-weight', '600').text(fmtInt(eloW));
+      // Velocity: delta is already in mB/yr. Negative delta = getting faster = positive display
+      const delta = d.delta != null ? d.delta : 0;
+      const deltaElo = Math.round(-delta);
+      const deltaColor = deltaElo > 0 ? 'var(--green)' : deltaElo < 0 ? 'var(--red)' : 'var(--text-light)';
+      tr.append('td').attr('class', 'num').style('color', deltaColor).text(delta !== 0 ? (deltaElo > 0 ? '+' : '') + deltaElo : '—');
+      const years = (d.yr_min && d.yr_max && d.yr_min !== d.yr_max) ? `${d.yr_min}-${d.yr_max}` : (d.yr_max || '—');
+      tr.append('td').attr('class', 'num').style('color', 'var(--text-light)').text(years);
       tr.append('td').attr('class', 'num').text(d.n);
     });
   }
+
+  // Populate piece-count filter dropdowns
+  const puzzlePcCounts = [...new Set(DATA.puzzles.map(d => d.pc))].sort((a,b) => a - b);
+  ['puzzle-pc-filter', 'easy-puzzle-pc-filter'].forEach(id => {
+    const sel = document.getElementById(id);
+    puzzlePcCounts.forEach(pc => {
+      const opt = document.createElement('option');
+      opt.value = pc; opt.textContent = pc + ' pcs';
+      sel.appendChild(opt);
+    });
+  });
+
+  // Populate source filter dropdowns
+  function puzzleSource(d) { return d.name.startsWith('msp_') ? 'myspeedpuzzling' : 'speedpuzzling'; }
+  const puzzleSources = [...new Set(DATA.puzzles.map(puzzleSource))].sort();
+  ['puzzle-source-filter', 'easy-puzzle-source-filter'].forEach(id => {
+    const sel = document.getElementById(id);
+    puzzleSources.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s; opt.textContent = s;
+      sel.appendChild(opt);
+    });
+  });
+
+  let hardPcFilter = 0, easyPcFilter = 0;
+  let hardSourceFilter = '', easySourceFilter = '';
 
   function renderPuzzleTable(filter = '') {
     const t = d3.select('#puzzle-table'); t.html('');
     const thead = t.append('thead').append('tr');
-    ['Rank', 'Puzzle', 'Pieces', 'Difficulty (\u03b2)', '\u00b1 Std', 'Obs'].forEach((h,i) =>
-      thead.append('th').text(h).attr('class', i !== 1 ? 'num' : null));
-    const filtered = DATA.puzzles.filter(d => d.name.toLowerCase().includes(filter.toLowerCase()));
+    ['Rank', '', 'Puzzle', 'Pieces', 'Difficulty (mB)', 'mB (Wilson)', 'Obs'].forEach((h,i) =>
+      thead.append('th').text(h).attr('class', (i !== 2) ? 'num' : null));
+    let filtered = DATA.puzzles;
+    if (hardPcFilter > 0) filtered = filtered.filter(d => d.pc === hardPcFilter);
+    if (hardSourceFilter) filtered = filtered.filter(d => puzzleSource(d) === hardSourceFilter);
+    if (filter) filtered = filtered.filter(d => d.name.toLowerCase().includes(filter.toLowerCase()));
     const tbody = t.append('tbody');
-    const maxB = d3.max(DATA.puzzles.slice(0, 50).map(d => Math.abs(d.beta)));
-    filtered.slice(0, 50).forEach(d => {
+    const eloFn = d => d.elo != null ? d.elo : Math.round((DATA.stats.elo_center||1500) + DATA.stats.mu + d.beta);
+    const maxElo = d3.max(filtered.slice(0, 50).map(eloFn)) || 2000;
+    const minElo = d3.min(filtered.slice(0, 50).map(eloFn)) || 1000;
+    filtered.slice(0, 50).forEach((d, i) => {
+      const elo = eloFn(d);
+      const eloW = d.elo_hard != null ? d.elo_hard : Math.round((DATA.stats.elo_center||1500) + DATA.stats.mu + d.beta - 3*d.std);
       const tr = tbody.append('tr');
-      tr.append('td').attr('class', 'num').text(DATA.puzzles.indexOf(d) + 1);
+      tr.append('td').attr('class', 'num').text(i + 1);
+      const imgTd = tr.append('td').style('padding', '2px 4px');
+      if (d.img) imgTd.append('img').attr('src', d.img).attr('alt', '').attr('class', 'puzzle-thumb');
       tr.append('td').text(d.name);
       tr.append('td').attr('class', 'num').text(d.pc);
       const td = tr.append('td').attr('class', 'num bar-cell');
-      td.append('div').attr('class', 'bar-bg').style('width', (Math.abs(d.beta)/maxB*80) + '%')
-        .style('background', d.beta > 0 ? 'var(--red)' : 'var(--green)');
-      td.append('span').text(fmt2(d.beta));
-      tr.append('td').attr('class', 'num').style('color', 'var(--text-light)').text(fmt2(d.std));
+      td.append('div').attr('class', 'bar-bg').style('width', ((elo - minElo)/(maxElo - minElo)*80) + '%')
+        .style('background', 'var(--red)');
+      td.append('span').text(elo);
+      tr.append('td').attr('class', 'num').text(eloW);
       tr.append('td').attr('class', 'num').text(d.n);
     });
   }
 
-  const easyPuzzles = DATA.puzzles.slice().reverse();
+  const EC = DATA.stats.elo_center || 1500;
+  const easyPuzzles = DATA.puzzles.slice().sort((a, b) => (a.elo_easy || EC + DATA.stats.mu + a.beta + 3*a.std) - (b.elo_easy || EC + DATA.stats.mu + b.beta + 3*b.std));
   function renderEasyPuzzleTable(filter = '') {
     const t = d3.select('#easy-puzzle-table'); t.html('');
     const thead = t.append('thead').append('tr');
-    ['Rank', 'Puzzle', 'Pieces', 'Difficulty (\u03b2)', '\u00b1 Std', 'Obs'].forEach((h,i) =>
-      thead.append('th').text(h).attr('class', i !== 1 ? 'num' : null));
-    const filtered = easyPuzzles.filter(d => d.name.toLowerCase().includes(filter.toLowerCase()));
+    ['Rank', '', 'Puzzle', 'Pieces', 'Difficulty (mB)', 'mB (Wilson)', 'Obs'].forEach((h,i) =>
+      thead.append('th').text(h).attr('class', (i !== 2) ? 'num' : null));
+    let filtered = easyPuzzles;
+    if (easyPcFilter > 0) filtered = filtered.filter(d => d.pc === easyPcFilter);
+    if (easySourceFilter) filtered = filtered.filter(d => puzzleSource(d) === easySourceFilter);
+    if (filter) filtered = filtered.filter(d => d.name.toLowerCase().includes(filter.toLowerCase()));
     const tbody = t.append('tbody');
-    const maxB = d3.max(easyPuzzles.slice(0, 50).map(d => Math.abs(d.beta)));
+    const eloFn = d => d.elo != null ? d.elo : Math.round((DATA.stats.elo_center||1500) + DATA.stats.mu + d.beta);
+    const maxElo = d3.max(filtered.slice(0, 50).map(eloFn)) || 2000;
+    const minElo = d3.min(filtered.slice(0, 50).map(eloFn)) || 1000;
     filtered.slice(0, 50).forEach((d, i) => {
+      const elo = eloFn(d);
+      const eloW = d.elo_easy != null ? d.elo_easy : Math.round((DATA.stats.elo_center||1500) + DATA.stats.mu + d.beta + 3*d.std);
       const tr = tbody.append('tr');
       tr.append('td').attr('class', 'num').text(i + 1);
+      const imgTd = tr.append('td').style('padding', '2px 4px');
+      if (d.img) imgTd.append('img').attr('src', d.img).attr('alt', '').attr('class', 'puzzle-thumb');
       tr.append('td').text(d.name);
       tr.append('td').attr('class', 'num').text(d.pc);
       const td = tr.append('td').attr('class', 'num bar-cell');
-      td.append('div').attr('class', 'bar-bg').style('width', (Math.abs(d.beta)/maxB*80) + '%')
-        .style('background', d.beta > 0 ? 'var(--red)' : 'var(--green)');
-      td.append('span').text(fmt2(d.beta));
-      tr.append('td').attr('class', 'num').style('color', 'var(--text-light)').text(fmt2(d.std));
+      td.append('div').attr('class', 'bar-bg').style('width', ((elo - minElo)/(maxElo - minElo)*80) + '%')
+        .style('background', 'var(--green)');
+      td.append('span').text(elo);
+      tr.append('td').attr('class', 'num').text(eloW);
       tr.append('td').attr('class', 'num').text(d.n);
     });
   }
 
-  // --- Alpha distribution ---
+  // --- mB distribution (stacked by observation count) ---
   (function() {
-    const alphas = DATA.puzzlers.map(d => d.alpha);
+    const EC = DATA.stats.elo_center || 1500;
+    const puzzlersWithElo = DATA.puzzlers.map(d => ({
+      elo: d.elo != null ? d.elo : Math.round(EC - d.alpha),
+      n: d.n || 1
+    }));
+    const elos = puzzlersWithElo.map(d => d.elo);
     const W = 600, H = 250, mg = {top: 28, right: 16, bottom: 44, left: 56};
     const svg = d3.select('#chart-alpha-dist').append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
-    svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text('Distribution of Puzzler Speed Effects (\u03b1)');
-    const bins = d3.bin().thresholds(50)(alphas);
-    const x = d3.scaleLinear().domain([d3.min(alphas)*1.1, d3.max(alphas)*1.1]).range([mg.left, W - mg.right]);
+    svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text('Distribution of Puzzler Ratings (mB)');
+    const nBins = 50;
+    const extent = [d3.min(elos)*0.95, d3.max(elos)*1.05];
+    const binWidth = (extent[1] - extent[0]) / nBins;
+    const groups = [{label: 'n=1', cls: 'n1', filter: d => d.n === 1, color: '#c44e52'},
+                    {label: 'n=2-5', cls: 'n2_5', filter: d => d.n >= 2 && d.n <= 5, color: '#e8a838'},
+                    {label: 'n\u22656', cls: 'n6plus', filter: d => d.n >= 6, color: '#4a7fb5'}];
+    const bins = d3.range(nBins).map(i => {
+      const x0 = extent[0] + i * binWidth, x1 = x0 + binWidth;
+      const obj = {x0, x1};
+      let cumul = 0;
+      groups.forEach(g => {
+        const count = puzzlersWithElo.filter(d => g.filter(d) && d.elo >= x0 && d.elo < x1).length;
+        obj[g.cls + '_y0'] = cumul;
+        cumul += count;
+        obj[g.cls + '_y1'] = cumul;
+      });
+      obj.total = cumul;
+      return obj;
+    });
+    const x = d3.scaleLinear().domain(extent).range([mg.left, W - mg.right]);
+    const y = d3.scaleLinear().domain([0, d3.max(bins, d => d.total) * 1.1]).range([H - mg.bottom, mg.top]);
+    makeAxis(svg, x, y, W, H, mg, 'Rating (mB, higher = faster)', 'Count');
+    groups.forEach(g => {
+      svg.selectAll(`.bar-${g.cls}`).data(bins).enter().append('rect')
+        .attr('x', d => x(d.x0) + 1).attr('y', d => y(d[g.cls + '_y1']))
+        .attr('width', d => Math.max(0, x(d.x1) - x(d.x0) - 1))
+        .attr('height', d => y(d[g.cls + '_y0']) - y(d[g.cls + '_y1']))
+        .attr('fill', g.color).attr('opacity', 0.7);
+    });
+    svg.append('line').attr('x1', x(1500)).attr('x2', x(1500))
+      .attr('y1', mg.top).attr('y2', H - mg.bottom)
+      .attr('stroke', '#303030').attr('stroke-dasharray', '3,3');
+    // Quartile lines
+    const sorted = elos.slice().sort((a, b) => a - b);
+    const q25 = sorted[Math.floor(sorted.length * 0.25)];
+    const q75 = sorted[Math.floor(sorted.length * 0.75)];
+    const q50 = sorted[Math.floor(sorted.length * 0.50)];
+    [{v: q25, label: 'Q1', anchor: 'end', dx: -4}, {v: q50, label: 'Median', anchor: 'middle', dx: 0}, {v: q75, label: 'Q3', anchor: 'start', dx: 4}].forEach(({v, label, anchor, dx}) => {
+      svg.append('line').attr('x1', x(v)).attr('x2', x(v))
+        .attr('y1', mg.top).attr('y2', H - mg.bottom)
+        .attr('stroke', '#6a6a9f').attr('stroke-dasharray', '5,3').attr('opacity', 0.8);
+      svg.append('text').attr('x', x(v) + dx).attr('y', mg.top - 3)
+        .attr('text-anchor', anchor).style('font-size', '9px').style('fill', '#6a6a9f')
+        .text(`${label} ${Math.round(v)}`);
+    });
+    // Legend
+    const lg = svg.append('g').attr('transform', `translate(${W - mg.right - 120}, ${mg.top + 5})`);
+    groups.forEach((g, i) => {
+      lg.append('rect').attr('x', 0).attr('y', i * 16).attr('width', 10).attr('height', 10).attr('fill', g.color).attr('opacity', 0.7);
+      lg.append('text').attr('x', 14).attr('y', i * 16 + 9).style('font-size', '11px').text(g.label);
+    });
+  })();
+
+  // --- Velocity distribution ---
+  (function() {
+    const deltaElos = DATA.puzzlers.filter(d => d.delta != null).map(d => Math.round(-d.delta));
+    if (deltaElos.length === 0) return;
+    const W = 600, H = 250, mg = {top: 28, right: 16, bottom: 44, left: 56};
+    const svg = d3.select('#chart-velocity-dist').append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
+    svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text('Distribution of Puzzler \u0394mB per Year');
+    const bins = d3.bin().thresholds(50)(deltaElos);
+    const x = d3.scaleLinear().domain([d3.min(deltaElos)*1.1, d3.max(deltaElos)*1.1]).range([mg.left, W - mg.right]);
     const y = d3.scaleLinear().domain([0, d3.max(bins, d => d.length)]).range([H - mg.bottom, mg.top]);
-    makeAxis(svg, x, y, W, H, mg, 'Puzzler effect \u03b1 (negative = faster)', 'Count');
+    makeAxis(svg, x, y, W, H, mg, '\u0394mB/yr (positive = improving)', 'Count');
     svg.selectAll('.bar').data(bins).enter().append('rect')
       .attr('x', d => x(d.x0) + 1).attr('y', d => y(d.length))
       .attr('width', d => Math.max(0, x(d.x1) - x(d.x0) - 1))
       .attr('height', d => H - mg.bottom - y(d.length))
-      .attr('fill', d => (d.x0 + d.x1)/2 < 0 ? '#55a868' : '#c44e52').attr('opacity', 0.7);
+      .attr('fill', d => (d.x0 + d.x1)/2 > 0 ? '#55a868' : '#c44e52').attr('opacity', 0.7);
+    // Zero line
     svg.append('line').attr('x1', x(0)).attr('x2', x(0))
       .attr('y1', mg.top).attr('y2', H - mg.bottom)
       .attr('stroke', '#303030').attr('stroke-dasharray', '3,3');
+    // Population trend delta_0 in mB units
+    const d0Elo = Math.round(-(DATA.stats.delta_0 || 0));
+    if (d0Elo !== 0 && x(d0Elo) > mg.left && x(d0Elo) < W - mg.right) {
+      svg.append('line').attr('x1', x(d0Elo)).attr('x2', x(d0Elo))
+        .attr('y1', mg.top).attr('y2', H - mg.bottom)
+        .attr('stroke', '#6a6a9f').attr('stroke-dasharray', '5,3').attr('opacity', 0.8);
+      svg.append('text').attr('x', x(d0Elo) + 4).attr('y', mg.top + 10)
+        .attr('text-anchor', 'start').style('font-size', '9px').style('fill', '#6a6a9f')
+        .text(`Pop. trend: +${d0Elo} mB/yr`);
+    }
+  })();
+
+  // --- Most improved table ---
+  (function() {
+    const multi = DATA.puzzlers.filter(d => d.delta != null && d.yr_min && d.yr_max && d.yr_max > d.yr_min);
+    const improving = multi.slice().sort((a, b) => a.delta - b.delta);
+    const declining = multi.slice().sort((a, b) => b.delta - a.delta);
+    const t = d3.select('#improved-table'); t.html('');
+    const thead = t.append('thead').append('tr');
+    ['Rank', 'Puzzler', 'mB', '\u03b4/yr', '\u0394mB/yr', 'Years', 'Obs'].forEach((h,i) =>
+      thead.append('th').text(h).attr('class', i !== 1 ? 'num' : null));
+    const tbody = t.append('tbody');
+    improving.slice(0, 30).forEach((d, i) => {
+      const elo = d.elo || Math.round((DATA.stats.elo_center||1500) - d.alpha);
+      const deltaElo = Math.round(-d.delta);  // negative delta → positive mB gain
+      const tr = tbody.append('tr');
+      tr.append('td').attr('class', 'num').text(i + 1);
+      tr.append('td').text(d.name);
+      tr.append('td').attr('class', 'num').text(fmtInt(elo));
+      tr.append('td').attr('class', 'num').style('color', 'var(--green)').text(d.delta.toFixed(3));
+      tr.append('td').attr('class', 'num').style('color', 'var(--green)').style('font-weight', '600').text('+' + deltaElo);
+      tr.append('td').attr('class', 'num').style('color', 'var(--text-light)').text(`${d.yr_min}-${d.yr_max}`);
+      tr.append('td').attr('class', 'num').text(d.n);
+    });
   })();
 
   // --- Basis functions ---
@@ -856,34 +1083,9 @@ function buildApp(DATA) {
     });
   })();
 
-  // --- Source effects ---
-  (function() {
-    const m5 = DATA.models.model_5;
-    const el = d3.select('#source-effects');
-    if (!m5 || !m5.source_effects) { el.append('p').text('No source effect data available.'); return; }
-    const effects = Object.entries(m5.source_effects).map(([name, v]) => ({name, ...v}));
-    const diff = effects.length === 2 ? Math.abs(effects[0].mean - effects[1].mean) : null;
-    const t = el.append('table');
-    const thead = t.append('thead').append('tr');
-    ['Source', '\u03b3 (mean)', '\u00b1 std', 'exp(\u03b3) multiplier'].forEach(h => thead.append('th').text(h));
-    const tbody = t.append('tbody');
-    effects.forEach(e => {
-      const tr = tbody.append('tr');
-      tr.append('td').text(e.name);
-      tr.append('td').attr('class', 'num').text(fmt(e.mean));
-      tr.append('td').attr('class', 'num').style('color', 'var(--text-light)').text(fmt(e.std));
-      tr.append('td').attr('class', 'num').text(d3.format('.1%')(Math.exp(e.mean) - 1) + ' slower than baseline');
-    });
-    if (diff != null) {
-      el.append('p').style('margin-top', '8px')
-        .html(`Source difference: <span class="metric-highlight">\u0394\u03b3 = ${fmt(diff)}</span> ` +
-          `(${d3.format('.1%')(Math.exp(diff) - 1)} multiplicative time difference between platforms)`);
-    }
-  })();
-
-  // --- Model 4 Deep Dive ---
-  if (DATA.model4_detail) {
-    const M4 = DATA.model4_detail;
+  // --- Model 2c Deep Dive ---
+  if (DATA.model2c_detail) {
+    const M2C = DATA.model2c_detail;
 
     // Scalar params table
     (function() {
@@ -892,19 +1094,23 @@ function buildApp(DATA) {
       ['Parameter', 'Value', '\u00b1 Std', 'Interpretation'].forEach(h => thead.append('th').text(h));
       const tbody = t.append('tbody');
       const interp = {
-        mu: 'Global intercept (log-time at N=1)',
+        mu: 'Global intercept (mB)',
         sigma: 'Noise scale (Student-t)',
         nu: 'Degrees of freedom (\u221e = Normal)',
-        c_pieces: 'Global log(N) coefficient',
         sigma_alpha: 'Puzzler effect spread',
         sigma_beta: 'Puzzle difficulty spread',
-        sigma_b_0: 'Factor 0 puzzle loading scale',
-        sigma_b_1: 'Factor 1 puzzle loading scale',
-        sigma_b_2: 'Factor 2 puzzle loading scale',
+        delta_0: 'Population trend (mB/yr)',
+        sigma_delta: 'Individual velocity spread',
+        c_basis_0: 'Basis coeff: log(N)',
+        c_basis_1: 'Basis coeff: \u221aN',
+        c_basis_2: 'Basis coeff: N',
+        c_basis_3: 'Basis coeff: N\u00b7log(N)',
+        c_basis_4: 'Basis coeff: N\u00b2',
       };
-      const order = ['mu', 'sigma', 'nu', 'c_pieces', 'sigma_alpha', 'sigma_beta', 'sigma_b_0', 'sigma_b_1', 'sigma_b_2'];
+      const order = ['mu', 'sigma', 'nu', 'sigma_alpha', 'sigma_beta', 'delta_0', 'sigma_delta',
+                      'c_basis_0', 'c_basis_1', 'c_basis_2', 'c_basis_3', 'c_basis_4'];
       order.forEach(key => {
-        const p = M4.scalar_params[key];
+        const p = M2C.scalar_params[key];
         if (!p) return;
         const tr = tbody.append('tr');
         tr.append('td').style('font-family', "'Source Code Pro', monospace").text(key);
@@ -916,7 +1122,7 @@ function buildApp(DATA) {
 
     // Student-t vs Normal
     (function() {
-      const st = M4.student_t_comparison;
+      const st = M2C.student_t_comparison;
       const W = 600, H = 300, mg = {top: 32, right: 120, bottom: 44, left: 56};
       const svg = d3.select('#chart-student-t').append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
       svg.append('text').attr('class', 'chart-title').attr('x', (W-mg.right)/2+mg.left/2).attr('y', 16).attr('text-anchor', 'middle')
@@ -924,13 +1130,12 @@ function buildApp(DATA) {
       const x = d3.scaleLinear().domain(d3.extent(st.x)).range([mg.left, W - mg.right]);
       const yMax = d3.max([...st.student_pdf, ...st.normal_pdf]);
       const y = d3.scaleLinear().domain([0, yMax * 1.1]).range([H - mg.bottom, mg.top]);
-      makeAxis(svg, x, y, W, H, mg, 'Residual (log-time)', 'Density');
+      makeAxis(svg, x, y, W, H, mg, 'Residual (mB)', 'Density');
       const line = d3.line().x((d,i) => x(st.x[i])).y(d => y(d));
       svg.append('path').datum(st.normal_pdf).attr('d', line)
         .attr('fill', 'none').attr('stroke', '#4a7fb5').attr('stroke-width', 2).attr('stroke-dasharray', '6,3');
       svg.append('path').datum(st.student_pdf).attr('d', line)
         .attr('fill', 'none').attr('stroke', '#c44e52').attr('stroke-width', 2);
-      // Shade the tails where Student-t > Normal
       const tailData = st.x.map((xi, i) => ({x: xi, st: st.student_pdf[i], n: st.normal_pdf[i]}))
         .filter(d => d.st > d.n * 1.2);
       if (tailData.length > 0) {
@@ -939,7 +1144,6 @@ function buildApp(DATA) {
           .attr('width', 2).attr('height', d => y(d.n) - y(d.st))
           .attr('fill', '#c44e52').attr('opacity', 0.15);
       }
-      // Legend
       const lg = svg.append('g').attr('transform', `translate(${W - mg.right + 8}, ${mg.top + 12})`);
       lg.append('line').attr('x2', 20).attr('stroke', '#c44e52').attr('stroke-width', 2);
       lg.append('text').attr('x', 24).attr('y', 4).style('font-size', '11px').text(`Student-t(\u03bd=${st.nu})`);
@@ -948,88 +1152,74 @@ function buildApp(DATA) {
       lg.append('text').attr('y', 48).style('font-size', '10px').style('fill', '#6e6e6e').text('Shaded: tail excess');
     })();
 
-    // Puzzler factor scatters
-    function factorScatter(containerId, xKey, yKey, xLabel, yLabel, title) {
-      const data = M4.puzzler_factors;
-      const W = 400, H = 300, mg = {top: 28, right: 16, bottom: 44, left: 56};
-      const svg = d3.select('#' + containerId).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
-      svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text(title);
-      const xExt = d3.extent(data, d => d[xKey]), yExt = d3.extent(data, d => d[yKey]);
-      const xPad = (xExt[1]-xExt[0])*0.05, yPad = (yExt[1]-yExt[0])*0.05;
-      const x = d3.scaleLinear().domain([xExt[0]-xPad, xExt[1]+xPad]).range([mg.left, W-mg.right]);
-      const y = d3.scaleLinear().domain([yExt[0]-yPad, yExt[1]+yPad]).range([H-mg.bottom, mg.top]);
-      makeAxis(svg, x, y, W, H, mg, xLabel, yLabel);
-      const color = d3.scaleSequential(d3.interpolateRdYlGn).domain(d3.extent(data, d => -d.alpha));
-      svg.selectAll('circle').data(data).enter().append('circle')
-        .attr('cx', d => x(d[xKey])).attr('cy', d => y(d[yKey]))
-        .attr('r', 2).attr('fill', d => color(-d.alpha)).attr('opacity', 0.5)
-        .on('mouseover', function(event, d) {
-          d3.select(this).attr('r', 5).attr('opacity', 1);
-          showTip(event, `<span class="tt-value">${d.name}</span><br>` +
-            `<span class="tt-label">\u03b1:</span> ${fmt2(d.alpha)} <span class="tt-label">n:</span> ${d.n}<br>` +
-            `<span class="tt-label">${xLabel}:</span> ${fmt2(d[xKey])} <span class="tt-label">${yLabel}:</span> ${fmt2(d[yKey])}`);
-        })
-        .on('mouseout', function() { d3.select(this).attr('r', 2).attr('opacity', 0.5); hideTip(); });
-      // Zero lines
-      svg.append('line').attr('x1', x(0)).attr('x2', x(0)).attr('y1', mg.top).attr('y2', H-mg.bottom)
-        .attr('stroke', '#ccc').attr('stroke-dasharray', '2,2');
-      svg.append('line').attr('x1', mg.left).attr('x2', W-mg.right).attr('y1', y(0)).attr('y2', y(0))
-        .attr('stroke', '#ccc').attr('stroke-dasharray', '2,2');
-    }
-    factorScatter('chart-puzzler-factors-01', 'a0', 'a1', 'Factor 0 (log N)', 'Factor 1 (\u221aN)', 'Puzzler Factors: a\u2080 vs a\u2081');
-    factorScatter('chart-puzzler-factors-02', 'a0', 'a2', 'Factor 0 (log N)', 'Factor 2 (N)', 'Puzzler Factors: a\u2080 vs a\u2082');
-
-    // Puzzle factor vs piece count
-    function puzzleFactorScatter(containerId, yKey, yLabel, title) {
-      const data = M4.factor_by_pieces;
-      const W = 400, H = 300, mg = {top: 28, right: 16, bottom: 44, left: 56};
-      const svg = d3.select('#' + containerId).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
-      svg.append('text').attr('class', 'chart-title').attr('x', W/2).attr('y', 16).attr('text-anchor', 'middle').text(title);
-      const x = d3.scaleLog().domain([30, 15000]).range([mg.left, W-mg.right]);
-      const yExt = d3.extent(data, d => d[yKey]);
-      const yPad = (yExt[1]-yExt[0])*0.05;
-      const y = d3.scaleLinear().domain([yExt[0]-yPad, yExt[1]+yPad]).range([H-mg.bottom, mg.top]);
-      makeAxis(svg, x, y, W, H, mg, 'Piece count', yLabel);
-      svg.selectAll('circle').data(data).enter().append('circle')
-        .attr('cx', d => x(d.pc)).attr('cy', d => y(d[yKey]))
-        .attr('r', 2).attr('fill', '#8172b2').attr('opacity', 0.4);
-      svg.append('line').attr('x1', mg.left).attr('x2', W-mg.right).attr('y1', y(0)).attr('y2', y(0))
-        .attr('stroke', '#ccc').attr('stroke-dasharray', '2,2');
-    }
-    puzzleFactorScatter('chart-puzzle-factor-b0', 'b0', 'b\u2080 (log N)', 'Puzzle Factor b\u2080 vs Pieces');
-    puzzleFactorScatter('chart-puzzle-factor-b1', 'b1', 'b\u2081 (\u221aN)', 'Puzzle Factor b\u2081 vs Pieces');
-
-    // Response curves
+    // Basis correction: main curve + uncertainty zoom (stacked vertically)
     (function() {
-      const curves = M4.response_curves;
-      const W = 600, H = 350, mg = {top: 28, right: 140, bottom: 44, left: 56};
-      const svg = d3.select('#chart-response-curves').append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width', '100%');
-      svg.append('text').attr('class', 'chart-title').attr('x', (W-mg.right)/2+mg.left/2).attr('y', 16).attr('text-anchor', 'middle')
-        .text('Predicted log(time) vs Pieces by Puzzler Skill');
-      const allPts = curves.flatMap(c => c.pieces.map((p,i) => ({p, lt: c.log_time[i]})));
-      const x = d3.scaleLog().domain([d3.min(allPts, d=>d.p)*0.9, d3.max(allPts, d=>d.p)*1.1]).range([mg.left, W-mg.right]);
-      const y = d3.scaleLinear().domain([d3.min(allPts, d=>d.lt)-0.3, d3.max(allPts, d=>d.lt)+0.3]).range([H-mg.bottom, mg.top]);
-      makeAxis(svg, x, y, W, H, mg, 'Pieces', 'Predicted log(time)');
-      const colors = ['#2d8a4e', '#55a868', '#8172b2', '#dd8452', '#c44e52'];
-      const labels = ['Fastest', '25th pctile', 'Median', '75th pctile', 'Slowest'];
-      curves.forEach((c, ci) => {
-        const line = d3.line().x((d,i) => x(c.pieces[i])).y(d => y(d));
-        svg.append('path').datum(c.log_time).attr('d', line)
-          .attr('fill', 'none').attr('stroke', colors[ci]).attr('stroke-width', 2);
-        const lg = svg.append('g').attr('transform', `translate(${W-mg.right+8}, ${mg.top + 8 + ci*18})`);
-        lg.append('line').attr('x2', 14).attr('stroke', colors[ci]).attr('stroke-width', 2);
-        lg.append('text').attr('x', 18).attr('y', 4).style('font-size', '10px').text(labels[ci]);
+      const bc = M2C.basis_correction;
+      const color = '#4a7fb5';
+      const W = 600, H1 = 280, H2 = 180, totalH = H1 + H2 + 20;
+      const mg = {top: 28, right: 50, bottom: 36, left: 64};
+      const svg = d3.select('#chart-response-curves').append('svg').attr('viewBox', `0 0 ${W} ${totalH}`).attr('width', '100%');
+
+      // --- Top panel: full correction curve ---
+      svg.append('text').attr('class', 'chart-title').attr('x', (W-mg.right+mg.left)/2).attr('y', 16).attr('text-anchor', 'middle')
+        .text('Learned Piece-Count Correction  Σ cₖφₖ(N)');
+      const allQ = [...bc.quantiles.p5, ...bc.quantiles.p95];
+      const yPad = (d3.max(allQ) - d3.min(allQ)) * 0.05;
+      const x1 = d3.scaleLog().domain([d3.min(bc.pieces)*0.9, d3.max(bc.pieces)*1.1]).range([mg.left, W-mg.right]);
+      const y1 = d3.scaleLinear().domain([d3.min(allQ)-yPad, d3.max(allQ)+yPad]).range([H1-mg.bottom, mg.top]);
+      svg.append('g').attr('class', 'axis').attr('transform', `translate(0,${H1-mg.bottom})`).call(d3.axisBottom(x1).ticks(6));
+      svg.append('g').attr('class', 'axis').attr('transform', `translate(${mg.left},0)`).call(d3.axisLeft(y1).ticks(5))
+        .append('text').attr('transform', 'rotate(-90)').attr('x', -H1/2).attr('y', -44)
+        .style('text-anchor', 'middle').style('font-size', '11px').style('fill', '#6e6e6e').text('Correction (mB)');
+      if (y1.domain()[0] < 0 && y1.domain()[1] > 0) {
+        svg.append('line').attr('x1', mg.left).attr('x2', W-mg.right)
+          .attr('y1', y1(0)).attr('y2', y1(0))
+          .attr('stroke', '#ccc').attr('stroke-width', 1).attr('stroke-dasharray', '4,3');
+      }
+      const mkLine1 = d3.line().x((d,i) => x1(bc.pieces[i])).y(d => y1(d));
+      svg.append('path').datum(bc.mean).attr('d', mkLine1)
+        .attr('fill', 'none').attr('stroke', color).attr('stroke-width', 2);
+
+      // --- Bottom panel: deviation from mean (zoomed to show uncertainty) ---
+      const offY = H1 + 20;
+      const g2 = svg.append('g').attr('transform', `translate(0,${offY})`);
+      g2.append('text').attr('class', 'chart-title').attr('x', (W-mg.right+mg.left)/2).attr('y', 14).attr('text-anchor', 'middle')
+        .text('Posterior uncertainty (quantile − mean)');
+      const mg2 = {top: 22, right: mg.right, bottom: 36, left: mg.left};
+      // Compute deviations
+      const devs = {};
+      for (const q of Object.keys(bc.quantiles)) {
+        devs[q] = bc.quantiles[q].map((v, i) => v - bc.mean[i]);
+      }
+      const allDevs = Object.values(devs).flat();
+      const devMax = Math.max(Math.abs(d3.min(allDevs)), Math.abs(d3.max(allDevs))) * 1.4;
+      const x2 = d3.scaleLog().domain(x1.domain()).range([mg2.left, W-mg2.right]);
+      const y2 = d3.scaleLinear().domain([-devMax, devMax]).range([H2-mg2.bottom, mg2.top]);
+      g2.append('g').attr('class', 'axis').attr('transform', `translate(0,${H2-mg2.bottom})`).call(d3.axisBottom(x2).ticks(6))
+        .append('text').attr('x', (W-mg2.right+mg2.left)/2).attr('y', 30)
+        .style('text-anchor', 'middle').style('font-size', '11px').style('fill', '#6e6e6e').text('Pieces');
+      g2.append('g').attr('class', 'axis').attr('transform', `translate(${mg2.left},0)`).call(d3.axisLeft(y2).ticks(5))
+        .append('text').attr('transform', 'rotate(-90)').attr('x', -H2/2).attr('y', -44)
+        .style('text-anchor', 'middle').style('font-size', '11px').style('fill', '#6e6e6e').text('Δ mB');
+      // Zero line
+      g2.append('line').attr('x1', mg2.left).attr('x2', W-mg2.right)
+        .attr('y1', y2(0)).attr('y2', y2(0))
+        .attr('stroke', '#aaa').attr('stroke-width', 1);
+      // Filled decile bands
+      const bandPairs = [['p5','p95'], ['p10','p90'], ['p20','p80'], ['p30','p70'], ['p40','p60']];
+      const bandOpacities = [0.12, 0.15, 0.20, 0.25, 0.30];
+      bandPairs.forEach(([lo, hi], bi) => {
+        const area = d3.area()
+          .x((d,i) => x2(bc.pieces[i]))
+          .y0((d,i) => y2(devs[lo][i]))
+          .y1((d,i) => y2(devs[hi][i]));
+        g2.append('path').datum(bc.pieces).attr('d', area)
+          .attr('fill', color).attr('opacity', bandOpacities[bi]);
       });
-      // Add secondary y-axis label with actual time
-      const timeTicks = [5, 10, 30, 60, 120, 300, 600, 1800, 3600];
-      const timeLabels = ['5s','10s','30s','1m','2m','5m','10m','30m','1h'];
-      timeTicks.forEach((t, i) => {
-        const lt = Math.log(t);
-        if (lt >= y.domain()[0] && lt <= y.domain()[1]) {
-          svg.append('text').attr('x', W-mg.right+4).attr('y', y(lt)+3)
-            .style('font-size', '9px').style('fill', '#999').text(timeLabels[i]);
-        }
-      });
+      // Legend
+      const lg = g2.append('g').attr('transform', `translate(${mg2.left + 8}, ${mg2.top + 4})`);
+      lg.append('rect').attr('width', 14).attr('height', 10).attr('fill', color).attr('opacity', 0.55);
+      lg.append('text').attr('x', 18).attr('y', 9).style('font-size', '9px').text('Nested deciles: 90/80/60/40/20% CI');
     })();
   }
 
@@ -1052,7 +1242,23 @@ function buildApp(DATA) {
 
   document.getElementById('puzzler-search').addEventListener('input', function() { renderPuzzlerTable(this.value); });
   document.getElementById('puzzle-search').addEventListener('input', function() { renderPuzzleTable(this.value); });
+  document.getElementById('puzzle-pc-filter').addEventListener('change', function() {
+    hardPcFilter = parseInt(this.value);
+    renderPuzzleTable(document.getElementById('puzzle-search').value);
+  });
   document.getElementById('easy-puzzle-search').addEventListener('input', function() { renderEasyPuzzleTable(this.value); });
+  document.getElementById('easy-puzzle-pc-filter').addEventListener('change', function() {
+    easyPcFilter = parseInt(this.value);
+    renderEasyPuzzleTable(document.getElementById('easy-puzzle-search').value);
+  });
+  document.getElementById('puzzle-source-filter').addEventListener('change', function() {
+    hardSourceFilter = this.value;
+    renderPuzzleTable(document.getElementById('puzzle-search').value);
+  });
+  document.getElementById('easy-puzzle-source-filter').addEventListener('change', function() {
+    easySourceFilter = this.value;
+    renderEasyPuzzleTable(document.getElementById('easy-puzzle-search').value);
+  });
 
   updateAll();
   renderResiduals();

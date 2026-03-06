@@ -4,8 +4,14 @@ import numpy as np
 import pandas as pd
 
 
-def load_solo_completed(path: str = "data/processed/combined_results.csv") -> pd.DataFrame:
-    """Load and filter to solo, completed results with valid times and piece counts."""
+def load_solo_completed(
+    path: str = "data/processed/combined_results.csv",
+    source: str | None = "myspeedpuzzling",
+) -> pd.DataFrame:
+    """Load and filter to solo, completed results with valid times and piece counts.
+
+    If source is given, filter to that source only.
+    """
     df = pd.read_csv(path, low_memory=False)
     mask = (
         (df["division"] == "solo")
@@ -16,19 +22,23 @@ def load_solo_completed(path: str = "data/processed/combined_results.csv") -> pd
         & (df["time_seconds"] > 0)
         & (df["puzzle_pieces"] > 0)
     )
+    if source is not None:
+        mask = mask & (df["source"] == source)
     df = df[mask].copy()
-    df["log_time"] = np.log(df["time_seconds"])
+    df["log_time"] = 1000.0 * np.log10(df["time_seconds"])
     df["puzzle_pieces"] = df["puzzle_pieces"].astype(int)
     return df.reset_index(drop=True)
 
 
 def create_puzzle_id(df: pd.DataFrame) -> pd.DataFrame:
-    """Create a unique puzzle identifier from event, name, and piece count."""
+    """Create a unique puzzle identifier from name and piece count.
+
+    Same puzzle (name + pieces) across different events/sources shares one ID,
+    enabling cross-source calibration through shared puzzles.
+    """
     df = df.copy()
     df["puzzle_id"] = (
-        df["event_id"].astype(str)
-        + "_"
-        + df["puzzle_name"].astype(str)
+        df["puzzle_name"].astype(str)
         + "_"
         + df["puzzle_pieces"].astype(str)
     )
@@ -51,11 +61,6 @@ def encode_indices(df: pd.DataFrame) -> tuple[pd.DataFrame, dict, dict]:
     puzzle_lookup = {pid: i for i, pid in enumerate(puzzles)}
     df["puzzle_idx"] = df["puzzle_id"].map(puzzle_lookup)
 
-    if "source" in df.columns:
-        sources = sorted(df["source"].unique())
-        source_lookup = {s: i for i, s in enumerate(sources)}
-        df["source_idx"] = df["source"].map(source_lookup)
-
     return df, puzzler_lookup, puzzle_lookup
 
 
@@ -75,17 +80,24 @@ def train_test_split(
     return df[~test_mask].reset_index(drop=True), df[test_mask].reset_index(drop=True)
 
 
-def prepare_model_data(df: pd.DataFrame) -> dict:
-    """Convert a DataFrame into the dict of arrays needed by NumPyro models."""
+def prepare_model_data(df: pd.DataFrame, mu_fixed: float | None = None) -> dict:
+    """Convert a DataFrame into the dict of arrays needed by NumPyro models.
+
+    If mu_fixed is None, computes it as the mean of log_time (use for training).
+    Pass the training mu_fixed explicitly for test data to keep them aligned.
+    """
+    log_time = np.array(df["log_time"])
+    if mu_fixed is None:
+        mu_fixed = float(np.mean(log_time))
     data = {
         "puzzler_idx": np.array(df["puzzler_idx"]),
         "puzzle_idx": np.array(df["puzzle_idx"]),
-        "log_time": np.array(df["log_time"]),
+        "log_time": log_time,
         "pieces": np.array(df["puzzle_pieces"]),
         "n_puzzlers": df["puzzler_idx"].max() + 1,
         "n_puzzles": df["puzzle_idx"].max() + 1,
+        "mu_fixed": mu_fixed,
     }
-    if "source_idx" in df.columns:
-        data["source_idx"] = np.array(df["source_idx"])
-        data["n_sources"] = df["source_idx"].max() + 1
+    if "year" in df.columns:
+        data["year"] = np.array(df["year"], dtype=np.float32)
     return data
