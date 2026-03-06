@@ -869,10 +869,12 @@
                 if (S.sigma_delta != null)
                     document.getElementById("param-sigma-delta").textContent =
                         S.sigma_delta.toFixed(1);
-                if (S.ranking_year)
+                if (S.ranking_year) {
+                    const label = S.ranking_date || S.ranking_year.toFixed(1);
                     document
                         .querySelectorAll("#ranking-year, .ranking-year-label")
-                        .forEach((el) => (el.textContent = S.ranking_year));
+                        .forEach((el) => (el.textContent = label));
+                }
 
                 const nP = S.n_puzzlers,
                     nPz = S.n_puzzles;

@@ -275,6 +275,7 @@ class PDFExtractResult:
     puzzle_brand: Optional[str] = None
     event_number: Optional[int] = None
     division: Optional[str] = None  # solo, pair, team, junior
+    event_date: Optional[str] = None  # YYYY-MM-DD from PDF creation date
 
 
 def _extract_puzzle_title(next_line: str) -> Optional[str]:
@@ -349,6 +350,15 @@ def extract_table_from_text(pdf_path: Path) -> Optional[PDFExtractResult]:
     """
     try:
         with pdfplumber.open(pdf_path) as pdf:
+            # Extract PDF creation date from metadata
+            event_date = None
+            raw_date = (pdf.metadata or {}).get("CreationDate", "")
+            if raw_date:
+                # Format: D:YYYYMMDDHHMMSS+TZ'TZ' or D:YYYYMMDDHHMMSS
+                date_match = re.match(r"D:(\d{4})(\d{2})(\d{2})", str(raw_date))
+                if date_match:
+                    event_date = f"{date_match.group(1)}-{date_match.group(2)}-{date_match.group(3)}"
+
             all_text = ""
             for page in pdf.pages:
                 all_text += page.extract_text() or ""
@@ -510,6 +520,7 @@ def extract_table_from_text(pdf_path: Path) -> Optional[PDFExtractResult]:
                 puzzle_brand=puzzle_brand,
                 event_number=event_number,
                 division=division,
+                event_date=event_date,
             )
 
     except Exception as e:
@@ -537,6 +548,14 @@ def extract_table_from_pdf(pdf_path: Path) -> Optional[PDFExtractResult]:
     # Fall back to table extraction
     try:
         with pdfplumber.open(pdf_path) as pdf:
+            # Extract PDF creation date from metadata
+            event_date = None
+            raw_date = (pdf.metadata or {}).get("CreationDate", "")
+            if raw_date:
+                date_match = re.match(r"D:(\d{4})(\d{2})(\d{2})", str(raw_date))
+                if date_match:
+                    event_date = f"{date_match.group(1)}-{date_match.group(2)}-{date_match.group(3)}"
+
             all_results = []
 
             for page in pdf.pages:
@@ -652,7 +671,7 @@ def extract_table_from_pdf(pdf_path: Path) -> Optional[PDFExtractResult]:
             if not all_results:
                 return None
 
-            return PDFExtractResult(df=pd.DataFrame(all_results))
+            return PDFExtractResult(df=pd.DataFrame(all_results), event_date=event_date)
 
     except Exception as e:
         print(f"  Table extraction error for {pdf_path.name}: {e}")
@@ -720,6 +739,7 @@ def normalize_results(extract_result: PDFExtractResult, pdf_info: PDFInfo) -> pd
                 "puzzle_pieces": puzzle_pieces,
                 "puzzle_brand": puzzle_brand,
                 "puzzle_name": puzzle_name,
+                "finished_date": extract_result.event_date,
             })
         except Exception:
             continue

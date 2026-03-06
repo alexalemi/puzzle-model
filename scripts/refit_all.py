@@ -21,6 +21,7 @@ from puzzle_model.data import (
     train_test_split,
     prepare_model_data,
     add_repeat_features,
+    to_fractional_year,
 )
 from puzzle_model.model import MODELS, N_REF, PHYS_BASIS_NAMES
 from puzzle_model.inference import run_svi
@@ -210,8 +211,9 @@ def main():
     piece_counts = sorted(df["puzzle_pieces"].unique())
 
     # Use Model 2r posterior for rankings
+    from datetime import date, datetime
     from puzzle_model.model import YEAR_CENTER
-    RANKING_YEAR = 2026
+    RANKING_YEAR = to_fractional_year(datetime.now())
     params_1 = ranking_samples
     sigma_val = round(float(np.mean(np.array(params_1["sigma"]))), 3)
     delta_0_val = round(float(np.mean(np.array(params_1["delta_0"]))), 4)
@@ -237,7 +239,8 @@ def main():
         "delta_0": delta_0_val,
         "sigma_delta": sigma_delta_val,
         "year_center": YEAR_CENTER,
-        "ranking_year": RANKING_YEAR,
+        "ranking_year": round(RANKING_YEAR, 4),
+        "ranking_date": date.today().isoformat(),
         "sigma_alpha": round(float(np.mean(np.array(params_1["sigma_alpha"]))), 3),
         "sigma_beta": round(float(np.mean(np.array(params_1["sigma_beta"]))), 3),
         "nu": round(float(np.mean(np.array(params_1["nu"]))), 3),

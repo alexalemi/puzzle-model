@@ -331,6 +331,9 @@ def combine() -> pd.DataFrame:
     if UJ_PATH.exists():
         uj = pd.read_csv(UJ_PATH)
         uj["first_attempt"] = True
+        # Known event dates for USA Jigsaw Nationals
+        uj_dates = {2022: "2022-10-22", 2024: "2024-03-23", 2025: "2025-04-05"}
+        uj["finished_date"] = uj["year"].map(uj_dates)
         frames.append(uj)
         print(f"usajigsaw: {len(uj)} rows")
     else:
