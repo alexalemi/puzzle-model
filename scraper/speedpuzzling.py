@@ -23,6 +23,7 @@ from bs4 import BeautifulSoup
 # Results pages to scrape (newest to oldest)
 RESULTS_PAGES = [
     "https://www.speedpuzzling.com/results.html",
+    "https://www.speedpuzzling.com/results2025.html",
     "https://www.speedpuzzling.com/results2024.html",
     "https://www.speedpuzzling.com/results-2023.html",
     "https://www.speedpuzzling.com/results-2022.html",
