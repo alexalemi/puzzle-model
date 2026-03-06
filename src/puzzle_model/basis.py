@@ -1,4 +1,9 @@
-"""Basis functions for piece-count scaling dimensions."""
+"""Basis functions for piece-count scaling dimensions.
+
+DEPRECATED: The production model (model_2c) now uses physical basis functions
+defined directly in model.py. This module is retained for backward compatibility
+with older scripts but is no longer used by the main model pipeline.
+"""
 
 import jax.numpy as jnp
 import numpy as np

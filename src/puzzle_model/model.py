@@ -9,8 +9,12 @@ mean "average puzzler" so hierarchical shrinkage works correctly.
 
 Model hierarchy (all use Student-t likelihood):
   Model 1t: mu_fixed + alpha_i + beta_j + c*log(N)       (robust baseline)
-  Model 2:  + sum_k c_k * phi_k(N)                       (+ global basis)
-  Model 2c: Model 2 + per-puzzler velocity                (+ velocity)
+  Model 2c: + physical piece-count correction + velocity  (production model)
+
+Piece-count correction uses physically-motivated basis functions that sum additively
+in time space: time(N) = w0*sqrt(N) + w1*N + w2*N*log(N) + w3*N^2, then converts
+to mB centered at N_REF. This gives sensible extrapolation (log-time grows as at
+most 2*log(N), not exponentially).
 """
 
 import jax.numpy as jnp
@@ -19,7 +23,11 @@ import numpyro.distributions as dist
 from numpyro.handlers import reparam
 from numpyro.infer.reparam import LocScaleReparam
 
-from .basis import compute_basis, normalize_basis
+# Reference piece count for centering the physical basis correction
+N_REF = 500.0
+
+# Physical basis function names: [sqrt(N), N, N*log(N), N^2]
+PHYS_BASIS_NAMES = ["sqrt_N", "N", "N_log_N", "N_sq"]
 
 
 def model_1t(puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles,
@@ -43,50 +51,21 @@ def model_1t(puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles,
         numpyro.sample("log_time", dist.StudentT(nu, mean, sigma), obs=log_time)
 
 
-def _compute_phi(pieces, basis_mean, basis_std):
-    """Compute and normalize basis functions."""
-    phi = compute_basis(pieces)
-    if basis_mean is not None:
-        phi, _, _ = normalize_basis(phi, basis_mean, basis_std)
-    else:
-        phi, _, _ = normalize_basis(phi)
-    return phi
-
-
-def model_2(
-    puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles,
-    mu_fixed=None, basis_mean=None, basis_std=None, log_time=None, **kwargs,
-):
-    """Student-t + global coefficients for all 5 basis functions with fixed mu."""
-    mu = numpyro.deterministic("mu", jnp.float32(mu_fixed))
-    sigma = numpyro.sample("sigma", dist.HalfNormal(500.0))
-    nu = numpyro.sample("nu", dist.Gamma(2.0, 0.1))
-    sigma_alpha = numpyro.sample("sigma_alpha", dist.HalfNormal(300.0))
-    sigma_beta = numpyro.sample("sigma_beta", dist.HalfNormal(300.0))
-
-    with numpyro.plate("basis_fns", 5):
-        c_basis = numpyro.sample("c_basis", dist.Normal(0, 500.0))
-
-    with numpyro.plate("puzzlers", n_puzzlers):
-        alpha = numpyro.sample("alpha", dist.Normal(0, sigma_alpha))
-    with numpyro.plate("puzzles", n_puzzles):
-        beta = numpyro.sample("beta", dist.Normal(0, sigma_beta))
-
-    phi = _compute_phi(pieces, basis_mean, basis_std)
-    basis_effect = jnp.dot(phi, c_basis)
-    mean = mu + alpha[puzzler_idx] + beta[puzzle_idx] + basis_effect
-    with numpyro.plate("obs", len(puzzler_idx)):
-        numpyro.sample("log_time", dist.StudentT(nu, mean, sigma), obs=log_time)
-
-
 YEAR_CENTER = 2025.0
 
 
 def model_2c(
     puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles,
-    mu_fixed=None, year=None, basis_mean=None, basis_std=None, log_time=None, **kwargs,
+    mu_fixed=None, year=None, log_time=None, **kwargs,
 ):
-    """Model 2 + per-puzzler velocity (linear time trend) with fixed mu.
+    """Physical basis model + per-puzzler velocity with fixed mu.
+
+    Physical processes contribute additively in TIME, not log-time:
+        time_pieces(N) = w0*sqrt(N) + w1*N + w2*N*log(N) + w3*N^2
+
+    Converted to mB and centered at N_REF so the correction is zero
+    at the reference piece count:
+        piece_correction = 1000*log10(time_pieces(N)) - 1000*log10(time_pieces(N_REF))
 
     Each puzzler gets: alpha_i + delta_i * (year - 2025)
     Plus a population-level trend delta_0.
@@ -97,8 +76,8 @@ def model_2c(
     sigma_alpha = numpyro.sample("sigma_alpha", dist.HalfNormal(300.0))
     sigma_beta = numpyro.sample("sigma_beta", dist.HalfNormal(300.0))
 
-    with numpyro.plate("basis_fns", 5):
-        c_basis = numpyro.sample("c_basis", dist.Normal(0, 500.0))
+    # Log-weights for physical processes (exp gives positive weights)
+    log_w = numpyro.sample("log_w", dist.Normal(0, 5.0).expand([4]))
 
     # Velocity: population trend + per-puzzler deviation (mB/yr)
     delta_0 = numpyro.sample("delta_0", dist.Normal(0, 100.0))
@@ -111,20 +90,33 @@ def model_2c(
     with numpyro.plate("puzzles", n_puzzles):
         beta = numpyro.sample("beta", dist.Normal(0, sigma_beta))
 
-    phi = _compute_phi(pieces, basis_mean, basis_std)
-    basis_effect = jnp.dot(phi, c_basis)
+    # Physical basis functions in time domain
+    N = jnp.asarray(pieces, dtype=jnp.float32)
+    g = jnp.column_stack([jnp.sqrt(N), N, N * jnp.log(N), N ** 2])
 
+    # Reference basis at N_REF (for centering)
+    g_ref = jnp.array([jnp.sqrt(N_REF), N_REF, N_REF * jnp.log(N_REF), N_REF ** 2])
+
+    # Weighted sum in time domain (positive weights via exp)
+    w = jnp.exp(log_w)
+    time_contrib = jnp.dot(g, w)
+    time_ref = jnp.dot(g_ref, w)
+
+    # Convert to mB, centered at N_REF
+    mB_scale = 1000.0 / jnp.log(10.0)
+    piece_correction = mB_scale * (jnp.log(time_contrib) - jnp.log(time_ref))
+
+    # Velocity
     t = jnp.asarray(year, dtype=jnp.float32) - YEAR_CENTER if year is not None else 0.0
     velocity_effect = (delta_0 + delta[puzzler_idx]) * t
 
-    mean = mu + alpha[puzzler_idx] + beta[puzzle_idx] + basis_effect + velocity_effect
+    mean = mu + alpha[puzzler_idx] + beta[puzzle_idx] + piece_correction + velocity_effect
     with numpyro.plate("obs", len(puzzler_idx)):
         numpyro.sample("log_time", dist.StudentT(nu, mean, sigma), obs=log_time)
 
 
 # Non-centered versions for SVI/MCMC efficiency
 model_1t_nc = reparam(model_1t, config={"alpha": LocScaleReparam(0), "beta": LocScaleReparam(0)})
-model_2_nc = reparam(model_2, config={"alpha": LocScaleReparam(0), "beta": LocScaleReparam(0)})
 model_2c_nc = reparam(model_2c, config={
     "alpha": LocScaleReparam(0), "beta": LocScaleReparam(0),
     "delta": LocScaleReparam(0),
@@ -132,6 +124,5 @@ model_2c_nc = reparam(model_2c, config={
 
 MODELS = {
     "model_1t": model_1t_nc,
-    "model_2": model_2_nc,
     "model_2c": model_2c_nc,
 }
