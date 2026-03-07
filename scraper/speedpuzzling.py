@@ -33,6 +33,9 @@ RESULTS_PAGES = [
 
 BASE_URL = "https://www.speedpuzzling.com"
 
+# Character class for letters including accented Latin chars (e.g. García)
+_L = r"A-Za-z\u00C0-\u024F"
+
 
 @dataclass
 class PDFInfo:
@@ -457,7 +460,7 @@ def extract_table_from_text(pdf_path: Path) -> Optional[PDFExtractResult]:
             # Pattern matches: rank numbers... [belt color] Name, First time...
             # Example: "1 100 1000 159,134 5 Black Kautz, Lauren 0:41:11 12.14 Minnesota 1"
             results = []
-            belt_colors = r"(?:Black|Blue|Green|Red|White|Yellow|Orange|Purple|Pink|Gray|Silver|Gold|Brown)"
+            belt_colors = r"(?:Black|Blue|Green|Red|White|Yellow|Orange|Purple|Pink|Gray|Silver|Gold|Brown|future)"
 
             for line in lines:
                 line = line.strip()
@@ -485,14 +488,14 @@ def extract_table_from_text(pdf_path: Path) -> Optional[PDFExtractResult]:
                 pre_time = line[:time_match.start()].strip()
 
                 # Find name (Last, First pattern) - may have belt color prefix
-                name_pattern = rf"(?:{belt_colors}\s+)?([A-Za-z][A-Za-z'\-\s]+,\s*[A-Za-z][A-Za-z'\-\s\.]*)"
+                name_pattern = rf"(?:{belt_colors}\s+)?([{_L}][{_L}'\-\s]+,\s*[{_L}][{_L}'\-\s\.]*)"
                 name_match = re.search(name_pattern, pre_time)
 
                 if name_match:
                     name = name_match.group(1).strip()
                 else:
                     # Fallback: look for comma-separated name anywhere
-                    fallback_match = re.search(r"([A-Za-z][A-Za-z'\-]+,\s*[A-Za-z][A-Za-z'\-\.]+)", pre_time)
+                    fallback_match = re.search(rf"([{_L}][{_L}'\-]+,\s*[{_L}][{_L}'\-\.]+)", pre_time)
                     if fallback_match:
                         name = fallback_match.group(1).strip()
                     else:
@@ -635,8 +638,8 @@ def extract_table_from_pdf(pdf_path: Path) -> Optional[PDFExtractResult]:
                             # Strip out leading numbers, belt colors (Green, Blue, Black, Red, etc.)
                             # Pattern: optional [numbers] [numbers] [Color] Name, First
                             name_match = re.search(
-                                r"(?:[\d,]+\s+)?(?:\d+\s+)?(?:Green|Blue|Black|Red|White|Yellow|Orange|Purple|Pink|Gray|Silver|Gold|Brown)?\s*"
-                                r"([A-Za-z][A-Za-z'\-\s]+,\s*[A-Za-z][A-Za-z'\-\s\.]*)",
+                                r"(?:[\d,]+\s+)?(?:\d+\s+)?(?:Green|Blue|Black|Red|White|Yellow|Orange|Purple|Pink|Gray|Silver|Gold|Brown|future)?\s*"
+                                rf"([{_L}][{_L}'\-\s]+,\s*[{_L}][{_L}'\-\s\.]*)",
                                 pre_time
                             )
                             if name_match:

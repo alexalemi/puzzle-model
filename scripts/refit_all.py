@@ -368,15 +368,39 @@ def main():
     puzzle_sources = df.groupby("puzzle_idx")["source"].apply(lambda s: sorted(s.unique().tolist())).to_dict()
 
     mu_float = mu_fixed
+
+    # Compute per-puzzle piece-count correction from posterior samples
+    n_puzzles_total = len(beta_mean)
+    pc_array = np.array([float(puzzle_pieces.get(i, N_REF)) for i in range(n_puzzles_total)])
+    g_all = np.column_stack([np.sqrt(pc_array), pc_array,
+                             pc_array * np.log(pc_array), pc_array ** 2])  # (n_puzzles, 4)
+    g_ref = np.array([np.sqrt(N_REF), N_REF, N_REF * np.log(N_REF), N_REF ** 2])
+    w_samp = np.exp(log_w_samples)  # (500, 4)
+    time_all = g_all @ w_samp.T    # (n_puzzles, 500)
+    time_ref_vec = g_ref @ w_samp.T  # (500,)
+    mB_scale = 1000.0 / np.log(10.0)
+    pc_correction_all = mB_scale * (np.log(time_all) - np.log(time_ref_vec[None, :]))  # (n_puzzles, 500)
+
+    # Total difficulty = beta + piece_correction (joint posterior samples)
+    total_diff_samples = beta_samples_raw + pc_correction_all.T  # (500, n_puzzles)
+    difficulty_mean = np.mean(total_diff_samples, axis=0)
+    difficulty_std = np.std(total_diff_samples, axis=0)
+
     puzzles_list = []
     for i in np.argsort(-beta_lower):
         p_elo = ELO_CENTER + ELO_SCALE * (mu_float + float(beta_mean[i]))
         p_elo_hard = ELO_CENTER + ELO_SCALE * (mu_float + float(beta_lower[i]))
         p_elo_easy = ELO_CENTER + ELO_SCALE * (mu_float + float(beta_upper[i]))
+        # Display name: strip trailing _PIECES suffix (pieces shown separately)
+        raw_name = str(inv_puzzle[i])
+        display_name = raw_name.rsplit("_", 1)[0] if "_" in raw_name else raw_name
         entry = {
-            "name": inv_puzzle[i],
+            "name": display_name,
+            "puzzle_id": inv_puzzle[i],
             "beta": round(float(beta_mean[i]), 3),
             "std": round(float(beta_std[i]), 3),
+            "difficulty": round(float(difficulty_mean[i]), 3),
+            "difficulty_std": round(float(difficulty_std[i]), 3),
             "wilson_hard": round(float(beta_lower[i]), 3),
             "wilson_easy": round(float(beta_upper[i]), 3),
             "elo": round(p_elo),

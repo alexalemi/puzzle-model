@@ -17,3 +17,5 @@ __marimo__/
 
 # Claude Code
 .claude/
+
+suggestions.txt

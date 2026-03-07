@@ -6,18 +6,25 @@ Bayesian latent factor model for speed puzzling competition times. Uses NumPyro 
 
 ```
 src/puzzle_model/     # Main package (src layout, hatchling build)
-  data.py             # Loading, filtering, encoding, train/test split
-  basis.py            # Piece-count scaling basis functions
-  model.py            # NumPyro models 0-4 (IRT through robust Student-t)
+  data.py             # Loading, filtering, encoding, train/test split, repeat features
+  basis.py            # DEPRECATED: old normalized basis functions (retained for compat)
+  model.py            # NumPyro models 1t, 2c, 2r (fixed mu, physical basis, Student-t)
   inference.py        # MCMC (NUTS) and SVI runners
   predict.py          # Predictions, rankings, cold-start
-  evaluate.py         # RMSE, MAE, coverage, model comparison
+  evaluate.py         # RMSE, MAE, coverage, WAIC
 
 scraper/              # Data collection
   speedpuzzling.py    # PDF scraper for speedpuzzling.com results
   usajigsaw.py        # Scraper for USA Jigsaw Puzzle Association results
   myspeedpuzzling.py  # Scraper for myspeedpuzzling.com (puzzles, times, players, images)
-  combine.py          # Merges all sources into combined_results.csv
+  combine.py          # Merges all 4 sources into combined_results.csv
+
+scripts/              # Analysis & utility scripts
+  refit_all.py        # Refit all models, regenerate explorer_data.json
+  slim_data.py        # Compress explorer_data.json (round floats, subsample)
+  suggest_player_links.py  # Find candidate MSP→SP player matches for review
+  compute_waic.py     # WAIC computation for model comparison
+  diagnostic_sources.py    # Check residuals by data source
 
 notebooks/            # Marimo notebooks
   01_eda.py           # Exploratory data analysis
@@ -25,19 +32,28 @@ notebooks/            # Marimo notebooks
 
 data/
   raw/pdfs/           # ~680 downloaded result PDFs from speedpuzzling.com
+  raw/myspeedpuzzling/  # puzzles.csv, solving_times.csv, players.csv, images/
+  raw/html/           # Downloaded HTML pages
   processed/          # Generated CSVs (do not edit by hand)
+  mappings/           # player_links.csv (manual MSP→SP identity links)
+  MalloryPuzzleData.csv  # Personal puzzle dataset (1 puzzler)
+
+explorer.html         # D3.js interactive explorer (distill.pub style)
+explorer_data.json    # Precomputed data for explorer (~7.7 MB)
+explorer_puzzler_obs.json  # Per-observation posterior predictive data (~23 MB)
+deploy.sh             # Deployment script
 ```
 
 ## Data Sources
 
-Three data sources, combined by `python -m scraper.combine`:
+Four data sources, combined by `python -m scraper.combine`:
 
 ### 1. speedpuzzling.com (`source=speedpuzzling`)
 - US-based virtual/in-person competitions with controlled conditions
 - Same puzzle for all competitors, timed, first-attempt
 - Scraped from PDF result sheets → `data/processed/speedpuzzling_results.csv`
 - Competitor names: "Last, First" format (real names)
-- ~15K rows, ~2K puzzlers, ~200 puzzles
+- ~29K rows, ~2K puzzlers
 - Columns: `puzzle_brand` (manufacturer), `puzzle_name` (actual title), `puzzle_pieces`
 - Run with: `python -m scraper.speedpuzzling`
 
@@ -51,44 +67,74 @@ Three data sources, combined by `python -m scraper.combine`:
 ### 3. myspeedpuzzling.com (`source=myspeedpuzzling`)
 - Global self-reported solving times from myspeedpuzzling.com
 - Scraped by `scraper/myspeedpuzzling.py` → `data/raw/myspeedpuzzling/`
-- Two files: `puzzles.csv` (catalog with names, brands, EANs) and `solving_times.csv`
+- Files: `puzzles.csv`, `solving_times.csv`, `players.csv`, `competitions.csv`, `images/`
 - Competitor names: "Display Name (msp:uuid_prefix)" for uniqueness
 - `first_attempt` field distinguishes unseen vs repeat solves
-- ~37K rows, ~3.6K puzzlers, ~400 puzzles
+- ~302K rows (~243K first-attempt + 59K repeats), ~5K puzzlers
 - Heavily European population (DE, AU, CZ, SE, FI) vs SP's US focus
 
-### Combined Schema (`data/processed/combined_results.csv`)
+### 4. mallory (`source=mallory`)
+- Personal puzzle dataset from `data/MalloryPuzzleData.csv`
+- 167 rows, 1 puzzler; canonical name "Alemi, Mallory"
+- Linked to MSP identity via `data/mappings/player_links.csv`
+
+### Combined Dataset (~333K rows, ~8.6K puzzlers, ~20.5K puzzles)
+
+Schema (`data/processed/combined_results.csv`):
 
 ```
 source, event_id, year, division, round, rank, competitor_name, origin,
 time_seconds, completed, pieces_completed, puzzle_pieces, puzzle_brand,
-puzzle_name, time_limit_seconds, first_attempt
+puzzle_name, finished_date, first_attempt, time_limit_seconds
 ```
+
+### Player Disambiguation
+
+- UJ individual names normalized to SP "Last, First" format → ~237 linked
+- `data/mappings/player_links.csv`: manual MSP player_id → SP name links (applied in combine.py)
+- `scripts/suggest_player_links.py`: finds candidate matches for human review
+- Cross-source overlaps: SP∩UJ=237 players, SP∩MSP=1 (Mallory)
 
 ## Key Data Pipeline
 
 ```python
 from puzzle_model.data import load_solo_completed, create_puzzle_id, encode_indices
+from puzzle_model.data import prepare_model_data, add_repeat_features
 
 df = load_solo_completed()          # Filter to solo + completed + valid times
-df = create_puzzle_id(df)           # puzzle_id = event_id + puzzle_name + puzzle_pieces
+df = create_puzzle_id(df)           # puzzle_id = puzzle_name + "_" + puzzle_pieces
 df, puzzler_map, puzzle_map = encode_indices(df)  # Integer indices for NumPyro
+data_dict = prepare_model_data(df)  # Computes mu_fixed = mean(log_time)
+df = add_repeat_features(df)        # solve_number, days_since_last, days_since_first
 ```
 
-- `create_puzzle_id` builds IDs like `sp_139_Backyard Heroes_500` or `msp_018c0d75_Tuscany Hills_500`
-- No shared players between SP and MSP (different name formats, populations)
-- Minimal shared puzzles between sources
+- `puzzle_id = puzzle_name + "_" + puzzle_pieces` — shared across events/sources
+- Same puzzle at different events shares one beta parameter (~139 bridge puzzles)
+- Response variable: milliBels (`log_time = 1000 * log10(time_seconds)`)
 
 ## Model Architecture
 
-Models 0-4, incrementally complex:
-- Model 0: Basic IRT (`mu + alpha_i + beta_j`)
-- Model 1: + global piece-count effect
-- Model 2: + K=1 latent interaction
-- Model 3: + K=3 latent interactions
-- Model 4: Student-t likelihood (robust to outliers)
+Three models, incrementally complex. All use fixed mu and Student-t likelihood:
 
-Uses non-centered parameterization via `LocScaleReparam`. Factor dimensions use separate plates per k.
+- **Model 1t**: `mu_fixed + alpha_i + beta_j + c*log(N)` — basic IRT with piece-count effect
+- **Model 2c**: + physical piece-count basis `[√N, N, N·log(N), N²]` + per-puzzler velocity
+- **Model 2r**: extends 2c + repeat-solve practice effect `gamma*log(solve_number)`
+
+Key design choices:
+- **mu is fixed** to `mean(log_time)` from training data, not sampled (eliminates identifiability issue)
+- Non-centered parameterization via `LocScaleReparam`
+- Physical basis functions defined in `model.py` (`N_REF=500`, `PHYS_BASIS_NAMES`)
+- Models 1t, 2c fitted on first-attempt data only; Model 2r on all data including repeats
+- Fitted via SVI (AutoNormal guide, 5000 steps, lr=0.005)
+
+## Explorer
+
+- `explorer.html` renders from `explorer_data.json` and `explorer_puzzler_obs.json`
+- Shows: data overview, model specs, basis functions, model comparison, deep dive (Model 2r)
+- Puzzler/puzzle rankings with mB ratings and Wilson bounds
+- Puzzler table projected to 2026 with velocity (ΔmB/yr)
+- Regenerate with: `uv run python -m scripts.refit_all`
+- Serve with: `python -m http.server 8010`
 
 ## DEVLOG.md
 
@@ -99,4 +145,5 @@ A lab-notebook-style development log. Newer entries at the top, organized by dat
 - **Python >=3.14**, managed with `uv`
 - Run any module: `uv run python -m scraper.speedpuzzling`
 - Combine data: `uv run python -m scraper.combine`
+- Refit models: `uv run python scripts/refit_all.py`
 - Notebooks: `uv run marimo edit notebooks/01_eda.py`
