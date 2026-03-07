@@ -1,5 +1,112 @@
 # Development Log
 
+## 2026-03-07
+
+### Rethinking the physical model: PPM, multiplicative scaling, and teams
+
+Brainstorming session about the fundamental model structure. Three interrelated questions: (1) why PPM is incomplete, (2) whether the piece-count effect should be multiplicative, and (3) how to model duos/teams.
+
+#### What the current model actually says in time space
+
+The model is additive in milliBels (log-time), which means it's **fully multiplicative in real-time space**:
+
+```
+time = K * speed_i * difficulty_j * T(N)/T(N_ref) * trend * practice
+```
+
+where `speed_i = 10^(alpha_i/1000)`, etc. The piece-count function T(N) has the **same shape** for every puzzler — faster puzzlers just compress the entire curve by a constant factor. If puzzler A is 2x faster than B at 300 pieces, they're 2x faster at 1000 pieces too. This is a strong assumption worth examining.
+
+#### PPM: the zeroth-order model
+
+Puzzle enthusiasts use PPM (pieces per minute), which assumes `time = N / rate`. In log space: `log(time) = log(N) - log(rate)`. This is essentially model_1t with a forced slope of 1.
+
+The learned physical basis weights show why PPM is incomplete but not crazy:
+- **Dominant term**: `w1*N` (linear per-piece work) — this IS the PPM model
+- **Strong secondary**: `w2*N*log(N)` — search complexity; for each piece, you search through O(log N) candidate locations (heuristic narrowing by color/shape/region)
+- **Weak**: `w0*sqrt(N)` (setup/edge overhead), `w3*N^2` (pairwise interactions, suppressed)
+
+Over the typical competition range (300-1000 pieces), `log(N)` varies from 5.7 to 6.9 — only 20%. So PPM is a decent approximation within this narrow range, but extrapolation to 2000+ pieces would systematically underpredict times.
+
+#### Should piece-count scaling be multiplicative?
+
+The current multiplicative structure (`time = speed * difficulty * T(N)`) assumes every puzzler performs the same physical processes and their speed advantage is a uniform multiplier across all of them. This is correct if: a puzzler's hands move 2x faster, eyes scan 2x faster, and brain pattern-matches 2x faster — everything scales together.
+
+It breaks down if:
+- **Expert search strategies have different complexity**: A skilled puzzler might use better heuristics that reduce the effective search from N*log(N) toward N — their T(N) would have a different *shape*, not just a different *scale*
+- **Strategy shifts with puzzle size**: Small puzzles might be "scan and place" (linear), while large puzzles require sorting, grouping, edge-first strategies that change the functional form
+- **Difficulty interacts with piece count non-uniformly**: A "hard" puzzle (unusual cut, monochrome) might be hard specifically because of search — so its difficulty multiplier grows with N rather than being constant
+
+A lightweight way to model this: give each puzzler a "search efficiency" parameter that modulates the N*log(N) term:
+
+```
+T_i(N) = w1*N + lambda_i * w2*N*log(N) + ...
+```
+
+where `lambda_i > 1` means "worse at search" and `lambda_i < 1` means "better at search." This adds only 1 parameter per puzzler and is related to the 2PL IRT discrimination idea. However, it makes the model non-separable (puzzler x puzzle interaction through piece count), complicating inference.
+
+**Empirical test**: Check whether residuals show systematic skill x piece-count interaction. If fast puzzlers consistently have negative residuals on large puzzles (faster than the multiplicative model predicts), that's evidence the multiplicative assumption is too simple. This should be checked before adding model complexity.
+
+#### Team/duo physics: rates add
+
+The cleanest physical model for teams comes from **rate space**. If two puzzlers work independently on different pieces, their solving rates add:
+
+```
+r_duo = r_1 + r_2
+time_duo = 1 / (r_1 + r_2) = (time_1 * time_2) / (time_1 + time_2)
+```
+
+This is the **harmonic mean** of solo times, not the arithmetic or geometric mean. In milliBel space, with `rate_i proportional to 10^(-alpha_i/1000)`:
+
+```
+alpha_team = -1000 * log10(sum_k 10^(-alpha_k/1000))
+```
+
+For k puzzlers of equal ability, this gives `delta = -1000*log10(k)`:
+- Duo: -301 mB (2x speedup)
+- Trio: -477 mB (3x speedup)
+- Quad: -602 mB (4x speedup)
+
+**Why perfect rate-addition is too optimistic** — real teams face overhead:
+1. **Spatial contention**: Can't both work on the same area; edge pieces are limited; physically reaching around each other
+2. **Amdahl's law**: Some work is inherently serial — initial sort, final assembly, edge frame, strategy coordination
+3. **Communication**: "Has anyone seen a blue piece with two tabs?" — can be positive (avoiding duplicate search) or negative (interruption)
+4. **Diminishing returns**: For a 500-piece puzzle with 4 people, each handles ~125 pieces, but spatial/coordination bottlenecks dominate
+
+A practical model adds an overhead term:
+
+```
+log_time_team = mu + beta_j + piece_correction(N)
+                - 1000*log10(sum_k 10^(-alpha_k/1000))   [rate addition]
+                + eta(team_size)                           [coordination overhead]
+```
+
+For solo (team_size=1), the rate-addition term simplifies to `+alpha_i`, recovering the current model exactly.
+
+#### Interesting prediction: fast puzzler dominates
+
+The rate-addition model predicts that heterogeneous teams are carried by their best member. Example (all in mB):
+
+| Team composition | Combined rate | Effective alpha |
+|---|---|---|
+| Two fast (-200 mB each) | 3.17 | -501 mB |
+| One fast (-200) + one slow (+200) | 2.22 | -346 mB |
+| Two slow (+200 mB each) | 1.26 | -100 mB |
+
+The mixed team is much closer to the fast-fast team than to the slow-slow team. The fast puzzler contributes ~71% of the total rate even though they're only 50% of the headcount. This is testable if team member identities can be linked to solo ratings.
+
+#### Connection to PPM and rates
+
+PPM is literally the rate model: `PPM_i = N / time_i`. For teams, PPM should approximately add: `PPM_team ≈ PPM_1 + PPM_2` (minus overhead). This gives team modeling a natural user-facing interpretation — "our duo has a combined PPM of 12" is intuitive even if the underlying model is more nuanced.
+
+The piece-count question and the team question connect here: if we think in rate space, the question is whether each puzzler has a rate that's constant (PPM model), depends on N (the current model's T(N)), or depends on N in a puzzler-specific way (the lambda_i extension). Teams then just sum whatever the individual rate functions are.
+
+#### Open questions for future work
+
+1. **Empirical check**: Do model 2r residuals show skill x piece-count interaction? (Fast puzzlers systematically beating predictions on large puzzles would motivate per-puzzler scaling.)
+2. **Team data parsing**: ~400 pair and ~300 team records exist from USA Jigsaw. Team member names are concatenated and would need parsing + linking to solo identities to test the rate-addition model.
+3. **Amdahl fraction**: What fraction of puzzle work is serial? Could be estimated from the team data if the rate-addition + overhead model is fit.
+4. **PPM as user-facing metric**: Even if PPM isn't the right model, converting alpha to effective PPM at a reference puzzle size (e.g., 500 pieces) would be intuitive for the community.
+
 ## 2026-03-06 (late night)
 
 ### Physical basis model promoted to production
