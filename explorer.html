@@ -182,6 +182,13 @@
             tr:hover td {
                 background: var(--bg-alt);
             }
+            td a {
+                color: var(--blue);
+                text-decoration: none;
+            }
+            td a:hover {
+                text-decoration: underline;
+            }
             .num {
                 font-family: "Source Code Pro", monospace;
                 text-align: right;
@@ -214,6 +221,40 @@
                 bottom: 2px;
                 border-radius: 2px;
                 opacity: 0.15;
+            }
+
+            details.section-collapse {
+                border: none;
+                border-radius: 0;
+                background: none;
+                margin-bottom: 48px;
+            }
+            details.section-collapse[open] {
+                background: none;
+            }
+            details.section-collapse > summary {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600;
+                font-size: 22px;
+                padding: 0 0 8px 0;
+                border-bottom: 1px solid var(--border);
+                margin-bottom: 16px;
+                gap: 10px;
+            }
+            details.section-collapse > summary::before {
+                border-left: 6px solid var(--text-light);
+                border-top: 5px solid transparent;
+                border-bottom: 5px solid transparent;
+            }
+
+            .about-section a {
+                color: var(--blue);
+                text-decoration: none;
+                border-bottom: 1px solid transparent;
+                transition: border-color 0.15s;
+            }
+            .about-section a:hover {
+                border-bottom-color: var(--blue);
             }
 
             details {
@@ -466,11 +507,63 @@
                     competition times
                 </p>
                 <div class="meta">
+                    <span><a href="https://alexalemi.com" style="color: var(--text-light); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.15s;" onmouseover="this.style.borderBottomColor='var(--blue)';this.style.color='var(--blue)'" onmouseout="this.style.borderBottomColor='transparent';this.style.color='var(--text-light)'">Alexander A. Alemi</a></span>
                     <span id="meta-records"></span>
                     <span id="meta-puzzlers"></span>
                     <span id="meta-puzzles"></span>
                 </div>
             </header>
+
+            <details open class="about-section" style="margin-bottom: 32px;">
+                <summary>About this page</summary>
+                <div class="details-content" style="font-size: 15px; line-height: 1.7;">
+                    <p>
+                        This explorer presents a <strong>Bayesian latent factor model</strong> for
+                        jigsaw puzzle competition times — think of it as an Elo rating system, but
+                        for puzzling. Every puzzler gets a skill rating and every puzzle gets a
+                        difficulty rating; together they predict how long a solve will take.
+                    </p>
+                    <p>
+                        The model is fitted on data from four sources:
+                        <a href="https://www.speedpuzzling.com">speedpuzzling.com</a> (US virtual
+                        and in-person competitions),
+                        <a href="https://www.myspeedpuzzling.com">myspeedpuzzling.com</a>
+                        (global self-reported times),
+                        <a href="https://www.usajigsaw.org">USA Jigsaw Puzzle Association</a>
+                        championships, and a personal dataset. When the same puzzle appears across
+                        sources it anchors the calibration, letting us compare puzzlers who have
+                        never directly competed.
+                    </p>
+                    <p>
+                        Ratings are expressed in <strong>milliBels</strong> (mB) — a logarithmic
+                        unit where 1000 mB corresponds to a factor of 10 in time and 100 mB
+                        (1 decibel) is roughly a 26% change. Higher puzzler ratings mean faster
+                        solvers; higher puzzle ratings mean harder puzzles.
+                    </p>
+                    <p>
+                        <strong>Predicting a solve time:</strong> Look up the puzzle's
+                        Difficulty (mB) and subtract your own puzzler mB rating. If you've
+                        solved the puzzle before, subtract about 3 mB for each doubling of
+                        your solve count (the practice effect: &gamma;&middot;ln(solve #),
+                        where &gamma; &approx; &minus;4 mB). The result
+                        is a predicted log-time in milliBels, which you can convert back to
+                        seconds with 10<sup>mB/1000</sup>.
+                        Each value has an uncertainty &sigma; — you can add or subtract it to
+                        get optimistic and pessimistic estimates. On top of that, any individual
+                        solve has random noise of about &plusmn;<span id="about-sigma"></span> mB
+                        (roughly &plusmn;8% in time).
+                    </p>
+                    <p style="margin-bottom: 0;">
+                        <strong>How to use this page:</strong> Start with the
+                        <em>Data Overview</em> for a summary of the dataset. The
+                        <em>Model Specification</em> section describes the math. <em>Model
+                        Comparison</em> shows predictive accuracy across three model variants.
+                        The <em>Deep Dive</em> unpacks the production model's parameters.
+                        Finally, the <em>Rankings</em> tables let you search for any puzzler
+                        or puzzle and see their estimated rating with uncertainty bounds.
+                    </p>
+                </div>
+            </details>
 
             <div id="app">
                 <div class="loading">Loading data...</div>
@@ -485,8 +578,8 @@
                 .then((DATA) => {
                     document.getElementById("app").innerHTML = `
 <!-- Data Overview -->
-<section>
-  <h2>Data Overview</h2>
+<details class="section-collapse">
+  <summary>Data Overview</summary>
   <div class="stat-grid" id="stat-grid"></div>
   <div class="chart-row">
     <div class="chart-container"><div id="chart-scatter"></div></div>
@@ -508,11 +601,11 @@
   </details>
 
 
-</section>
+</details>
 
 <!-- Model -->
-<section>
-  <h2>Model Specification</h2>
+<details class="section-collapse">
+  <summary>Model Specification</summary>
   <p>Each model decomposes log-completion-time additively:</p>
   <div class="equation">mB(t<sub>ij</sub>) = &mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub> + 1000&middot;log<sub>10</sub>(&Sigma;<sub>k</sub> w<sub>k</sub> g<sub>k</sub>(N)) + &delta;<sub>i</sub>&middot;t + &epsilon;</div>
   <details>
@@ -535,11 +628,11 @@
       <div class="chart-container"><div id="chart-basis"></div></div>
     </div>
   </details>
-</section>
+</details>
 
 <!-- Model Comparison -->
-<section>
-  <h2>Model Comparison</h2>
+<details class="section-collapse">
+  <summary>Model Comparison</summary>
   <p>All models fitted via stochastic variational inference (SVI). Select models to compare:</p>
   <div class="model-selector" id="model-selector"></div>
   <div class="chart-row">
@@ -558,11 +651,11 @@
       <div class="chart-container"><div id="chart-residuals"></div></div>
     </div>
   </details>
-</section>
+</details>
 
 <!-- Model 2r Deep Dive -->
-<section id="section-model2r">
-  <h2>Model 2r Deep Dive</h2>
+<details class="section-collapse" id="section-model2r">
+  <summary>Model 2r Deep Dive</summary>
   <p>Model 2r is the production model: Student-t likelihood, per-puzzler velocity, physical piece-count basis, and a practice effect for repeat solves. Trained on all data.</p>
   <details open>
     <summary>Model specification (mB scale)</summary>
@@ -645,11 +738,11 @@
       <div class="chart-container"><div id="chart-basis-fractions-2r"></div></div>
     </div>
   </details>
-</section>
+</details>
 
 <!-- Prediction Calculator -->
-<section>
-  <h2>Prediction Calculator</h2>
+<details class="section-collapse" open>
+  <summary>Prediction Calculator</summary>
   <p>Pick a puzzler and puzzle, choose a year, and see the model's full predicted time distribution.</p>
   <div class="pred-controls">
     <div>
@@ -686,11 +779,11 @@
       <table id="pred-decomp-table"></table>
     </div>
   </details>
-</section>
+</details>
 
 <!-- Learned Parameters -->
-<section>
-  <h2>Learned Parameters</h2>
+<details class="section-collapse" open>
+  <summary>Learned Parameters</summary>
   <p>From Model 2r: global intercept &mu; = <span class="metric-highlight" id="param-mu"></span>,
      noise &sigma; = <span class="metric-highlight" id="param-sigma"></span>,
      mean improvement = <span class="metric-highlight" id="param-delta0"></span> mB/yr,
@@ -698,14 +791,27 @@
   <details open>
     <summary>Puzzler rankings (projected to <span id="ranking-year">2026</span>)</summary>
     <div class="details-content">
+      <details open style="margin-bottom: 12px;">
+        <summary>How to read this table</summary>
+        <div class="details-content">
+          <p>The <strong>Wilson</strong> column is your puzzling score — think of it like an Elo rating in chess. Higher is better (faster). It represents the value we are reasonably confident you are <em>at least</em> as good as: it equals your mB rating minus three times your uncertainty (mB &minus; 3&sigma;). The <strong>mB</strong> column is our best point estimate of your skill, and <strong>&sigma;</strong> is the uncertainty around it — puzzlers with few observations will have large &sigma;.</p>
+          <p style="margin-bottom: 0;">The <strong>&Delta;mB/yr</strong> column is a <em>velocity</em>: the rate at which your score is changing each year. A positive value means you are getting faster over time; negative means slowing down. Ratings are projected forward to <span class="ranking-year-label">2026</span> using this velocity.</p>
+        </div>
+      </details>
       <input type="text" class="search-box" id="puzzler-search" placeholder="Search puzzlers...">
       <table id="puzzler-table"></table>
       <p class="footnote">Rating projected to <span class="ranking-year-label">2026</span> using per-puzzler velocity. &Delta;mB/yr shows individual yearly improvement (positive = getting faster). Wilson bound uses projected &alpha; + 3&sigma;.</p>
     </div>
   </details>
-  <details>
+  <details open>
     <summary>Hardest puzzles</summary>
     <div class="details-content">
+      <details open style="margin-bottom: 12px;">
+        <summary>How to read this table</summary>
+        <div class="details-content">
+          <p style="margin-bottom: 0;">The <strong>Difficulty</strong> column is the raw difficulty of the puzzle, including its piece-count contribution — you can use it directly with your puzzler mB rating to estimate how long the puzzle will take. The <strong>Wilson</strong> column is a <em>relative</em> difficulty: it measures how hard this puzzle is compared to other puzzles of the same size. A high Wilson score means the puzzle is unusually difficult for its piece count (e.g. a tricky image or irregular cuts), not just that it has many pieces.</p>
+        </div>
+      </details>
       <input type="text" class="search-box" id="puzzle-search" placeholder="Search puzzles..." style="display:inline-block; width:auto;">
       <select id="puzzle-pc-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="0">All pieces</option></select>
       <select id="puzzle-source-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="">All sources</option></select>
@@ -716,6 +822,12 @@
   <details>
     <summary>Easiest puzzles</summary>
     <div class="details-content">
+      <details open style="margin-bottom: 12px;">
+        <summary>How to read this table</summary>
+        <div class="details-content">
+          <p style="margin-bottom: 0;">The <strong>Difficulty</strong> column is the raw difficulty including piece count — use it with your puzzler rating to estimate solve time. The <strong>Wilson</strong> column is the <em>relative</em> difficulty: how easy this puzzle is compared to others of the same size. A very negative Wilson means the puzzle is unusually easy for its piece count.</p>
+        </div>
+      </details>
       <input type="text" class="search-box" id="easy-puzzle-search" placeholder="Search puzzles..." style="display:inline-block; width:auto;">
       <select id="easy-puzzle-pc-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="0">All pieces</option></select>
       <select id="easy-puzzle-source-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="">All sources</option></select>
@@ -767,7 +879,7 @@
       </div>
     </div>
   </details>
-</section>
+</details>
 
 <footer>
   <p>Data from myspeedpuzzling.com, speedpuzzling.com and USA Jigsaw Nationals. Models fitted with NumPyro (JAX). Visualization built with D3.js.</p>
@@ -789,6 +901,20 @@
                 const fmt1 = d3.format(".1f");
                 const fmtPct = d3.format(".1%");
                 const fmtInt = d3.format(",");
+
+                function appendNameCell(tr, d) {
+                    const td = tr.append("td");
+                    if (d.msp_url) {
+                        td.append("a")
+                            .attr("href", d.msp_url)
+                            .attr("target", "_blank")
+                            .attr("rel", "noopener")
+                            .text(d.name);
+                    } else {
+                        td.text(d.name);
+                    }
+                    return td;
+                }
 
                 const COLORS = {
                     model_0: "#4a7fb5",
@@ -879,6 +1005,7 @@
 
                 document.getElementById("param-mu").textContent = S.mu;
                 document.getElementById("param-sigma").textContent = S.sigma;
+                document.getElementById("about-sigma").textContent = Math.round(S.sigma);
                 if (S.delta_0 != null)
                     document.getElementById("param-delta0").textContent =
                         Math.round(-S.delta_0);
@@ -1796,7 +1923,7 @@
                         tr.append("td")
                             .attr("class", "num")
                             .text(DATA.puzzlers.indexOf(d) + 1);
-                        tr.append("td").text(d.name);
+                        appendNameCell(tr, d);
                         const td = tr
                             .append("td")
                             .attr("class", "num bar-cell");
@@ -1927,11 +2054,12 @@
                                       DATA.stats.mu +
                                       d.beta,
                               );
+                    const limit = filter ? filtered.length : 50;
                     const maxDiff =
-                        d3.max(filtered.slice(0, 50).map(diffFn)) || 2000;
+                        d3.max(filtered.slice(0, limit).map(diffFn)) || 2000;
                     const minDiff =
-                        d3.min(filtered.slice(0, 50).map(diffFn)) || 1000;
-                    filtered.slice(0, 50).forEach((d, i) => {
+                        d3.min(filtered.slice(0, limit).map(diffFn)) || 1000;
+                    filtered.slice(0, limit).forEach((d, i) => {
                         const diff = diffFn(d);
                         const eloW =
                             d.elo_hard != null
@@ -1956,7 +2084,7 @@
                                 .attr("src", d.img)
                                 .attr("alt", "")
                                 .attr("class", "puzzle-thumb");
-                        tr.append("td").text(d.name);
+                        appendNameCell(tr, d);
                         tr.append("td").attr("class", "num").text(d.pc);
                         const td = tr
                             .append("td")
@@ -2026,11 +2154,12 @@
                                       DATA.stats.mu +
                                       d.beta,
                               );
+                    const limit = filter ? filtered.length : 50;
                     const maxDiff =
-                        d3.max(filtered.slice(0, 50).map(diffFn)) || 2000;
+                        d3.max(filtered.slice(0, limit).map(diffFn)) || 2000;
                     const minDiff =
-                        d3.min(filtered.slice(0, 50).map(diffFn)) || 1000;
-                    filtered.slice(0, 50).forEach((d, i) => {
+                        d3.min(filtered.slice(0, limit).map(diffFn)) || 1000;
+                    filtered.slice(0, limit).forEach((d, i) => {
                         const diff = diffFn(d);
                         const eloW =
                             d.elo_easy != null
@@ -2055,7 +2184,7 @@
                                 .attr("src", d.img)
                                 .attr("alt", "")
                                 .attr("class", "puzzle-thumb");
-                        tr.append("td").text(d.name);
+                        appendNameCell(tr, d);
                         tr.append("td").attr("class", "num").text(d.pc);
                         const td = tr
                             .append("td")
@@ -2356,7 +2485,7 @@
                         tr.append("td")
                             .attr("class", "num")
                             .text(i + 1);
-                        tr.append("td").text(d.name);
+                        appendNameCell(tr, d);
                         tr.append("td").attr("class", "num").text(fmtInt(elo));
                         tr.append("td")
                             .attr("class", "num")
@@ -2524,8 +2653,8 @@
                         opt.value = d.name;
                         puzzlerList.appendChild(opt);
                     });
-                    // Top puzzles by observation count
-                    const topPuzzles = DATA.puzzles.slice().sort((a,b) => b.n - a.n).slice(0, 2000);
+                    // Puzzles with enough observations for meaningful estimates
+                    const topPuzzles = DATA.puzzles.filter(d => d.n >= 3);
                     const puzzleList = document.getElementById("pred-puzzle-list");
                     topPuzzles.forEach(d => {
                         const opt = document.createElement("option");
@@ -3628,6 +3757,8 @@
 
                         // Observation table
                         const imgLookup = OBS_DATA._images || {};
+                        const puzzleMspUrls = {};
+                        DATA.puzzles.forEach(p => { if (p.msp_url) puzzleMspUrls[p.puzzle_id] = p.msp_url; });
                         const table = d3.select("#deep-dive-table");
                         table.html("");
                         const thead = table.append("thead").append("tr");
@@ -3673,7 +3804,16 @@
                                         return;
                                     }
                                     const val = d[c.key];
-                                    const td = tr.append("td").text(c.fmt(val));
+                                    const td = tr.append("td");
+                                    if (c.key === "puzzle_id" && puzzleMspUrls[d.puzzle_id]) {
+                                        td.append("a")
+                                            .attr("href", puzzleMspUrls[d.puzzle_id])
+                                            .attr("target", "_blank")
+                                            .attr("rel", "noopener")
+                                            .text(c.fmt(val));
+                                    } else {
+                                        td.text(c.fmt(val));
+                                    }
                                     if (c.cls) td.attr("class", c.cls);
                                     if (c.key === "percentile") {
                                         const bg = val < 0.3 ? "rgba(85,168,104,0.15)" :

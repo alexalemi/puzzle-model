@@ -56,6 +56,45 @@ def main():
     n_repeat = len(df) - n_first
     print(f"First-attempt: {n_first:,}, Repeat: {n_repeat:,}")
 
+    # ── Build MSP URL lookups ──
+    import pandas as pd
+    msp_dir = Path(__file__).resolve().parent.parent / "data" / "raw" / "myspeedpuzzling"
+    MSP_BASE = "https://myspeedpuzzling.com/en"
+
+    # Player: 8-char prefix -> full UUID (and also linked SP names -> full UUID)
+    msp_player_url = {}  # competitor_name -> MSP URL
+    players_csv = msp_dir / "players.csv"
+    if players_csv.exists():
+        players_df = pd.read_csv(players_csv, usecols=["player_id", "name"])
+        prefix_to_player_uuid = {pid[:8]: pid for pid in players_df["player_id"]}
+        # For names with (msp:XXXXXXXX) suffix
+        for _, row in players_df.iterrows():
+            pid = row["player_id"]
+            short = pid[:8]
+            display = f"{row['name']} (msp:{short})"
+            msp_player_url[display] = f"{MSP_BASE}/player-profile/{pid}"
+        # For linked SP names via player_links.csv
+        links_csv = Path(__file__).resolve().parent.parent / "data" / "mappings" / "player_links.csv"
+        if links_csv.exists():
+            links_df = pd.read_csv(links_csv, usecols=["msp_player_id", "sp_competitor_name"])
+            for _, row in links_df.iterrows():
+                msp_player_url[row["sp_competitor_name"]] = f"{MSP_BASE}/player-profile/{row['msp_player_id']}"
+
+    # Puzzle: 8-char prefix of puzzle_id UUID -> full UUID
+    msp_puzzle_url = {}  # internal puzzle_id (name_pieces) -> MSP URL
+    puzzles_csv = msp_dir / "puzzles.csv"
+    if puzzles_csv.exists():
+        puzzles_df = pd.read_csv(puzzles_csv, usecols=["puzzle_id"])
+        prefix_to_puzzle_uuid = {pid[:8]: pid for pid in puzzles_df["puzzle_id"]}
+        # Build mapping from event_id prefix -> full UUID
+        msp_rows = df[df["source"] == "myspeedpuzzling"]
+        for _, row in msp_rows.drop_duplicates("puzzle_id").iterrows():
+            eid = str(row.get("event_id", ""))
+            m = re.match(r"msp_([0-9a-f]+)", eid)
+            if m and m.group(1) in prefix_to_puzzle_uuid:
+                msp_puzzle_url[row["puzzle_id"]] = f"{MSP_BASE}/puzzle/{prefix_to_puzzle_uuid[m.group(1)]}"
+    print(f"MSP links: {len(msp_player_url)} puzzlers, {len(msp_puzzle_url)} puzzles")
+
     # Full data (all observations, for model_2r)
     train_data_all = prepare_model_data(train_df)
     mu_fixed = train_data_all["mu_fixed"]
@@ -324,7 +363,7 @@ def main():
     for i in np.argsort(proj_upper):
         elo = ELO_CENTER - ELO_SCALE * float(proj_mean[i])
         elo_wilson = ELO_CENTER - ELO_SCALE * float(proj_upper[i])
-        puzzlers_list.append({
+        entry = {
             "name": inv_puzzler[i],
             "alpha": round(float(alpha_mean[i]), 3),
             "alpha_proj": round(float(proj_mean[i]), 3),
@@ -336,7 +375,10 @@ def main():
             "n": int(obs_counts.get(i, 0)),
             "yr_min": int(year_range.loc[i, "min"]) if i in year_range.index else 0,
             "yr_max": int(year_range.loc[i, "max"]) if i in year_range.index else 0,
-        })
+        }
+        if inv_puzzler[i] in msp_player_url:
+            entry["msp_url"] = msp_player_url[inv_puzzler[i]]
+        puzzlers_list.append(entry)
 
     # Puzzle rankings
     beta_mean = np.mean(beta_samples_raw, axis=0)
@@ -412,6 +454,8 @@ def main():
         }
         if inv_puzzle[i] in img_lookup:
             entry["img"] = img_lookup[inv_puzzle[i]]
+        if inv_puzzle[i] in msp_puzzle_url:
+            entry["msp_url"] = msp_puzzle_url[inv_puzzle[i]]
         puzzles_list.append(entry)
 
     # ── Model 2r Deep Dive data ──
