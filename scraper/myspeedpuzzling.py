@@ -410,22 +410,21 @@ def _parse_solving_time_row(row: Tag, puzzle_id: str, category: str) -> Optional
     # --- Player info ---
     player_td = row.select_one("td.player-name")
     if player_td:
-        # Collect team members: registered (<a href="player-profile/...">) and
-        # unregistered (<span> without player-profile link). Each is (id, name)
-        # where id="" for unregistered members.
+        # Collect team members: duo/group tabs use class="player-name-item" on
+        # both <a> (registered) and <span> (unregistered). Solo tabs have plain
+        # <a href="player-profile/..."> without that class.
         members: list[tuple[str, str]] = []
-        for el in player_td.select("a[href*='player-profile'], span.team-member"):
-            if el.name == "a":
-                pid = el.get("href", "").rstrip("/").split("/")[-1]
+        name_items = player_td.select(".player-name-item")
+        if name_items:
+            for el in name_items:
                 pname = el.get_text(strip=True)
-                members.append((pid, pname))
-            else:
-                pname = el.get_text(strip=True)
-                if pname:
+                if el.name == "a" and "player-profile" in el.get("href", ""):
+                    pid = el["href"].rstrip("/").split("/")[-1]
+                    members.append((pid, pname))
+                elif pname:
                     members.append(("", pname))
-
-        # Fall back to link-only parsing for solo rows (no span.team-member)
-        if not members:
+        else:
+            # Solo rows: plain <a href="player-profile/..."> without .player-name-item
             for link in player_td.select("a[href*='player-profile']"):
                 pid = link.get("href", "").rstrip("/").split("/")[-1]
                 pname = link.get_text(strip=True)
