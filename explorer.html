@@ -704,23 +704,23 @@
     </div>
   </details>
   <details>
-    <summary>Hardest puzzles (highest &beta;)</summary>
+    <summary>Hardest puzzles</summary>
     <div class="details-content">
       <input type="text" class="search-box" id="puzzle-search" placeholder="Search puzzles..." style="display:inline-block; width:auto;">
       <select id="puzzle-pc-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="0">All pieces</option></select>
       <select id="puzzle-source-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="">All sources</option></select>
       <table id="puzzle-table"></table>
-      <p class="footnote">Positive &beta; = harder than average. Effect is relative to piece count (which is accounted for separately).</p>
+      <p class="footnote">Total difficulty = &beta; + piece-count correction (mB relative to ELO center). Wilson bound uses &beta; only (puzzle-specific effect, excluding piece count).</p>
     </div>
   </details>
   <details>
-    <summary>Easiest puzzles (lowest &beta;)</summary>
+    <summary>Easiest puzzles</summary>
     <div class="details-content">
       <input type="text" class="search-box" id="easy-puzzle-search" placeholder="Search puzzles..." style="display:inline-block; width:auto;">
       <select id="easy-puzzle-pc-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="0">All pieces</option></select>
       <select id="easy-puzzle-source-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="">All sources</option></select>
       <table id="easy-puzzle-table"></table>
-      <p class="footnote">Negative &beta; = easier than average. These puzzles are completed faster than expected given their piece count.</p>
+      <p class="footnote">Total difficulty = &beta; + piece-count correction. Negative values = easier/faster than average. Wilson bound uses &beta; only.</p>
     </div>
   </details>
   <details>
@@ -1897,7 +1897,7 @@
                         "Pieces",
                         "Difficulty (mB)",
                         "\u03c3",
-                        "mB (Wilson)",
+                        "\u03b2 (Wilson)",
                         "Obs",
                     ].forEach((h, i) =>
                         thead
@@ -1919,20 +1919,20 @@
                             d.name.toLowerCase().includes(filter.toLowerCase()),
                         );
                     const tbody = t.append("tbody");
-                    const eloFn = (d) =>
-                        d.elo != null
-                            ? d.elo
+                    const diffFn = (d) =>
+                        d.difficulty != null
+                            ? Math.round((DATA.stats.elo_center || 1500) + DATA.stats.mu + d.difficulty)
                             : Math.round(
                                   (DATA.stats.elo_center || 1500) +
                                       DATA.stats.mu +
                                       d.beta,
                               );
-                    const maxElo =
-                        d3.max(filtered.slice(0, 50).map(eloFn)) || 2000;
-                    const minElo =
-                        d3.min(filtered.slice(0, 50).map(eloFn)) || 1000;
+                    const maxDiff =
+                        d3.max(filtered.slice(0, 50).map(diffFn)) || 2000;
+                    const minDiff =
+                        d3.min(filtered.slice(0, 50).map(diffFn)) || 1000;
                     filtered.slice(0, 50).forEach((d, i) => {
-                        const elo = eloFn(d);
+                        const diff = diffFn(d);
                         const eloW =
                             d.elo_hard != null
                                 ? d.elo_hard
@@ -1942,6 +1942,7 @@
                                           d.beta -
                                           3 * d.std,
                                   );
+                        const sigma = d.difficulty_std != null ? Math.round(d.difficulty_std) : Math.round(d.std);
                         const tr = tbody.append("tr");
                         tr.append("td")
                             .attr("class", "num")
@@ -1964,11 +1965,11 @@
                             .attr("class", "bar-bg")
                             .style(
                                 "width",
-                                ((elo - minElo) / (maxElo - minElo)) * 80 + "%",
+                                ((diff - minDiff) / (maxDiff - minDiff)) * 80 + "%",
                             )
                             .style("background", "var(--red)");
-                        td.append("span").text(elo);
-                        tr.append("td").attr("class", "num").style("color", "var(--text-light)").text(Math.round(d.std));
+                        td.append("span").text(diff);
+                        tr.append("td").attr("class", "num").style("color", "var(--text-light)").text(sigma);
                         tr.append("td").attr("class", "num").text(eloW);
                         tr.append("td").attr("class", "num").text(d.n);
                     });
@@ -1995,7 +1996,7 @@
                         "Pieces",
                         "Difficulty (mB)",
                         "\u03c3",
-                        "mB (Wilson)",
+                        "\u03b2 (Wilson)",
                         "Obs",
                     ].forEach((h, i) =>
                         thead
@@ -2017,20 +2018,20 @@
                             d.name.toLowerCase().includes(filter.toLowerCase()),
                         );
                     const tbody = t.append("tbody");
-                    const eloFn = (d) =>
-                        d.elo != null
-                            ? d.elo
+                    const diffFn = (d) =>
+                        d.difficulty != null
+                            ? Math.round((DATA.stats.elo_center || 1500) + DATA.stats.mu + d.difficulty)
                             : Math.round(
                                   (DATA.stats.elo_center || 1500) +
                                       DATA.stats.mu +
                                       d.beta,
                               );
-                    const maxElo =
-                        d3.max(filtered.slice(0, 50).map(eloFn)) || 2000;
-                    const minElo =
-                        d3.min(filtered.slice(0, 50).map(eloFn)) || 1000;
+                    const maxDiff =
+                        d3.max(filtered.slice(0, 50).map(diffFn)) || 2000;
+                    const minDiff =
+                        d3.min(filtered.slice(0, 50).map(diffFn)) || 1000;
                     filtered.slice(0, 50).forEach((d, i) => {
-                        const elo = eloFn(d);
+                        const diff = diffFn(d);
                         const eloW =
                             d.elo_easy != null
                                 ? d.elo_easy
@@ -2040,6 +2041,7 @@
                                           d.beta +
                                           3 * d.std,
                                   );
+                        const sigma = d.difficulty_std != null ? Math.round(d.difficulty_std) : Math.round(d.std);
                         const tr = tbody.append("tr");
                         tr.append("td")
                             .attr("class", "num")
@@ -2062,11 +2064,11 @@
                             .attr("class", "bar-bg")
                             .style(
                                 "width",
-                                ((elo - minElo) / (maxElo - minElo)) * 80 + "%",
+                                ((diff - minDiff) / (maxDiff - minDiff)) * 80 + "%",
                             )
                             .style("background", "var(--green)");
-                        td.append("span").text(elo);
-                        tr.append("td").attr("class", "num").style("color", "var(--text-light)").text(Math.round(d.std));
+                        td.append("span").text(diff);
+                        tr.append("td").attr("class", "num").style("color", "var(--text-light)").text(sigma);
                         tr.append("td").attr("class", "num").text(eloW);
                         tr.append("td").attr("class", "num").text(d.n);
                     });
@@ -2527,7 +2529,7 @@
                     const puzzleList = document.getElementById("pred-puzzle-list");
                     topPuzzles.forEach(d => {
                         const opt = document.createElement("option");
-                        opt.value = d.name;
+                        opt.value = d.name + (d.pc ? " (" + d.pc + " pc)" : "");
                         puzzleList.appendChild(opt);
                     });
 
@@ -2535,7 +2537,11 @@
                     const puzzlerMap = {};
                     DATA.puzzlers.forEach(d => { puzzlerMap[d.name] = d; });
                     const puzzleMap = {};
-                    DATA.puzzles.forEach(d => { puzzleMap[d.name] = d; });
+                    DATA.puzzles.forEach(d => {
+                        puzzleMap[d.name] = d;
+                        puzzleMap[d.name + " (" + d.pc + " pc)"] = d;
+                        if (d.puzzle_id) puzzleMap[d.puzzle_id] = d;
+                    });
 
                     // Gamma from model_2r for practice effect
                     const gamma_2r = DATA.model2r_detail && DATA.model2r_detail.scalar_params.gamma
@@ -3627,7 +3633,7 @@
                         const thead = table.append("thead").append("tr");
                         const colDefs = [
                             { key: "_img", label: "", fmt: () => "" },
-                            { key: "puzzle_id", label: "Puzzle", fmt: d => d },
+                            { key: "puzzle_id", label: "Puzzle", fmt: d => d.replace(/_\d+$/, "") },
                             { key: "pieces", label: "Pieces", fmt: d => d, cls: "num" },
                             { key: "log_time", label: "Time", fmt: d => mBtoTime(d), cls: "num" },
                             { key: "pred_mean", label: "Predicted", fmt: d => mBtoTime(d), cls: "num" },

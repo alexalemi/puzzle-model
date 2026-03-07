@@ -46,6 +46,8 @@ SP_TO_MSP_OVERRIDES: dict[tuple[str, int], str] = {
     # Renames / typos
     ("Beechcraft Scatterwing", 500): "Beechcraft Staggerwing",
     ("Ellen Shershow Photography", 500): "Dogs by Ellen Shershow",
+    # Subtitle in MSP that SP omits
+    ("Puzzling Emotions", 500): "Puzzling Emotions - Inside Out 2",
     # Comma difference
     ("My Hair, My Crown", 300): "My Hair My crown",
 }
@@ -61,6 +63,10 @@ MALLORY_OVERRIDES: dict[tuple[str, int], str | None] = {
     ("The Rivera", 500): None,  # Not the same as "The Riverbank"
     ("Sacred Lake Tahoe", 1000): "Lake Tahoe",  # Same Ravensburger puzzle
     ("Lake Como", 500): "Lake Como, Italy",  # Same Ravensburger puzzle
+    ("Cuyahoga Valley", 500): "Cuyahoga Valley National Park",  # Same Boardwalk puzzle
+    ("Joe Cool", 300): "Peanuts - Joe Cool",  # Same RoseArt puzzle
+    ("Cocoa Break", 500): "Cocoa Break At The Copperfield's",  # Same Buffalo Games puzzle
+    ("Peacock Delight", 500): "Brilliance: Peacock Delights",  # Same Masterpieces puzzle
 }
 
 
