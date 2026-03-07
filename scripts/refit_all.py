@@ -189,11 +189,27 @@ def main():
         # Save model_2r posterior for rankings and deep dive
         if name == "model_2r":
             ranking_samples = posterior_samples
+            guide_2r = guide
+            params_2r = svi_result.params
             gamma_vals = np.array(posterior_samples["gamma"])
             model_results[name]["repeat_params"] = {
                 "gamma": {"mean": round(float(np.mean(gamma_vals)), 3),
                           "std": round(float(np.std(gamma_vals)), 3)},
             }
+
+    # ── Per-observation posterior predictive percentiles (model_2r, all data) ──
+    print(f"\n{'='*60}")
+    print("Computing posterior predictive percentiles...")
+    full_data = prepare_model_data(df, mu_fixed=mu_fixed)
+    full_no_obs = {k: v for k, v in full_data.items() if k != "log_time"}
+    pp_predictive = Predictive(MODELS["model_2r"], guide=guide_2r, params=params_2r, num_samples=500)
+    pp_samples = np.array(pp_predictive(jax.random.PRNGKey(42), **full_no_obs)["log_time"])
+    # Shape: (500, n_obs) — 500 full stochastic draws per observation
+    actual = np.array(full_data["log_time"])  # (n_obs,)
+    pp_pred_mean = np.mean(pp_samples, axis=0)  # (n_obs,)
+    percentiles = np.mean(pp_samples <= actual[None, :], axis=0)  # (n_obs,)
+    print(f"  Mean percentile: {np.mean(percentiles):.3f} (should be ~0.50)")
+    print(f"  Tail rate (<0.1 or >0.9): {np.mean((percentiles < 0.1) | (percentiles > 0.9)):.3f}")
 
     # ── Model comparison ──
     print(f"\n{'='*60}")
@@ -332,13 +348,13 @@ def main():
     beta_upper = beta_mean + 3 * beta_std
 
     # Build image lookup
-    img_dir = Path(__file__).resolve().parent.parent / "puzzle_images"
+    img_dir = Path(__file__).resolve().parent.parent / "data" / "raw" / "myspeedpuzzling" / "images"
     img_by_prefix = {}
     if img_dir.is_dir():
         for f in img_dir.iterdir():
-            if f.suffix in (".jpg", ".jpeg", ".png", ".webp"):
+            if f.suffix in (".jpg", ".jpeg", ".png", ".webp", ".avif", ".gif"):
                 prefix = f.name.split("-")[0]
-                img_by_prefix[prefix] = f"puzzle_images/{f.name}"
+                img_by_prefix[prefix] = f"data/raw/myspeedpuzzling/images/{f.name}"
     img_lookup = {}
     for _, row in df.drop_duplicates("puzzle_id").iterrows():
         eid = str(row.get("event_id", ""))
@@ -553,6 +569,40 @@ def main():
     output = json.dumps(explorer_data, separators=(",", ":"))
     out_path.write_text(output)
     print(f"\nWrote {out_path} ({len(output):,} bytes)")
+
+    # ── Write per-observation data for puzzler deep dive ──
+    source_abbrev = {"speedpuzzling": "s", "myspeedpuzzling": "m", "mallory": "a", "usajigsaw": "u"}
+    import pandas as pd
+    obs_by_puzzler = {}
+    has_finished_date = "finished_date" in df.columns
+    for pos, (i, row) in enumerate(df.iterrows()):
+        name = row["competitor_name"]
+        if has_finished_date and pd.notna(row["finished_date"]):
+            date_str = row["finished_date"].strftime("%Y-%m-%d")
+        else:
+            date_str = str(int(row["year"])) if "year" in row.index else None
+        obs = [
+            row["puzzle_id"],
+            round(float(row["log_time"])),
+            round(float(pp_pred_mean[pos])),
+            round(float(percentiles[pos]), 2),
+            int(row["puzzle_pieces"]),
+            date_str,
+            int(row.get("solve_number", 1)),
+            source_abbrev.get(row.get("source", ""), "?"),
+        ]
+        obs_by_puzzler.setdefault(name, []).append(obs)
+
+    obs_data = {
+        "_columns": ["puzzle_id", "log_time", "pred_mean", "percentile", "pieces", "date", "solve_number", "source"],
+        "_images": img_lookup,
+        **obs_by_puzzler,
+    }
+    obs_data = sanitize(obs_data)
+    obs_output = json.dumps(obs_data, separators=(",", ":"))
+    obs_path = out_path.parent / "explorer_puzzler_obs.json"
+    obs_path.write_text(obs_output)
+    print(f"Wrote {obs_path} ({len(obs_output):,} bytes, {len(obs_by_puzzler):,} puzzlers)")
 
 
 if __name__ == "__main__":
