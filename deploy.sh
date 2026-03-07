@@ -6,7 +6,11 @@ DEST="nubo:~/static/puzzle-model/"
 rsync -avzL --info=progress2 \
   explorer.html \
   explorer_data.json \
-  data/raw/myspeedpuzzling/images \
+  explorer_puzzler_obs.json \
   "$DEST"
+
+rsync -avzL --info=progress2 \
+  data/raw/myspeedpuzzling/images \
+  "$DEST"data/raw/myspeedpuzzling/
 
 echo "Deployed to $DEST"

@@ -24,6 +24,7 @@ UJ_PATH = PROJECT_ROOT / "data" / "processed" / "usajigsaw_results.csv"
 MSP_PUZZLES_PATH = PROJECT_ROOT / "data" / "raw" / "myspeedpuzzling" / "puzzles.csv"
 MSP_TIMES_PATH = PROJECT_ROOT / "data" / "raw" / "myspeedpuzzling" / "solving_times.csv"
 MALLORY_PATH = PROJECT_ROOT / "data" / "MalloryPuzzleData.csv"
+PLAYER_LINKS_PATH = PROJECT_ROOT / "data" / "mappings" / "player_links.csv"
 OUTPUT_PATH = PROJECT_ROOT / "data" / "processed" / "combined_results.csv"
 
 
@@ -177,7 +178,7 @@ def load_mallory(existing_puzzles: pd.DataFrame) -> pd.DataFrame:
         "division": "solo",
         "round": None,
         "rank": None,
-        "competitor_name": "Mallory Alemi",
+        "competitor_name": "Alemi, Mallory",
         "origin": "US",
         "time_seconds": df["time_seconds"],
         "completed": True,
@@ -263,11 +264,66 @@ def normalize_sp_to_msp(sp: pd.DataFrame, msp: pd.DataFrame) -> pd.DataFrame:
     return sp
 
 
-def load_myspeedpuzzling() -> pd.DataFrame:
+def normalize_uj_names(uj: pd.DataFrame, sp_names: set[str]) -> pd.DataFrame:
+    """Normalize UJ individual competitor names to SP 'Last, First' format.
+
+    Strips origin (city/state) from the name, then tries all possible
+    'First [Middle] Last' -> 'Last, First [Middle]' splits against the
+    SP name set. Case-insensitive matching with canonical SP casing.
+    """
+    uj = uj.copy()
+    # Build case-insensitive SP lookup
+    sp_lower = {n.lower(): n for n in sp_names}
+
+    renamed = 0
+    for idx, row in uj.iterrows():
+        if row.get("division") != "solo":
+            continue
+        name = row["competitor_name"]
+        origin = row.get("origin")
+        # Strip origin suffix (city + state) from competitor_name
+        if pd.notna(origin):
+            bare = name.replace(str(origin), "").strip()
+        else:
+            bare = name
+        parts = bare.split()
+        if len(parts) < 2:
+            continue
+        # Try all splits: first i words = first name, rest = last name
+        for i in range(1, len(parts)):
+            first = " ".join(parts[:i])
+            last = " ".join(parts[i:])
+            attempt = f"{last}, {first}"
+            if attempt.lower() in sp_lower:
+                canonical = sp_lower[attempt.lower()]
+                uj.at[idx, "competitor_name"] = canonical
+                renamed += 1
+                break
+
+    print(f"  UJ->SP name normalization: {renamed} names matched")
+    return uj
+
+
+def load_player_links() -> dict[str, str]:
+    """Load manual MSP player_id -> SP competitor_name links.
+
+    Returns dict mapping MSP player_id (full UUID) to canonical SP name.
+    """
+    if not PLAYER_LINKS_PATH.exists():
+        return {}
+    links = pd.read_csv(PLAYER_LINKS_PATH)
+    return dict(zip(links["msp_player_id"], links["sp_competitor_name"]))
+
+
+def load_myspeedpuzzling(player_links: dict[str, str] | None = None) -> pd.DataFrame:
     """Load and normalize myspeedpuzzling.com data to the shared schema.
 
     Joins solving_times with puzzles catalog to get puzzle metadata,
     then maps columns to match the combined schema.
+
+    Args:
+        player_links: Optional dict mapping MSP player_id -> canonical SP name.
+            Linked players get the SP name instead of the default MSP format.
     """
     puzzles = pd.read_csv(MSP_PUZZLES_PATH)
     times = pd.read_csv(MSP_TIMES_PATH)
@@ -284,6 +340,15 @@ def load_myspeedpuzzling() -> pd.DataFrame:
     df["competitor_name"] = (
         df["player_name"] + " (msp:" + df["player_id"].str[:8] + ")"
     )
+
+    # Apply manual player links: replace MSP names with canonical SP names
+    if player_links:
+        linked = df["player_id"].isin(player_links)
+        n_linked = linked.sum()
+        if n_linked > 0:
+            df.loc[linked, "competitor_name"] = df.loc[linked, "player_id"].map(player_links)
+            n_players = df.loc[linked, "player_id"].nunique()
+            print(f"  MSP player links: {n_players} players ({n_linked} rows) linked to SP names")
 
     # Parse finished_date and extract year
     df["finished_date_parsed"] = pd.to_datetime(df["finished_date"], errors="coerce")
@@ -331,17 +396,29 @@ def combine() -> pd.DataFrame:
     if UJ_PATH.exists():
         uj = pd.read_csv(UJ_PATH)
         uj["first_attempt"] = True
+        # 1A: Normalize "individual" division to "solo"
+        uj.loc[uj["division"] == "individual", "division"] = "solo"
         # Known event dates for USA Jigsaw Nationals
         uj_dates = {2022: "2022-10-22", 2024: "2024-03-23", 2025: "2025-04-05"}
         uj["finished_date"] = uj["year"].map(uj_dates)
+        # 1B: Normalize UJ individual names to SP "Last, First" format
+        if SP_PATH.exists():
+            sp_names = set(frames[0]["competitor_name"].unique()) if frames else set()
+            if sp_names:
+                uj = normalize_uj_names(uj, sp_names)
         frames.append(uj)
-        print(f"usajigsaw: {len(uj)} rows")
+        print(f"usajigsaw: {len(uj)} rows ({(uj['division'] == 'solo').sum()} solo)")
     else:
         print(f"WARNING: {UJ_PATH} not found, skipping")
 
+    # 1C: Load manual player links for MSP->SP identity merging
+    player_links = load_player_links()
+    if player_links:
+        print(f"Loaded {len(player_links)} manual player links")
+
     # myspeedpuzzling.com
     if MSP_TIMES_PATH.exists() and MSP_PUZZLES_PATH.exists():
-        msp = load_myspeedpuzzling()
+        msp = load_myspeedpuzzling(player_links=player_links)
         frames.append(msp)
         print(f"myspeedpuzzling: {len(msp)} rows")
     else:

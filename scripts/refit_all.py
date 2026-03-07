@@ -356,11 +356,14 @@ def main():
                 prefix = f.name.split("-")[0]
                 img_by_prefix[prefix] = f"data/raw/myspeedpuzzling/images/{f.name}"
     img_lookup = {}
-    for _, row in df.drop_duplicates("puzzle_id").iterrows():
+    for _, row in df.iterrows():
+        pid = row["puzzle_id"]
+        if pid in img_lookup:
+            continue
         eid = str(row.get("event_id", ""))
         m = re.match(r"msp_([0-9a-f]+)", eid)
         if m and m.group(1) in img_by_prefix:
-            img_lookup[row["puzzle_id"]] = img_by_prefix[m.group(1)]
+            img_lookup[pid] = img_by_prefix[m.group(1)]
 
     puzzle_sources = df.groupby("puzzle_idx")["source"].apply(lambda s: sorted(s.unique().tolist())).to_dict()
 
