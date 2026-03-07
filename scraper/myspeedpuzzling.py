@@ -12,6 +12,7 @@ Output: data/raw/myspeedpuzzling/ directory with CSV/JSON files and images/ subd
 """
 
 import csv
+import json
 import logging
 import re
 import sys
@@ -134,6 +135,30 @@ class Fetcher:
             log.error("Request failed for %s: %s", url, exc)
             return None
 
+    def post_live_action(
+        self, url: str, action_name: str, props: dict, args: dict,
+    ) -> Optional[str]:
+        """POST a Symfony UX Live Component action and return the HTML fragment."""
+        elapsed = time.time() - self._last_request_time
+        if elapsed < REQUEST_DELAY:
+            time.sleep(REQUEST_DELAY - elapsed)
+        endpoint = f"{url}/{action_name}"
+        payload = {"data": json.dumps({"props": props, "updated": {}, "args": args})}
+        headers = {
+            "Accept": "application/vnd.live-component+html",
+            "X-Requested-With": "XMLHttpRequest",
+        }
+        try:
+            resp = self.client.post(endpoint, data=payload, headers=headers)
+            self._last_request_time = time.time()
+            if resp.status_code != 200:
+                log.warning("Live Component HTTP %d for %s", resp.status_code, endpoint)
+                return None
+            return resp.text
+        except httpx.HTTPError as exc:
+            log.error("Live Component request failed for %s: %s", endpoint, exc)
+            return None
+
     def download_image(self, url: str, dest: Path) -> bool:
         """Download an image to disk. Returns True on success."""
         if dest.exists():
@@ -221,6 +246,41 @@ def extract_country_from_flag(el: Optional[Tag]) -> str:
     return ""
 
 
+TAB_COUNT_RE = re.compile(r"\((\d+)\)")
+
+
+def _parse_tab_counts(soup: BeautifulSoup) -> dict[str, int]:
+    """Parse duo/group tab counts from the PuzzleTimes Live Component buttons."""
+    counts: dict[str, int] = {"solo": 0, "duo": 0, "group": 0}
+    for btn in soup.select("button[data-live-category-param]"):
+        category = btn.get("data-live-category-param", "").lower()
+        if category in counts:
+            m = TAB_COUNT_RE.search(btn.get_text())
+            if m:
+                counts[category] = int(m.group(1))
+    return counts
+
+
+def _extract_live_props(soup: BeautifulSoup) -> tuple[str, dict] | None:
+    """Extract the Live Component URL and props from the PuzzleTimes div."""
+    div = soup.select_one("div[data-live-name-value='PuzzleTimes']")
+    if div is None:
+        return None
+    url = div.get("data-live-url-value", "")
+    props_json = div.get("data-live-props-value", "")
+    if not url or not props_json:
+        return None
+    try:
+        props = json.loads(props_json)
+    except json.JSONDecodeError:
+        log.warning("Failed to parse Live Component props JSON")
+        return None
+    # URL may be relative
+    if url.startswith("/"):
+        url = BASE_URL + url
+    return url, props
+
+
 def scrape_puzzle_detail(
     url: str, puzzle_id: str, download_images: bool = True,
 ) -> tuple[Optional[Puzzle], list[SolvingTime]]:
@@ -284,23 +344,37 @@ def scrape_puzzle_detail(
 
     # --- Solving times from table ---
     # PuzzleTimes Live Component renders server-side with table.custom-table
+    # Initial HTML contains the solo tab (default)
     tables = soup.select("table.custom-table")
-    category = "solo"
-
-    # Determine category from active tab
-    active_tab = soup.select_one(".nav-tabs .nav-link.active")
-    if active_tab:
-        tab_text = active_tab.get_text(strip=True).lower()
-        if "duo" in tab_text or "pair" in tab_text:
-            category = "duo"
-        elif "group" in tab_text or "team" in tab_text:
-            category = "group"
-
     for table in tables:
         for row in table.select("tbody tr"):
-            st = _parse_solving_time_row(row, puzzle_id, category)
+            st = _parse_solving_time_row(row, puzzle_id, "solo")
             if st:
                 solving_times.append(st)
+
+    # Fetch duo/group tabs via Live Component POST if they have data
+    tab_counts = _parse_tab_counts(soup)
+    live_info = None
+    for category in ("duo", "group"):
+        if tab_counts.get(category, 0) > 0:
+            if live_info is None:
+                live_info = _extract_live_props(soup)
+                if live_info is None:
+                    log.warning("Puzzle %s has %s data but no Live Component props",
+                                puzzle_id[:8], category)
+                    break
+            component_url, props = live_info
+            log.info("  Fetching %s tab (%d entries)...", category, tab_counts[category])
+            html = fetcher.post_live_action(
+                component_url, "changeResultsCategory", props, {"category": category},
+            )
+            if html:
+                frag = BeautifulSoup(html, "html.parser")
+                for table in frag.select("table.custom-table"):
+                    for row in table.select("tbody tr"):
+                        st = _parse_solving_time_row(row, puzzle_id, category)
+                        if st:
+                            solving_times.append(st)
 
     puzzle.solved_times_count = len(solving_times)
 
@@ -336,20 +410,37 @@ def _parse_solving_time_row(row: Tag, puzzle_id: str, category: str) -> Optional
     # --- Player info ---
     player_td = row.select_one("td.player-name")
     if player_td:
-        player_links = player_td.select("a[href*='player-profile']")
-        players = []
-        for link in player_links:
-            pid = link.get("href", "").rstrip("/").split("/")[-1]
-            pname = link.get_text(strip=True)
-            players.append((pid, pname))
+        # Collect team members: registered (<a href="player-profile/...">) and
+        # unregistered (<span> without player-profile link). Each is (id, name)
+        # where id="" for unregistered members.
+        members: list[tuple[str, str]] = []
+        for el in player_td.select("a[href*='player-profile'], span.team-member"):
+            if el.name == "a":
+                pid = el.get("href", "").rstrip("/").split("/")[-1]
+                pname = el.get_text(strip=True)
+                members.append((pid, pname))
+            else:
+                pname = el.get_text(strip=True)
+                if pname:
+                    members.append(("", pname))
 
-        if players:
-            st.player_id = players[0][0]
-            st.player_name = players[0][1]
-            if len(players) > 1:
-                st.team_members = ", ".join(p[1] for p in players)
+        # Fall back to link-only parsing for solo rows (no span.team-member)
+        if not members:
+            for link in player_td.select("a[href*='player-profile']"):
+                pid = link.get("href", "").rstrip("/").split("/")[-1]
+                pname = link.get_text(strip=True)
+                members.append((pid, pname))
+
+        if members:
+            st.player_id = members[0][0]
+            st.player_name = members[0][1]
+            if len(members) > 1:
+                # Structured format: "Name1:uuid1,Name2:,Name3:uuid3"
+                st.team_members = ",".join(
+                    f"{name}:{pid}" for pid, name in members
+                )
                 if category == "solo":
-                    st.category = "duo" if len(players) == 2 else "group"
+                    st.category = "duo" if len(members) == 2 else "group"
 
         # Player code (e.g. #ABCD)
         for code_el in player_td.select("code, small"):
@@ -644,6 +735,12 @@ def main():
             for t in times:
                 if t.player_id:
                     discovered_player_ids.add(t.player_id)
+                # Also collect registered player_ids from team_members
+                if t.team_members:
+                    for member in t.team_members.split(","):
+                        parts = member.rsplit(":", 1)
+                        if len(parts) == 2 and parts[1]:
+                            discovered_player_ids.add(parts[1])
 
         # Periodic save every 50 puzzles
         if len(batch_puzzles) >= 50:

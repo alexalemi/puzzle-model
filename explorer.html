@@ -2083,7 +2083,8 @@
                                 .append("img")
                                 .attr("src", d.img)
                                 .attr("alt", "")
-                                .attr("class", "puzzle-thumb");
+                                .attr("class", "puzzle-thumb")
+                                .attr("loading", "lazy");
                         appendNameCell(tr, d);
                         tr.append("td").attr("class", "num").text(d.pc);
                         const td = tr
@@ -2183,7 +2184,8 @@
                                 .append("img")
                                 .attr("src", d.img)
                                 .attr("alt", "")
-                                .attr("class", "puzzle-thumb");
+                                .attr("class", "puzzle-thumb")
+                                .attr("loading", "lazy");
                         appendNameCell(tr, d);
                         tr.append("td").attr("class", "num").text(d.pc);
                         const td = tr
@@ -3800,7 +3802,7 @@
                                     if (c.key === "_img") {
                                         const td = tr.append("td").style("width", "48px").style("padding", "2px 4px");
                                         const src = imgLookup[d.puzzle_id];
-                                        if (src) td.append("img").attr("src", src).attr("class", "puzzle-thumb");
+                                        if (src) td.append("img").attr("src", src).attr("class", "puzzle-thumb").attr("loading", "lazy");
                                         return;
                                     }
                                     const val = d[c.key];
