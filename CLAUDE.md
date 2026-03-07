@@ -16,6 +16,7 @@ src/puzzle_model/     # Main package (src layout, hatchling build)
 scraper/              # Data collection
   speedpuzzling.py    # PDF scraper for speedpuzzling.com results
   usajigsaw.py        # Scraper for USA Jigsaw Puzzle Association results
+  myspeedpuzzling.py  # Scraper for myspeedpuzzling.com (puzzles, times, players, images)
   combine.py          # Merges all sources into combined_results.csv
 
 notebooks/            # Marimo notebooks
@@ -49,7 +50,7 @@ Three data sources, combined by `python -m scraper.combine`:
 
 ### 3. myspeedpuzzling.com (`source=myspeedpuzzling`)
 - Global self-reported solving times from myspeedpuzzling.com
-- Scraped externally at `~/build/myspeedpuzzling.com/scraper_output/`
+- Scraped by `scraper/myspeedpuzzling.py` → `data/raw/myspeedpuzzling/`
 - Two files: `puzzles.csv` (catalog with names, brands, EANs) and `solving_times.csv`
 - Competitor names: "Display Name (msp:uuid_prefix)" for uniqueness
 - `first_attempt` field distinguishes unseen vs repeat solves

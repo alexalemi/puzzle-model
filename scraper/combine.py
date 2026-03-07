@@ -21,8 +21,8 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).parent.parent
 SP_PATH = PROJECT_ROOT / "data" / "processed" / "speedpuzzling_results.csv"
 UJ_PATH = PROJECT_ROOT / "data" / "processed" / "usajigsaw_results.csv"
-MSP_PUZZLES_PATH = Path.home() / "build" / "myspeedpuzzling.com" / "scraper_output" / "puzzles.csv"
-MSP_TIMES_PATH = Path.home() / "build" / "myspeedpuzzling.com" / "scraper_output" / "solving_times.csv"
+MSP_PUZZLES_PATH = PROJECT_ROOT / "data" / "raw" / "myspeedpuzzling" / "puzzles.csv"
+MSP_TIMES_PATH = PROJECT_ROOT / "data" / "raw" / "myspeedpuzzling" / "solving_times.csv"
 MALLORY_PATH = PROJECT_ROOT / "data" / "MalloryPuzzleData.csv"
 OUTPUT_PATH = PROJECT_ROOT / "data" / "processed" / "combined_results.csv"
 

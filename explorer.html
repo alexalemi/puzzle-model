@@ -751,6 +751,22 @@
       <p class="footnote">Puzzlers with the highest total velocity (biggest improvement per year), filtered to those with data spanning 2+ years.</p>
     </div>
   </details>
+  <details id="puzzler-deep-dive">
+    <summary>Individual Puzzler Deep Dive</summary>
+    <div class="details-content">
+      <p>Select a puzzler to see how their results compare to model predictions. Each observation is shown with its posterior predictive percentile — a uniform distribution indicates good calibration.</p>
+      <input type="text" list="pred-puzzler-list" id="deep-dive-search" placeholder="Type a puzzler name..." style="width:100%;max-width:400px;padding:6px 10px;font-size:14px;border:1px solid var(--border);border-radius:3px;font-family:'Source Sans 3',sans-serif;">
+      <div id="deep-dive-loading" style="display:none;padding:16px;color:var(--text-light)">Loading observation data...</div>
+      <div id="deep-dive-content" style="display:none">
+        <div class="stat-grid" id="deep-dive-stats"></div>
+        <div class="chart-row">
+          <div class="chart-container"><div id="chart-dd-histogram"></div></div>
+          <div class="chart-container"><div id="chart-dd-timeline"></div></div>
+        </div>
+        <table id="deep-dive-table"></table>
+      </div>
+    </div>
+  </details>
 </section>
 
 <footer>
@@ -2428,6 +2444,18 @@
                     });
                 })();
 
+                // Convert mB to human-readable time string (shared utility)
+                function mBtoTime(mB) {
+                    const seconds = Math.pow(10, mB / 1000);
+                    if (seconds < 60) return Math.round(seconds) + "s";
+                    const m = Math.floor(seconds / 60);
+                    const s = Math.round(seconds % 60);
+                    if (m < 60) return m + "m " + (s < 10 ? "0" : "") + s + "s";
+                    const h = Math.floor(m / 60);
+                    const rm = m % 60;
+                    return h + "h " + (rm < 10 ? "0" : "") + rm + "m";
+                }
+
                 // --- Prediction Calculator ---
                 (function() {
                     const S = DATA.stats;
@@ -2485,18 +2513,6 @@
                             time_ref += w_k * g_ref[k];
                         }
                         return 1000 / Math.LN10 * (Math.log(time_N) - Math.log(time_ref));
-                    }
-
-                    // Convert mB to human-readable time string
-                    function mBtoTime(mB) {
-                        const seconds = Math.pow(10, mB / 1000);
-                        if (seconds < 60) return Math.round(seconds) + "s";
-                        const m = Math.floor(seconds / 60);
-                        const s = Math.round(seconds % 60);
-                        if (m < 60) return m + "m " + (s < 10 ? "0" : "") + s + "s";
-                        const h = Math.floor(m / 60);
-                        const rm = m % 60;
-                        return h + "h " + (rm < 10 ? "0" : "") + rm + "m";
                     }
 
                     // Populate datalists
@@ -3466,6 +3482,205 @@
                             document.getElementById("easy-puzzle-search").value,
                         );
                     });
+
+                // --- Individual Puzzler Deep Dive ---
+                (function() {
+                    let OBS_DATA = null;
+                    const ddDetails = document.getElementById("puzzler-deep-dive");
+                    const ddLoading = document.getElementById("deep-dive-loading");
+                    const ddContent = document.getElementById("deep-dive-content");
+                    const ddSearch = document.getElementById("deep-dive-search");
+
+                    ddDetails.addEventListener("toggle", function() {
+                        if (ddDetails.open && !OBS_DATA) {
+                            ddLoading.style.display = "";
+                            fetch("explorer_puzzler_obs.json")
+                                .then(r => r.json())
+                                .then(data => {
+                                    OBS_DATA = data;
+                                    ddLoading.style.display = "none";
+                                    if (ddSearch.value.trim()) renderDeepDive(ddSearch.value.trim());
+                                })
+                                .catch(err => {
+                                    ddLoading.textContent = "Failed to load explorer_puzzler_obs.json: " + err.message;
+                                });
+                        }
+                    });
+
+                    ddSearch.addEventListener("change", function() {
+                        if (OBS_DATA && this.value.trim()) renderDeepDive(this.value.trim());
+                    });
+
+                    const sourceColors = { s: "var(--blue)", m: "var(--green)", a: "var(--purple)", u: "var(--orange)" };
+                    const sourceNames = { s: "SP", m: "MSP", a: "Mallory", u: "USAJ" };
+
+                    function renderDeepDive(name) {
+                        if (!OBS_DATA || !OBS_DATA[name]) {
+                            ddContent.style.display = "none";
+                            return;
+                        }
+                        ddContent.style.display = "";
+                        const cols = OBS_DATA._columns;
+                        const raw = OBS_DATA[name];
+                        const obs = raw.map(r => {
+                            const o = {};
+                            cols.forEach((c, i) => o[c] = r[i]);
+                            return o;
+                        });
+
+                        // Stat cards
+                        const meanPct = d3.mean(obs, d => d.percentile);
+                        const tailRate = d3.mean(obs, d => d.percentile < 0.1 || d.percentile > 0.9 ? 1 : 0);
+                        const statsEl = d3.select("#deep-dive-stats");
+                        statsEl.html("");
+                        [
+                            { label: "Solves", value: obs.length },
+                            { label: "Mean Percentile", value: meanPct.toFixed(2) },
+                            { label: "Surprise Rate", value: (tailRate * 100).toFixed(0) + "%" },
+                        ].forEach(c => {
+                            const card = statsEl.append("div").attr("class", "stat-card");
+                            card.append("span").attr("class", "value").text(c.value);
+                            card.append("span").attr("class", "label").text(c.label);
+                        });
+
+                        // Percentile histogram
+                        const histEl = d3.select("#chart-dd-histogram");
+                        histEl.html("");
+                        const W = 300, H = 200;
+                        const mg = { top: 28, right: 12, bottom: 36, left: 40 };
+                        const bins = d3.range(10).map(i => ({
+                            x0: i * 0.1, x1: (i + 1) * 0.1,
+                            count: obs.filter(d => d.percentile >= i * 0.1 && d.percentile < (i + 1) * 0.1 + (i === 9 ? 0.01 : 0)).length,
+                        }));
+                        const expected = obs.length / 10;
+                        const x = d3.scaleLinear().domain([0, 1]).range([mg.left, W - mg.right]);
+                        const yMax = d3.max(bins, d => d.count);
+                        const y = d3.scaleLinear().domain([0, Math.max(yMax, expected) * 1.15]).range([H - mg.bottom, mg.top]);
+                        const svg = histEl.append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("width", "100%");
+                        svg.append("text").attr("class", "chart-title").attr("x", W / 2).attr("y", 16)
+                            .attr("text-anchor", "middle").text("Percentile Distribution");
+                        // Expected line
+                        svg.append("line")
+                            .attr("x1", mg.left).attr("x2", W - mg.right)
+                            .attr("y1", y(expected)).attr("y2", y(expected))
+                            .attr("stroke", "var(--red)").attr("stroke-dasharray", "4,3").attr("stroke-width", 1);
+                        // Bars
+                        const barW = (W - mg.left - mg.right) / 10;
+                        svg.selectAll(".hist-bar").data(bins).enter().append("rect")
+                            .attr("x", d => x(d.x0) + 1).attr("y", d => y(d.count))
+                            .attr("width", barW - 2).attr("height", d => y(0) - y(d.count))
+                            .attr("fill", "var(--blue)").attr("opacity", 0.6);
+                        svg.append("g").attr("class", "axis")
+                            .attr("transform", `translate(0,${H - mg.bottom})`)
+                            .call(d3.axisBottom(x).ticks(5).tickFormat(d3.format(".1f")));
+                        svg.append("g").attr("class", "axis")
+                            .attr("transform", `translate(${mg.left},0)`)
+                            .call(d3.axisLeft(y).ticks(4));
+
+                        // Residual timeline (using dates)
+                        const tlEl = d3.select("#chart-dd-timeline");
+                        tlEl.html("");
+                        const W2 = 300, H2 = 200;
+                        const parseDate = s => {
+                            if (!s) return null;
+                            if (s.length > 4) return new Date(s);
+                            return new Date(+s, 6, 1);  // year-only: mid-year
+                        };
+                        const obsDates = obs.map(d => ({ ...d, _date: parseDate(d.date) })).filter(d => d._date);
+                        const dateExtent = d3.extent(obsDates, d => d._date);
+                        const datePad = Math.max((dateExtent[1] - dateExtent[0]) * 0.05, 7 * 86400000);
+                        const xT = d3.scaleTime()
+                            .domain([new Date(dateExtent[0] - datePad), new Date(+dateExtent[1] + datePad)])
+                            .range([mg.left, W2 - mg.right]);
+                        const yT = d3.scaleLinear().domain([0, 1]).range([H2 - mg.bottom, mg.top]);
+                        const svg2 = tlEl.append("svg").attr("viewBox", `0 0 ${W2} ${H2}`).attr("width", "100%");
+                        svg2.append("text").attr("class", "chart-title").attr("x", W2 / 2).attr("y", 16)
+                            .attr("text-anchor", "middle").text("Percentile Over Time");
+                        svg2.append("line")
+                            .attr("x1", mg.left).attr("x2", W2 - mg.right)
+                            .attr("y1", yT(0.5)).attr("y2", yT(0.5))
+                            .attr("stroke", "var(--border)").attr("stroke-width", 1);
+                        svg2.selectAll(".dot").data(obsDates).enter().append("circle")
+                            .attr("cx", d => xT(d._date)).attr("cy", d => yT(d.percentile))
+                            .attr("r", 3).attr("fill", d => sourceColors[d.source] || "var(--text-light)")
+                            .attr("opacity", 0.7);
+                        svg2.append("g").attr("class", "axis")
+                            .attr("transform", `translate(0,${H2 - mg.bottom})`)
+                            .call(d3.axisBottom(xT).ticks(4));
+                        svg2.append("g").attr("class", "axis")
+                            .attr("transform", `translate(${mg.left},0)`)
+                            .call(d3.axisLeft(yT).ticks(5));
+                        // Source legend
+                        const sources = [...new Set(obs.map(d => d.source))];
+                        const lg = svg2.append("g").attr("transform", `translate(${W2 - mg.right - 50}, ${mg.top + 4})`);
+                        sources.forEach((s, i) => {
+                            lg.append("circle").attr("cx", 0).attr("cy", i * 14).attr("r", 3)
+                                .attr("fill", sourceColors[s] || "gray");
+                            lg.append("text").attr("x", 6).attr("y", i * 14 + 4)
+                                .style("font-size", "10px").text(sourceNames[s] || s);
+                        });
+
+                        // Observation table
+                        const imgLookup = OBS_DATA._images || {};
+                        const table = d3.select("#deep-dive-table");
+                        table.html("");
+                        const thead = table.append("thead").append("tr");
+                        const colDefs = [
+                            { key: "_img", label: "", fmt: () => "" },
+                            { key: "puzzle_id", label: "Puzzle", fmt: d => d },
+                            { key: "pieces", label: "Pieces", fmt: d => d, cls: "num" },
+                            { key: "log_time", label: "Time", fmt: d => mBtoTime(d), cls: "num" },
+                            { key: "pred_mean", label: "Predicted", fmt: d => mBtoTime(d), cls: "num" },
+                            { key: "_residual", label: "Resid (mB)", fmt: d => d, cls: "num" },
+                            { key: "percentile", label: "Percentile", fmt: d => d.toFixed(2), cls: "num" },
+                            { key: "date", label: "Date", fmt: d => d || "—" },
+                            { key: "source", label: "Src", fmt: d => sourceNames[d] || d },
+                            { key: "solve_number", label: "Solve#", fmt: d => d, cls: "num" },
+                        ];
+                        let sortKey = "percentile", sortAsc = true;
+                        function renderTable() {
+                            const sorted = obs.slice().map(d => ({
+                                ...d, _residual: d.log_time - d.pred_mean,
+                            })).sort((a, b) => {
+                                const va = a[sortKey], vb = b[sortKey];
+                                return sortAsc ? (va < vb ? -1 : va > vb ? 1 : 0) : (va > vb ? -1 : va < vb ? 1 : 0);
+                            });
+                            table.html("");
+                            const th = table.append("thead").append("tr");
+                            colDefs.forEach(c => {
+                                th.append("th").text(c.label + (sortKey === c.key ? (sortAsc ? " ▲" : " ▼") : ""))
+                                    .style("cursor", c.key === "_img" ? "default" : "pointer")
+                                    .on("click", c.key === "_img" ? null : () => {
+                                        if (sortKey === c.key) sortAsc = !sortAsc;
+                                        else { sortKey = c.key; sortAsc = true; }
+                                        renderTable();
+                                    });
+                            });
+                            const tbody = table.append("tbody");
+                            sorted.forEach(d => {
+                                const tr = tbody.append("tr");
+                                colDefs.forEach(c => {
+                                    if (c.key === "_img") {
+                                        const td = tr.append("td").style("width", "48px").style("padding", "2px 4px");
+                                        const src = imgLookup[d.puzzle_id];
+                                        if (src) td.append("img").attr("src", src).attr("class", "puzzle-thumb");
+                                        return;
+                                    }
+                                    const val = d[c.key];
+                                    const td = tr.append("td").text(c.fmt(val));
+                                    if (c.cls) td.attr("class", c.cls);
+                                    if (c.key === "percentile") {
+                                        const bg = val < 0.3 ? "rgba(85,168,104,0.15)" :
+                                                   val > 0.7 ? "rgba(196,78,82,0.15)" : "";
+                                        if (bg) td.style("background", bg);
+                                    }
+                                    if (c.key === "_residual") td.text(Math.round(val));
+                                });
+                            });
+                        }
+                        renderTable();
+                    }
+                })();
 
                 updateAll();
                 renderResiduals();
