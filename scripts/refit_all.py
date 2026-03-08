@@ -389,23 +389,17 @@ def main():
     puzzle_pieces = df.groupby("puzzle_idx")["puzzle_pieces"].first()
     beta_upper = beta_mean + 3 * beta_std
 
-    # Build image lookup
-    img_dir = Path(__file__).resolve().parent.parent / "data" / "raw" / "myspeedpuzzling" / "images"
-    img_by_prefix = {}
-    if img_dir.is_dir():
-        for f in img_dir.iterdir():
-            if f.suffix in (".jpg", ".jpeg", ".png", ".webp", ".avif", ".gif"):
-                prefix = f.name.split("-")[0]
-                img_by_prefix[prefix] = f"data/raw/myspeedpuzzling/images/{f.name}"
+    # Build image lookup (use MSP image URLs directly)
     img_lookup = {}
-    for _, row in df.iterrows():
-        pid = row["puzzle_id"]
-        if pid in img_lookup:
-            continue
-        eid = str(row.get("event_id", ""))
-        m = re.match(r"msp_([0-9a-f]+)", eid)
-        if m and m.group(1) in img_by_prefix:
-            img_lookup[pid] = img_by_prefix[m.group(1)]
+    if puzzles_csv.exists():
+        img_df = pd.read_csv(puzzles_csv, usecols=["puzzle_id", "image_url"])
+        prefix_to_img_url = {pid[:8]: url for pid, url in zip(img_df["puzzle_id"], img_df["image_url"]) if pd.notna(url)}
+        for _, row in df.drop_duplicates("puzzle_id").iterrows():
+            pid = row["puzzle_id"]
+            eid = str(row.get("event_id", ""))
+            m = re.match(r"msp_([0-9a-f]+)", eid)
+            if m and m.group(1) in prefix_to_img_url:
+                img_lookup[pid] = prefix_to_img_url[m.group(1)]
 
     puzzle_sources = df.groupby("puzzle_idx")["source"].apply(lambda s: sorted(s.unique().tolist())).to_dict()
 
