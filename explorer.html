@@ -511,56 +511,49 @@
                     <span id="meta-records"></span>
                     <span id="meta-puzzlers"></span>
                     <span id="meta-puzzles"></span>
+                    <span><a href="explorer_solo.html" style="color: var(--text-light); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.15s;" onmouseover="this.style.borderBottomColor='var(--blue)';this.style.color='var(--blue)'" onmouseout="this.style.borderBottomColor='transparent';this.style.color='var(--text-light)'">Solo Explorer</a></span>
                 </div>
             </header>
 
-            <details open class="about-section" style="margin-bottom: 32px;">
+            <details class="about-section" style="margin-bottom: 32px;">
                 <summary>About this page</summary>
                 <div class="details-content" style="font-size: 15px; line-height: 1.7;">
                     <p>
-                        This explorer presents a <strong>Bayesian latent factor model</strong> for
-                        jigsaw puzzle competition times — think of it as an Elo rating system, but
-                        for puzzling. Every puzzler gets a skill rating and every puzzle gets a
-                        difficulty rating; together they predict how long a solve will take.
+                        This explorer presents a <strong>joint solo+team Bayesian model</strong> for
+                        jigsaw puzzle solving times. It extends the solo-only Model 2r with team
+                        mechanics: when multiple puzzlers work together, their individual rates
+                        combine via <strong>logsumexp</strong> (parallel rate addition), subject to
+                        <strong>Amdahl's law</strong> (serial fraction) and per-bucket residual
+                        corrections.
                     </p>
                     <p>
-                        The model is fitted on data from four sources:
-                        <a href="https://www.speedpuzzling.com">speedpuzzling.com</a> (US virtual
-                        and in-person competitions),
-                        <a href="https://www.myspeedpuzzling.com">myspeedpuzzling.com</a>
-                        (global self-reported times),
-                        <a href="https://www.usajigsaw.org">USA Jigsaw Puzzle Association</a>
-                        championships, and a personal dataset. When the same puzzle appears across
-                        sources it anchors the calibration, letting us compare puzzlers who have
-                        never directly competed.
+                        For solo solves (K=1), the team model reduces exactly to Model 2r —
+                        logsumexp of a single alpha is just that alpha, and all team corrections
+                        vanish. This means solo predictions are unchanged while team predictions
+                        benefit from the additional structure.
                     </p>
                     <p>
-                        Ratings are expressed in <strong>milliBels</strong> (mB) — a logarithmic
-                        unit where 1000 mB corresponds to a factor of 10 in time and 100 mB
-                        (1 decibel) is roughly a 26% change. Higher puzzler ratings mean faster
-                        solvers; higher puzzle ratings mean harder puzzles.
+                        The model is fitted jointly on solo, duo, and group data from
+                        <a href="https://www.speedpuzzling.com">speedpuzzling.com</a>,
+                        <a href="https://www.myspeedpuzzling.com">myspeedpuzzling.com</a>,
+                        <a href="https://www.usajigsaw.org">USA Jigsaw</a>, and a personal dataset.
+                        Team members who also have solo data provide the key link — their
+                        individual ability estimates are informed by both solo and team observations.
                     </p>
                     <p>
-                        <strong>Predicting a solve time:</strong> Look up the puzzle's
-                        Difficulty (mB) and subtract your own puzzler mB rating. If you've
-                        solved the puzzle before, subtract about 3 mB for each doubling of
-                        your solve count (the practice effect: &gamma;&middot;ln(solve #),
-                        where &gamma; &approx; &minus;4 mB). The result
-                        is a predicted log-time in milliBels, which you can convert back to
-                        seconds with 10<sup>mB/1000</sup>.
-                        Each value has an uncertainty &sigma; — you can add or subtract it to
-                        get optimistic and pessimistic estimates. On top of that, any individual
-                        solve has random noise of about &plusmn;<span id="about-sigma"></span> mB
-                        (roughly &plusmn;8% in time).
+                        Ratings are in <strong>milliBels</strong> (mB): 1000 mB = factor of 10 in time,
+                        100 mB &approx; 26% change. The <em>Prediction Calculator</em> supports
+                        team predictions — add multiple team members and see the combined prediction
+                        with Amdahl and eta corrections applied.
                     </p>
                     <p style="margin-bottom: 0;">
-                        <strong>How to use this page:</strong> Start with the
-                        <em>Data Overview</em> for a summary of the dataset. The
-                        <em>Model Specification</em> section describes the math. <em>Model
-                        Comparison</em> shows predictive accuracy across three model variants.
-                        The <em>Deep Dive</em> unpacks the production model's parameters.
-                        Finally, the <em>Rankings</em> tables let you search for any puzzler
-                        or puzzle and see their estimated rating with uncertainty bounds.
+                        <strong>How to use this page:</strong> <em>Data Overview</em> summarizes the
+                        combined dataset. <em>Model Specification</em> describes the team formula.
+                        <em>Model Comparison</em> compares solo-only vs joint on the same test set.
+                        <em>Team Deep Dive</em> shows team-specific parameters (serial fraction,
+                        eta corrections). <em>Model Deep Dive</em> covers shared parameters.
+                        <em>Prediction Calculator</em> supports both solo and team predictions.
+                        <em>Rankings</em> shows puzzler and puzzle tables from the joint model.
                     </p>
                 </div>
             </details>
@@ -573,191 +566,32 @@
         <div class="tooltip" id="tooltip" style="display: none"></div>
 
         <script>
-            fetch("explorer_data.json")
+            fetch("explorer_team_data.json")
                 .then((r) => r.json())
                 .then((DATA) => {
                     document.getElementById("app").innerHTML = `
-<!-- Data Overview -->
-<details class="section-collapse">
-  <summary>Data Overview</summary>
-  <div class="stat-grid" id="stat-grid"></div>
-  <div class="chart-row">
-    <div class="chart-container"><div id="chart-scatter"></div></div>
-    <div class="chart-container"><div id="chart-piece-dist"></div></div>
-  </div>
-  <details>
-    <summary>Time distributions by piece count (mB)</summary>
-    <div class="details-content">
-      <p class="footnote">Completion times in milliBels (1000·log₁₀) are approximately normal within each piece count, supporting the log-normal likelihood assumption.</p>
-      <div id="chart-histograms" class="chart-row" style="grid-template-columns: repeat(3, 1fr);"></div>
-    </div>
-  </details>
-  <details>
-    <summary>Puzzler observation frequency</summary>
-    <div class="details-content">
-      <p class="footnote">Most puzzlers have very few observations. Bayesian shrinkage pulls their estimates toward the population mean, avoiding overfitting.</p>
-      <div class="chart-container"><div id="chart-puzzler-freq"></div></div>
-    </div>
-  </details>
-
-
-</details>
-
-<!-- Model -->
-<details class="section-collapse">
-  <summary>Model Specification</summary>
-  <p>Each model decomposes log-completion-time additively:</p>
-  <div class="equation">mB(t<sub>ij</sub>) = &mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub> + 1000&middot;log<sub>10</sub>(&Sigma;<sub>k</sub> w<sub>k</sub> g<sub>k</sub>(N)) + &delta;<sub>i</sub>&middot;t + &epsilon;</div>
-  <details>
-    <summary>Model hierarchy details</summary>
-    <div class="details-content">
-      <table>
-        <tr><th>Model</th><th>Formula</th><th>Parameters</th><th>Description</th></tr>
-        <tr><th>Model</th><th>Formula</th><th>Parameters</th><th>Description</th><th>Data</th></tr>
-        <tr><td>Model 1t</td><td class="num">&mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub> + c&middot;log(N)</td><td class="num" id="m1t-params"></td><td>Student-t robust baseline</td><td>First-attempt</td></tr>
-        <tr><td>Model 2c</td><td class="num">+ log<sub>10</sub>(&Sigma;<sub>k</sub> w<sub>k</sub> g<sub>k</sub>(N)) + &delta;<sub>0</sub>t + &delta;<sub>i</sub>t</td><td class="num" id="m2c-params"></td><td>Physical basis + velocity (production)</td><td>First-attempt</td></tr>
-        <tr><td>Model 2r</td><td class="num">+ &gamma;&middot;log(solve_number)</td><td class="num" id="m2r-params"></td><td>Practice effect (repeat solves)</td><td>All data</td></tr>
-      </table>
-      <p class="footnote">All models use Student-t likelihood. Priors: &alpha;<sub>i</sub> ~ N(0, &sigma;<sub>&alpha;</sub>), &beta;<sub>j</sub> ~ N(0, &sigma;<sub>&beta;</sub>), log(w<sub>k</sub>) ~ N(0,5). Non-centered parameterization via SVI. Models 1t/2c use first-attempt data only; 2r uses all data including repeat solves.</p>
-    </div>
-  </details>
-  <details>
-    <summary>Physical basis components g<sub>k</sub>(N)</summary>
-    <div class="details-content">
-      <p class="footnote">Model 2c sums physical processes additively in time space: time(N) = &Sigma;<sub>k</sub> w<sub>k</sub> g<sub>k</sub>(N), then converts to mB. Each curve shows one component's contribution (mB relative to N=500). The dominant process at each piece count determines the scaling behavior.</p>
-      <div class="chart-container"><div id="chart-basis"></div></div>
-    </div>
-  </details>
-</details>
-
-<!-- Model Comparison -->
-<details class="section-collapse">
-  <summary>Model Comparison</summary>
-  <p>All models fitted via stochastic variational inference (SVI). Select models to compare:</p>
-  <div class="model-selector" id="model-selector"></div>
-  <div class="chart-row">
-    <div class="chart-container"><div id="chart-metrics"></div></div>
-    <div class="chart-container"><div id="chart-loss"></div></div>
-  </div>
-  <details>
-    <summary>Full metrics table</summary>
-    <div class="details-content"><table id="metrics-table"></table></div>
-  </details>
-  <details>
-    <summary>Residual analysis</summary>
-    <div class="details-content">
-      <p class="footnote">Predicted vs actual time (mB) on held-out test set. Points near the diagonal indicate good predictions.</p>
-      <div class="model-selector" id="residual-selector"></div>
-      <div class="chart-container"><div id="chart-residuals"></div></div>
-    </div>
-  </details>
-</details>
-
-<!-- Model 2r Deep Dive -->
-<details class="section-collapse" id="section-model2r">
-  <summary>Model 2r Deep Dive</summary>
-  <p>Model 2r is the production model: Student-t likelihood, per-puzzler velocity, physical piece-count basis, and a practice effect for repeat solves. Trained on all data.</p>
-  <details open>
-    <summary>Model specification (mB scale)</summary>
-    <div class="details-content">
-      <p>The predicted solving time in milliBels decomposes as:</p>
-      <div class="equation">mB(time<sub>ij</sub>) = D<sub>j</sub> + f(N<sub>j</sub>) &minus; R<sub>i</sub>(y) + &gamma;&middot;log(solve#) + &epsilon;</div>
-      <table>
-        <tr><th>Term</th><th>Definition</th><th>Zero means</th><th>Learned scale</th></tr>
-        <tr>
-          <td>D<sub>j</sub></td>
-          <td>Puzzle difficulty = &mu; + &beta;<sub>j</sub></td>
-          <td>&beta;<sub>j</sub> = 0 &rarr; average puzzle (given its piece count)</td>
-          <td id="m2r-spec-D"></td>
-        </tr>
-        <tr>
-          <td>f(N<sub>j</sub>)</td>
-          <td>Piece-count correction = 1000&middot;log<sub>10</sub>(&Sigma;<sub>k</sub> w<sub>k</sub> g<sub>k</sub>(N)) &minus; ref</td>
-          <td>f = 0 at N = 500 pieces</td>
-          <td id="m2r-spec-f"></td>
-        </tr>
-        <tr>
-          <td>R<sub>i</sub>(y)</td>
-          <td>Puzzler rating at year y = &alpha;&#x0303;<sub>i</sub> + v<sub>i</sub>(y &minus; 2026)</td>
-          <td>R = 0 &rarr; average-speed puzzler in 2026</td>
-          <td id="m2r-spec-R"></td>
-        </tr>
-        <tr>
-          <td>&gamma;&middot;log(solve#)</td>
-          <td>Practice effect (negative = faster with repetition)</td>
-          <td>solve# = 1 &rarr; no effect (first attempt)</td>
-          <td id="m2r-spec-gamma"></td>
-        </tr>
-        <tr>
-          <td>&epsilon;</td>
-          <td>Noise ~ Student-t(&nu;, 0, &sigma;)</td>
-          <td>—</td>
-          <td id="m2r-spec-eps"></td>
-        </tr>
-      </table>
-      <p class="footnote">Here &alpha;&#x0303;<sub>i</sub> = &minus;(&alpha;<sub>i</sub> + &delta;<sub>0</sub> + &delta;<sub>i</sub>) is the puzzler skill projected to 2026, and v<sub>i</sub> = &minus;(&delta;<sub>0</sub> + &delta;<sub>i</sub>) is the improvement rate in mB/yr (positive = getting faster). The sign convention: higher R = faster puzzler, higher D = harder puzzle, so predicted time = difficulty minus skill.</p>
-    </div>
-  </details>
-  <details open>
-    <summary>Scalar parameters</summary>
-    <div class="details-content">
-      <table id="m2r-scalar-table"></table>
-    </div>
-  </details>
-  <details open>
-    <summary>Student-t vs Normal: how heavy are the tails?</summary>
-    <div class="details-content">
-      <p class="footnote">The learned degrees of freedom &nu; controls tail heaviness. Lower &nu; = heavier tails = more robust to outliers.</p>
-      <div class="chart-container"><div id="chart-student-t"></div></div>
-    </div>
-  </details>
-  <details open>
-    <summary>Practice curve</summary>
-    <div class="details-content">
-      <p class="footnote">Expected time change from repeated solving. Each additional solve makes the puzzler faster. The shaded band shows the 80% credible interval from the &gamma; posterior.</p>
-      <div class="chart-container"><div id="chart-practice-curve"></div></div>
-    </div>
-  </details>
-  <details open>
-    <summary>Repeat statistics</summary>
-    <div class="details-content">
-      <div class="stat-grid" id="repeat-stat-grid"></div>
-    </div>
-  </details>
-  <details>
-    <summary>Learned piece-count correction</summary>
-    <div class="details-content">
-      <p class="footnote">The learned piece-count correction as a function of N. Physical processes (edge scanning, per-piece work, search, combinatorial matching) sum additively in time, then convert to mB centered at N=500. This gives sensible extrapolation: at large N, log(time) grows as at most 2·log(N). Shaded bands show posterior deciles from the log(w<sub>k</sub>) posterior.</p>
-      <div class="chart-container"><div id="chart-response-curves"></div></div>
-    </div>
-  </details>
-  <details>
-    <summary>Process contributions by piece count</summary>
-    <div class="details-content">
-      <p class="footnote">Fraction of total predicted solving time attributable to each physical process. Since the model sums processes additively in time space (time = &Sigma; w<sub>k</sub> g<sub>k</sub>(N)), the fraction w<sub>k</sub> g<sub>k</sub>(N) / &Sigma;<sub>j</sub> w<sub>j</sub> g<sub>j</sub>(N) gives each process's share. At small N, edge-related work dominates; at large N, combinatorial/search effects take over.</p>
-      <div class="chart-container"><div id="chart-basis-fractions-2r"></div></div>
-    </div>
-  </details>
-</details>
-
 <!-- Prediction Calculator -->
 <details class="section-collapse" open>
   <summary>Prediction Calculator</summary>
-  <p>Pick a puzzler and puzzle, choose a year, and see the model's full predicted time distribution.</p>
-  <div class="pred-controls">
+  <p>Pick puzzler(s) and a puzzle, choose a year, and see the model's full predicted time distribution. Add team members for team predictions.</p>
+  <div class="pred-controls" style="grid-template-columns: 1fr 1fr;">
     <div>
-      <label for="pred-puzzler">Puzzler</label>
-      <input type="text" id="pred-puzzler" list="pred-puzzler-list" placeholder="— Average Puzzler —">
+      <label>Puzzler(s)</label>
+      <input type="text" id="pred-puzzler" list="pred-puzzler-list" placeholder="&mdash; Average Puzzler &mdash;">
       <datalist id="pred-puzzler-list"></datalist>
+      <div id="team-member-slots"></div>
+      <button id="add-team-member" type="button" style="margin-top:6px;padding:4px 12px;font-size:13px;font-family:'Source Sans 3',sans-serif;border:1px solid var(--border);border-radius:3px;background:var(--bg);cursor:pointer;">+ Add Team Member</button>
     </div>
     <div>
-      <label for="pred-puzzle">Puzzle</label>
-      <input type="text" id="pred-puzzle" list="pred-puzzle-list" placeholder="— Average Puzzle —">
+      <label>Puzzle(s)</label>
+      <input type="text" id="pred-puzzle" list="pred-puzzle-list" placeholder="&mdash; Average Puzzle &mdash;">
       <datalist id="pred-puzzle-list"></datalist>
-      <div id="pred-custom-pieces" style="margin-top:6px; display:none;">
+      <div id="puzzle-slots"></div>
+      <div id="pred-custom-pieces" style="margin-top:6px;">
         <label for="pred-pieces" style="display:inline; text-transform:none; font-weight:400;">Pieces:</label>
         <input type="number" id="pred-pieces" class="pred-piece-count" value="500" min="10" max="10000">
       </div>
+      <button id="add-puzzle" type="button" style="margin-top:6px;padding:4px 12px;font-size:13px;font-family:'Source Sans 3',sans-serif;border:1px solid var(--border);border-radius:3px;background:var(--bg);cursor:pointer;">+ Add Puzzle</button>
     </div>
     <div>
       <label for="pred-year">Year <span class="pred-year-display" id="pred-year-val">2026.0</span></label>
@@ -781,11 +615,11 @@
   </details>
 </details>
 
-<!-- Learned Parameters -->
+<!-- Rankings -->
 <details class="section-collapse" open>
-  <summary>Learned Parameters</summary>
-  <p>From Model 2r: global intercept &mu; = <span class="metric-highlight" id="param-mu"></span>,
-     noise &sigma; = <span class="metric-highlight" id="param-sigma"></span>,
+  <summary>Rankings</summary>
+  <p>From the joint team model: &mu; = <span class="metric-highlight" id="param-mu"></span>,
+     &sigma; = <span class="metric-highlight" id="param-sigma"></span>,
      mean improvement = <span class="metric-highlight" id="param-delta0"></span> mB/yr,
      &sigma;<sub>v</sub> = <span class="metric-highlight" id="param-sigma-delta"></span></p>
   <details open>
@@ -794,58 +628,42 @@
       <details open style="margin-bottom: 12px;">
         <summary>How to read this table</summary>
         <div class="details-content">
-          <p>The <strong>Wilson</strong> column is your puzzling score — think of it like an Elo rating in chess. Higher is better (faster). It represents the value we are reasonably confident you are <em>at least</em> as good as: it equals your mB rating minus three times your uncertainty (mB &minus; 3&sigma;). The <strong>mB</strong> column is our best point estimate of your skill, and <strong>&sigma;</strong> is the uncertainty around it — puzzlers with few observations will have large &sigma;.</p>
-          <p style="margin-bottom: 0;">The <strong>&Delta;mB/yr</strong> column is a <em>velocity</em>: the rate at which your score is changing each year. A positive value means you are getting faster over time; negative means slowing down. Ratings are projected forward to <span class="ranking-year-label">2026</span> using this velocity.</p>
+          <p>The <strong>Wilson</strong> column is your puzzling score &mdash; higher is better (faster). It equals mB &minus; 3&sigma;. The <strong>Solo</strong> and <strong>Team</strong> columns show observation counts from each category.</p>
+          <p style="margin-bottom: 0;">The <strong>&Delta;mB/yr</strong> column is a velocity: positive = getting faster. Ratings projected to <span class="ranking-year-label">2026</span>.</p>
         </div>
       </details>
       <input type="text" class="search-box" id="puzzler-search" placeholder="Search puzzlers...">
       <table id="puzzler-table"></table>
-      <p class="footnote">Rating projected to <span class="ranking-year-label">2026</span> using per-puzzler velocity. &Delta;mB/yr shows individual yearly improvement (positive = getting faster). Wilson bound uses projected &alpha; + 3&sigma;.</p>
+      <p class="footnote">Rating projected to <span class="ranking-year-label">2026</span>. Wilson bound uses projected &alpha; + 3&sigma;.</p>
     </div>
   </details>
   <details open>
     <summary>Hardest puzzles</summary>
     <div class="details-content">
-      <details open style="margin-bottom: 12px;">
-        <summary>How to read this table</summary>
-        <div class="details-content">
-          <p style="margin-bottom: 0;">The <strong>Difficulty</strong> column is the raw difficulty of the puzzle, including its piece-count contribution — you can use it directly with your puzzler mB rating to estimate how long the puzzle will take. The <strong>Wilson</strong> column is a <em>relative</em> difficulty: it measures how hard this puzzle is compared to other puzzles of the same size. A high Wilson score means the puzzle is unusually difficult for its piece count (e.g. a tricky image or irregular cuts), not just that it has many pieces.</p>
-        </div>
-      </details>
       <input type="text" class="search-box" id="puzzle-search" placeholder="Search puzzles..." style="display:inline-block; width:auto;">
       <select id="puzzle-pc-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="0">All pieces</option></select>
       <select id="puzzle-source-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="">All sources</option></select>
       <table id="puzzle-table"></table>
-      <p class="footnote">Total difficulty = &beta; + piece-count correction (mB relative to ELO center). Wilson bound uses &beta; only (puzzle-specific effect, excluding piece count).</p>
     </div>
   </details>
   <details>
     <summary>Easiest puzzles</summary>
     <div class="details-content">
-      <details open style="margin-bottom: 12px;">
-        <summary>How to read this table</summary>
-        <div class="details-content">
-          <p style="margin-bottom: 0;">The <strong>Difficulty</strong> column is the raw difficulty including piece count — use it with your puzzler rating to estimate solve time. The <strong>Wilson</strong> column is the <em>relative</em> difficulty: how easy this puzzle is compared to others of the same size. A very negative Wilson means the puzzle is unusually easy for its piece count.</p>
-        </div>
-      </details>
       <input type="text" class="search-box" id="easy-puzzle-search" placeholder="Search puzzles..." style="display:inline-block; width:auto;">
       <select id="easy-puzzle-pc-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="0">All pieces</option></select>
       <select id="easy-puzzle-source-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="">All sources</option></select>
       <table id="easy-puzzle-table"></table>
-      <p class="footnote">Total difficulty = &beta; + piece-count correction. Negative values = easier/faster than average. Wilson bound uses &beta; only.</p>
     </div>
   </details>
   <details>
     <summary>Puzzle difficulty distribution (&beta;)</summary>
     <div class="details-content">
-      <p class="footnote">Distribution of puzzle difficulty parameters from Model 2c. More positive = harder. Colored by observation count to show shrinkage effects.</p>
       <div class="chart-container"><div id="chart-beta-dist"></div></div>
     </div>
   </details>
   <details>
     <summary>Puzzler rating distribution (&alpha;)</summary>
     <div class="details-content">
-      <p class="footnote">Distribution of puzzler skill parameters from Model 2c. More negative = faster. Colored by observation count.</p>
       <div class="chart-container"><div id="chart-alpha-dist"></div></div>
     </div>
   </details>
@@ -853,20 +671,18 @@
     <summary>Puzzler velocity distribution (v<sub>i</sub>)</summary>
     <div class="details-content">
       <div class="chart-container"><div id="chart-velocity-dist"></div></div>
-      <p class="footnote">v<sub>i</sub> = total improvement rate in mB/yr (positive = getting faster). Includes the population trend. Only puzzlers with 2+ years of data have meaningful velocity estimates.</p>
     </div>
   </details>
   <details>
     <summary>Most improved puzzlers</summary>
     <div class="details-content">
       <table id="improved-table"></table>
-      <p class="footnote">Puzzlers with the highest total velocity (biggest improvement per year), filtered to those with data spanning 2+ years.</p>
     </div>
   </details>
   <details id="puzzler-deep-dive">
     <summary>Individual Puzzler Deep Dive</summary>
     <div class="details-content">
-      <p>Select a puzzler to see how their results compare to model predictions. Each observation is shown with its posterior predictive percentile — a uniform distribution indicates good calibration.</p>
+      <p>Select a puzzler to see how their results compare to model predictions.</p>
       <input type="text" list="pred-puzzler-list" id="deep-dive-search" placeholder="Type a puzzler name..." style="width:100%;max-width:400px;padding:6px 10px;font-size:14px;border:1px solid var(--border);border-radius:3px;font-family:'Source Sans 3',sans-serif;">
       <div id="deep-dive-loading" style="display:none;padding:16px;color:var(--text-light)">Loading observation data...</div>
       <div id="deep-dive-content" style="display:none">
@@ -881,8 +697,195 @@
   </details>
 </details>
 
+<!-- Data Overview -->
+<details class="section-collapse">
+  <summary>Data Overview</summary>
+  <div class="stat-grid" id="stat-grid"></div>
+  <div class="chart-row">
+    <div class="chart-container"><div id="chart-team-size"></div></div>
+    <div class="chart-container"><div id="chart-overlap"></div></div>
+  </div>
+  <div class="chart-row">
+    <div class="chart-container"><div id="chart-scatter"></div></div>
+    <div class="chart-container"><div id="chart-piece-dist"></div></div>
+  </div>
+  <details>
+    <summary>Time distributions by piece count (mB)</summary>
+    <div class="details-content">
+      <p class="footnote">Completion times in milliBels (1000&middot;log&#x2081;&#x2080;) are approximately normal within each piece count, supporting the log-normal likelihood assumption.</p>
+      <div id="chart-histograms" class="chart-row" style="grid-template-columns: repeat(3, 1fr);"></div>
+    </div>
+  </details>
+  <details>
+    <summary>Puzzler observation frequency</summary>
+    <div class="details-content">
+      <p class="footnote">Most puzzlers have very few observations. Bayesian shrinkage pulls their estimates toward the population mean, avoiding overfitting.</p>
+      <div class="chart-container"><div id="chart-puzzler-freq"></div></div>
+    </div>
+  </details>
+</details>
+
+<!-- Model Specification -->
+<details class="section-collapse">
+  <summary>Model Specification</summary>
+  <p>Extends Model 2r with <strong>logsumexp team alpha</strong> (rates add in time domain) + <strong>Amdahl&rsquo;s law</strong> (serial fraction) + <strong>per-bucket corrections</strong>:</p>
+  <div class="equation" style="line-height:2.0;">
+&alpha;<sub>i</sub>(t) = &alpha;<sub>i</sub> + (&delta;<sub>0</sub> + &delta;<sub>i</sub>) &middot; t&nbsp;&nbsp;&nbsp;(per-member velocity)<br>
+&alpha;<sub>parallel</sub> = &minus;mB &middot; log(&Sigma; exp(&minus;&alpha;<sub>i</sub>(t) / mB))&nbsp;&nbsp;&nbsp;(rates add)<br>
+amdahl = mB &middot; log(1 + s&middot;(K&minus;1))&nbsp;&nbsp;&nbsp;(serial overhead)<br>
+&alpha;<sub>eff</sub> = &alpha;<sub>parallel</sub> + amdahl + &eta;[bucket(K)]<br>
+mean = &mu; + &alpha;<sub>eff</sub> + &beta;[puzzle] + f(N) + &gamma;&middot;log(solve#)<br>
+log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub> for K&gt;1]
+  </div>
+  <p>For <strong>solo (K=1)</strong>: logsumexp = &alpha;<sub>i</sub> + velocity, amdahl = 0, &eta; = 0 &mdash; exactly Model 2r. Four new parameters beyond 2r:</p>
+  <ul style="margin: 0 0 16px 24px; font-size: 16px;">
+    <li><strong>s</strong> &mdash; serial fraction (0 = fully parallel, 1 = serial)</li>
+    <li><strong>&eta;<sub>2</sub>, &eta;<sub>3</sub>, &eta;<sub>4+</sub></strong> &mdash; per-bucket residual corrections</li>
+    <li><strong>&sigma;<sub>team</sub></strong> &mdash; separate noise scale for team observations</li>
+  </ul>
+  <details>
+    <summary>Model hierarchy: 2r &rarr; Team</summary>
+    <div class="details-content">
+      <table>
+        <tr><th>Model</th><th>Additions over previous</th><th>Data</th></tr>
+        <tr><td>Model 2r</td><td>&mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub> + f(N) + &delta;&middot;t + &gamma;&middot;log(solve#) + Student-t</td><td>Solo only</td></tr>
+        <tr><td>Model Team</td><td>+ logsumexp(&alpha;) + Amdahl(s) + &eta;[K] + &sigma;<sub>team</sub></td><td>Solo + Duo + Group</td></tr>
+      </table>
+      <p class="footnote">All models use Student-t likelihood. Non-centered parameterization via SVI. Velocity is applied per-member inside the logsumexp. Unregistered team members map to a shared __unknown__ puzzler (shrinks toward &alpha;=0).</p>
+    </div>
+  </details>
+  <details>
+    <summary>Physical basis components g<sub>k</sub>(N)</summary>
+    <div class="details-content">
+      <p class="footnote">Sums physical processes additively in time space: time(N) = &Sigma;<sub>k</sub> w<sub>k</sub> g<sub>k</sub>(N), then converts to mB. Each curve shows one component's contribution (mB relative to N=500).</p>
+      <div class="chart-container"><div id="chart-basis"></div></div>
+    </div>
+  </details>
+</details>
+
+<!-- Model Comparison -->
+<details class="section-collapse">
+  <summary>Model Comparison</summary>
+  <p>Both models evaluated on the <em>same solo test set</em>. Does adding team data improve solo predictions?</p>
+  <div id="comparison-callout"></div>
+  <table class="comparison-table" id="comparison-table">
+    <thead><tr><th>Metric</th><th>Solo-Only (2r)</th><th>Joint (Team)</th><th>Delta</th></tr></thead>
+    <tbody id="comparison-body"></tbody>
+  </table>
+  <details>
+    <summary>Held-out team predictions</summary>
+    <div class="details-content">
+      <p>How well does the joint model predict <em>team</em> solving times on 20% held-out team data?</p>
+      <table id="team-eval-table">
+        <thead><tr><th>Subset</th><th class="num">N</th><th class="num">Mean LPD</th><th class="num">RMSE (mB)</th><th class="num">MAE (mB)</th><th class="num">Cov 90%</th><th class="num">Cov 50%</th></tr></thead>
+        <tbody id="team-eval-body"></tbody>
+      </table>
+    </div>
+  </details>
+  <details>
+    <summary>Loss curves</summary>
+    <div class="details-content">
+      <div class="chart-container"><div id="chart-loss"></div></div>
+    </div>
+  </details>
+</details>
+
+<!-- Team Deep Dive -->
+<details class="section-collapse">
+  <summary>Team Deep Dive</summary>
+  <p>Team-specific parameters learned by the joint model.</p>
+  <div class="chart-row">
+    <div class="chart-container" id="s-chart"></div>
+    <div class="chart-container" id="eta-chart"></div>
+  </div>
+  <details open>
+    <summary>Diagnostic: solo model vs team reality</summary>
+    <div class="details-content">
+      <p>What happens if we predict team times using the solo-only model with <strong>logsumexp</strong> of member alphas? Points on the diagonal mean the parallel-rates model fits perfectly.</p>
+      <div style="margin-bottom:12px; font-family: 'Source Sans 3', sans-serif; font-size:13px;">
+        <label><input type="checkbox" id="show-solo" checked> Solo (subsampled)</label>
+        <label style="margin-left:16px"><input type="checkbox" id="show-duo" checked> Duo</label>
+        <label style="margin-left:16px"><input type="checkbox" id="show-group" checked> Group (3+)</label>
+      </div>
+      <div class="chart-container"><div id="scatter-diagnostic"></div></div>
+      <h3>Residuals by Team Size (Observed &minus; Predicted)</h3>
+      <table id="residual-table">
+        <thead><tr><th>K</th><th class="num">N</th><th class="num">Mean Residual (mB)</th><th class="num">Std (mB)</th><th class="num">Implied Speedup</th></tr></thead>
+        <tbody id="residual-body"></tbody>
+      </table>
+    </div>
+  </details>
+  <details>
+    <summary>Alpha shift: solo-only vs joint</summary>
+    <div class="details-content">
+      <p>How much did individual ability estimates change when team data was added? Puzzlers with both solo and team data may shift most.</p>
+      <div class="chart-container"><div id="alpha-scatter"></div></div>
+      <h3>Largest Shifts</h3>
+      <table id="alpha-table">
+        <thead><tr><th>Puzzler</th><th class="num">Alpha (Solo)</th><th class="num">Alpha (Joint)</th><th class="num">Shift</th><th class="num">N Solo</th><th class="num">N Team</th></tr></thead>
+        <tbody id="alpha-body"></tbody>
+      </table>
+    </div>
+  </details>
+  <details>
+    <summary>Scalar parameter comparison (solo vs joint)</summary>
+    <div class="details-content">
+      <table id="scalar-compare-table">
+        <thead><tr><th>Parameter</th><th class="num">Solo-Only</th><th class="num">Joint</th><th class="num">Delta</th></tr></thead>
+        <tbody id="scalar-compare-body"></tbody>
+      </table>
+    </div>
+  </details>
+</details>
+
+<!-- Model Deep Dive -->
+<details class="section-collapse" id="section-model-deep">
+  <summary>Model Deep Dive</summary>
+  <p>The joint team model: Student-t likelihood, per-puzzler velocity, physical piece-count basis, practice effect, and team mechanics. Trained on all solo + team data.</p>
+  <details open>
+    <summary>Scalar parameters</summary>
+    <div class="details-content">
+      <table id="m2r-scalar-table"></table>
+    </div>
+  </details>
+  <details open>
+    <summary>Student-t vs Normal: how heavy are the tails?</summary>
+    <div class="details-content">
+      <p class="footnote">The learned degrees of freedom &nu; controls tail heaviness. Lower &nu; = heavier tails = more robust to outliers.</p>
+      <div class="chart-container"><div id="chart-student-t"></div></div>
+    </div>
+  </details>
+  <details open>
+    <summary>Practice curve</summary>
+    <div class="details-content">
+      <p class="footnote">Expected time change from repeated solving. The shaded band shows the 80% credible interval from the &gamma; posterior.</p>
+      <div class="chart-container"><div id="chart-practice-curve"></div></div>
+    </div>
+  </details>
+  <details open>
+    <summary>Repeat statistics</summary>
+    <div class="details-content">
+      <div class="stat-grid" id="repeat-stat-grid"></div>
+    </div>
+  </details>
+  <details>
+    <summary>Learned piece-count correction</summary>
+    <div class="details-content">
+      <p class="footnote">Piece-count correction as a function of N. Physical processes sum additively in time, then convert to mB centered at N=500. Shaded bands show posterior deciles.</p>
+      <div class="chart-container"><div id="chart-response-curves"></div></div>
+    </div>
+  </details>
+  <details>
+    <summary>Process contributions by piece count</summary>
+    <div class="details-content">
+      <p class="footnote">Fraction of solving time attributable to each physical process. At small N, edge-related work dominates; at large N, combinatorial/search effects take over.</p>
+      <div class="chart-container"><div id="chart-basis-fractions-2r"></div></div>
+    </div>
+  </details>
+</details>
+
 <footer>
-  <p>Data from myspeedpuzzling.com, speedpuzzling.com and USA Jigsaw Nationals. Models fitted with NumPyro (JAX). Visualization built with D3.js.</p>
+  <p>Joint solo+team model. Data from myspeedpuzzling.com, speedpuzzling.com and USA Jigsaw Nationals. Models fitted with NumPyro (JAX). Visualization built with D3.js. <a href="explorer_solo.html" style="color:var(--blue)">Solo Explorer</a></p>
 </footer>
 `;
                     buildApp(DATA);
@@ -890,7 +893,7 @@
                 .catch((err) => {
                     console.error("Explorer load error:", err);
                     document.getElementById("app").innerHTML =
-                        '<div class="loading" style="color:var(--red)">Failed to load explorer_data.json:<br><pre style="font-size:12px;text-align:left;max-width:800px;margin:1em auto;white-space:pre-wrap">' +
+                        '<div class="loading" style="color:var(--red)">Failed to load explorer_team_data.json:<br><pre style="font-size:12px;text-align:left;max-width:800px;margin:1em auto;white-space:pre-wrap">' +
                         (err.stack || err.message || String(err)) +
                         '</pre><br>Serve this directory with a local server:<br><code style="font-size:14px">python -m http.server 8000</code></div>';
                 });
@@ -916,27 +919,8 @@
                     return td;
                 }
 
-                const COLORS = {
-                    model_0: "#4a7fb5",
-                    model_1: "#55a868",
-                    model_1t: "#3a9a58",
-                    model_2: "#2d8a4e",
-                    model_2c: "#0e6a2e",
-                    model_2r: "#e377c2",
-                    model_3: "#dd8452",
-                };
-                const MODEL_NAMES = {
-                    model_0: "Model 0: IRT",
-                    model_1: "Model 1: + log(N)",
-                    model_1t: "Model 1t: Student-t",
-                    model_2: "Model 2: + basis \u03c6",
-                    model_2c: "Model 2c: + velocity",
-                    model_2r: "Model 2r: + practice",
-                    model_3: "Model 3: + interaction",
-                };
-                const availableModels = Object.keys(MODEL_NAMES).filter(
-                    (k) => DATA.models[k],
-                );
+                // Team data uses model_team_detail instead of model2r_detail
+                const M2R = DATA.model_team_detail;
 
                 const tooltip = d3.select("#tooltip");
                 function showTip(event, html) {
@@ -980,6 +964,7 @@
 
                 // --- Populate ---
                 const S = DATA.stats;
+                const C = DATA.comparison;
                 document.getElementById("meta-records").textContent =
                     `${fmtInt(S.n_records)} records`;
                 document.getElementById("meta-puzzlers").textContent =
@@ -987,15 +972,13 @@
                 document.getElementById("meta-puzzles").textContent =
                     `${fmtInt(S.n_puzzles)} puzzles`;
 
-                const repeatStats = DATA.model2r_detail ? DATA.model2r_detail.repeat_stats : null;
                 document.getElementById("stat-grid").innerHTML = [
-                    { value: fmtInt(S.n_records), label: "Total Records" },
-                    { value: fmtInt(S.n_puzzlers), label: "Unique Puzzlers" },
-                    { value: fmtInt(S.n_puzzles), label: "Unique Puzzles" },
-                    { value: S.piece_counts.length, label: "Piece Counts" },
-                    { value: fmt2(S.log_time_mean), label: "Mean (mB)" },
-                    repeatStats ? { value: fmtInt(repeatStats.n_repeat), label: "Repeat Solves" }
-                               : { value: fmt2(S.log_time_std), label: "Std (mB)" },
+                    { value: fmtInt(S.n_solo_total || S.n_records), label: "Solo Obs" },
+                    { value: fmtInt(S.n_duo || 0), label: "Duo Obs" },
+                    { value: fmtInt(S.n_group || 0), label: "Group Obs" },
+                    { value: fmtInt(S.n_puzzlers), label: "Puzzlers" },
+                    { value: fmtInt(S.n_puzzles), label: "Puzzles" },
+                    { value: (S.pct_registered_with_solo || 0) + "%", label: "Team w/ Solo Data" },
                 ]
                     .map(
                         (s) =>
@@ -1005,7 +988,6 @@
 
                 document.getElementById("param-mu").textContent = S.mu;
                 document.getElementById("param-sigma").textContent = S.sigma;
-                document.getElementById("about-sigma").textContent = Math.round(S.sigma);
                 if (S.delta_0 != null)
                     document.getElementById("param-delta0").textContent =
                         Math.round(-S.delta_0);
@@ -1019,21 +1001,371 @@
                         .forEach((el) => (el.textContent = label));
                 }
 
-                const nP = S.n_puzzlers,
-                    nPz = S.n_puzzles;
-                // Model 1t: mu(fixed) + sigma + nu + sigma_alpha + sigma_beta + c_pieces + alpha_i + beta_j
-                document.getElementById("m1t-params").textContent =
-                    `~${fmtInt(nP + nPz + 6)}`;
-                // Model 2c: + 4 log_w + delta_0 + sigma_delta + delta_i per puzzler
-                document.getElementById("m2c-params").textContent =
-                    `~${fmtInt(2 * nP + nPz + 12)}`;
-                // Model 2r: 2c + gamma
-                const m2rEl = document.getElementById("m2r-params");
-                if (m2rEl)
-                    m2rEl.textContent = `~${fmtInt(2 * nP + nPz + 13)}`;
+                // --- Team size histogram ---
+                if (DATA.team_size_dist) {
+                    const data = DATA.team_size_dist;
+                    const W = 380, H = 200, M = { top: 30, right: 20, bottom: 40, left: 50 };
+                    const svg = d3.select("#chart-team-size").append("svg")
+                        .attr("viewBox", `0 0 ${W} ${H}`).attr("width", "100%");
+                    svg.append("text").attr("class", "chart-title")
+                        .attr("x", W / 2).attr("y", 16).attr("text-anchor", "middle")
+                        .text("Team Size Distribution");
+                    const x = d3.scaleBand().domain(data.map(d => d.size))
+                        .range([M.left, W - M.right]).padding(0.3);
+                    const y = d3.scaleLog().domain([1, d3.max(data, d => d.count)])
+                        .range([H - M.bottom, M.top]);
+                    svg.append("g").attr("class", "axis")
+                        .attr("transform", `translate(0,${H - M.bottom})`)
+                        .call(d3.axisBottom(x).tickFormat(d => d + " members"));
+                    svg.append("g").attr("class", "axis")
+                        .attr("transform", `translate(${M.left},0)`)
+                        .call(d3.axisLeft(y).ticks(4, ",.0f"));
+                    svg.selectAll("rect").data(data).join("rect")
+                        .attr("x", d => x(d.size)).attr("y", d => y(d.count))
+                        .attr("width", x.bandwidth())
+                        .attr("height", d => H - M.bottom - y(d.count))
+                        .attr("fill", "var(--blue)").attr("rx", 2);
+                    svg.selectAll(".bar-label").data(data).join("text")
+                        .attr("x", d => x(d.size) + x.bandwidth() / 2)
+                        .attr("y", d => y(d.count) - 4)
+                        .attr("text-anchor", "middle").attr("font-size", "10px")
+                        .attr("fill", "var(--text-light)").text(d => fmtInt(d.count));
+                }
 
-                // --- Scatter ---
+                // --- Overlap donut ---
+                {
+                    const W = 380, H = 200;
+                    const svg = d3.select("#chart-overlap").append("svg")
+                        .attr("viewBox", `0 0 ${W} ${H}`).attr("width", "100%");
+                    svg.append("text").attr("class", "chart-title")
+                        .attr("x", W / 2).attr("y", 16).attr("text-anchor", "middle")
+                        .text("Team Member Overlap with Solo");
+                    const withSolo = S.n_registered_with_solo || 0;
+                    const withoutSolo = (S.n_registered_team_members || 0) - withSolo;
+                    const pieData = [
+                        { label: "Has solo data", value: Math.max(withSolo, 0), color: "var(--blue)" },
+                        { label: "Team only", value: Math.max(withoutSolo, 0), color: "var(--border)" },
+                    ];
+                    const radius = 70;
+                    const g = svg.append("g").attr("transform", `translate(${W / 2},${H / 2 + 10})`);
+                    const arc = d3.arc().innerRadius(40).outerRadius(radius);
+                    const pie = d3.pie().value(d => d.value).sort(null);
+                    g.selectAll("path").data(pie(pieData)).join("path")
+                        .attr("d", arc).attr("fill", d => d.data.color);
+                    g.append("text").attr("text-anchor", "middle").attr("dy", "-0.1em")
+                        .attr("font-size", "20px").attr("font-weight", "600")
+                        .text((S.pct_registered_with_solo || 0) + "%");
+                    g.append("text").attr("text-anchor", "middle").attr("dy", "1.2em")
+                        .attr("font-size", "10px").attr("fill", "var(--text-light)")
+                        .text("overlap");
+                }
+
+                // --- Model Comparison ---
+                {
+                    const metrics = [
+                        { key: "test_mean_lpd", label: "Test Mean LPD", higher: true, fmt: fmt },
+                        { key: "rmse_log", label: "RMSE (mB)", higher: false, fmt: fmt2 },
+                        { key: "mae_log", label: "MAE (mB)", higher: false, fmt: fmt2 },
+                        { key: "coverage_90", label: "90% Coverage", higher: true, fmt: fmt, target: 0.9 },
+                        { key: "coverage_50", label: "50% Coverage", higher: true, fmt: fmt, target: 0.5 },
+                    ];
+                    const tbody = d3.select("#comparison-body");
+                    metrics.forEach(m => {
+                        const solo = C.solo_only[m.key];
+                        const joint = C.joint_solo[m.key];
+                        if (solo == null || joint == null) return;
+                        const delta = joint - solo;
+                        const better = m.higher ? delta > 0 : delta < 0;
+                        let soloWins, jointWins;
+                        if (m.target !== undefined) {
+                            soloWins = Math.abs(solo - m.target) < Math.abs(joint - m.target);
+                            jointWins = !soloWins;
+                        } else { soloWins = !better; jointWins = better; }
+                        const tr = tbody.append("tr");
+                        tr.append("td").text(m.label);
+                        tr.append("td").attr("class", "num" + (soloWins ? " winner" : "")).text(m.fmt(solo));
+                        tr.append("td").attr("class", "num" + (jointWins ? " winner" : "")).text(m.fmt(joint));
+                        tr.append("td").attr("class", "num")
+                            .style("color", better ? "var(--green)" : "var(--red)")
+                            .text((delta > 0 ? "+" : "") + m.fmt(delta));
+                    });
+                    // Callout
+                    const deltaLPD = C.delta_mean_lpd;
+                    if (deltaLPD != null) {
+                        const cls = deltaLPD > 0 ? "positive" : "negative";
+                        const verdict = deltaLPD > 0
+                            ? "Team data <strong>improves</strong> solo predictions."
+                            : "Team data does <strong>not</strong> improve solo predictions.";
+                        d3.select("#comparison-callout").html(
+                            `<div class="callout ${cls}"><strong>Delta Mean LPD: ${deltaLPD > 0 ? "+" : ""}${fmt(deltaLPD)}</strong><br>${verdict}</div>`);
+                    }
+                    // Held-out team eval table
+                    const teamBody = d3.select("#team-eval-body");
+                    [
+                        { key: "solo_only", label: "Solo test (solo model)" },
+                        { key: "joint_solo", label: "Solo test (joint model)" },
+                        { key: "team_all", label: "All team (held out)" },
+                        { key: "duo", label: "Duo (held out)" },
+                        { key: "group", label: "Group (held out)" },
+                    ].forEach(s => {
+                        const d = C[s.key];
+                        if (!d || d.test_mean_lpd == null) return;
+                        const n = d.n || (s.key.includes("solo") ? S.n_solo_test : "");
+                        const tr = teamBody.append("tr");
+                        tr.append("td").text(s.label);
+                        tr.append("td").attr("class", "num").text(n ? fmtInt(n) : "\u2014");
+                        tr.append("td").attr("class", "num").text(fmt(d.test_mean_lpd));
+                        tr.append("td").attr("class", "num").text(d.rmse_log != null ? fmt2(d.rmse_log) : "\u2014");
+                        tr.append("td").attr("class", "num").text(d.mae_log != null ? fmt2(d.mae_log) : "\u2014");
+                        tr.append("td").attr("class", "num").text(d.coverage_90 != null ? fmt(d.coverage_90) : "\u2014");
+                        tr.append("td").attr("class", "num").text(d.coverage_50 != null ? fmt(d.coverage_50) : "\u2014");
+                    });
+                }
+
+                // --- Loss curves ---
+                if (DATA.loss_curves) {
+                    const lc = DATA.loss_curves;
+                    const W = 500, H = 250;
+                    const mg = { top: 28, right: 120, bottom: 44, left: 64 };
+                    const svg = d3.select("#chart-loss").append("svg")
+                        .attr("viewBox", `0 0 ${W} ${H}`).attr("width", "100%");
+                    svg.append("text").attr("class", "chart-title")
+                        .attr("x", (W - mg.right + mg.left) / 2).attr("y", 16)
+                        .attr("text-anchor", "middle").text("SVI Loss Curves");
+                    const allVals = [...(lc.solo_only || []), ...(lc.joint || [])];
+                    const x = d3.scaleLinear().domain([0, Math.max(lc.solo_only.length, lc.joint.length)])
+                        .range([mg.left, W - mg.right]);
+                    const y = d3.scaleLinear().domain([d3.min(allVals) * 0.99, d3.max(allVals) * 1.01])
+                        .range([H - mg.bottom, mg.top]);
+                    makeAxis(svg, x, y, W, H, mg, "Step (×10)", "ELBO Loss");
+                    [{data: lc.solo_only, color: "var(--blue)", label: "Solo-only (2r)"},
+                     {data: lc.joint, color: "var(--green)", label: "Joint (team)"}].forEach((s, si) => {
+                        const line = d3.line().x((d, i) => x(i)).y(d => y(d));
+                        svg.append("path").datum(s.data).attr("d", line)
+                            .attr("fill", "none").attr("stroke", s.color).attr("stroke-width", 1.5);
+                        const lg = svg.append("g")
+                            .attr("transform", `translate(${W - mg.right + 8}, ${mg.top + 8 + si * 18})`);
+                        lg.append("line").attr("x2", 14).attr("stroke", s.color).attr("stroke-width", 2);
+                        lg.append("text").attr("x", 18).attr("y", 4).style("font-size", "11px").text(s.label);
+                    });
+                }
+
+                // --- Team Deep Dive: Serial fraction s ---
+                if (DATA.team_params) {
+                    const sData = DATA.team_params.s;
+                    const W = 380, H = 200, M = { top: 30, right: 20, bottom: 40, left: 20 };
+                    const svg = d3.select("#s-chart").append("svg")
+                        .attr("viewBox", `0 0 ${W} ${H}`).attr("width", "100%");
+                    svg.append("text").attr("class", "chart-title")
+                        .attr("x", W / 2).attr("y", 16).attr("text-anchor", "middle")
+                        .text("Serial Fraction s (Amdahl\u2019s Law)");
+                    const cx = W / 2, cy = H / 2 + 5;
+                    svg.append("text").attr("x", cx).attr("y", cy - 10)
+                        .attr("text-anchor", "middle").attr("font-size", "32px")
+                        .attr("font-weight", "600").attr("fill", "var(--green)")
+                        .text((sData.mean * 100).toFixed(1) + "%");
+                    svg.append("text").attr("x", cx).attr("y", cy + 18)
+                        .attr("text-anchor", "middle").attr("font-size", "13px")
+                        .attr("fill", "var(--text-light)")
+                        .text("\u00b1 " + (sData.std * 100).toFixed(1) + "%");
+                    svg.append("text").attr("x", cx).attr("y", cy + 38)
+                        .attr("text-anchor", "middle").attr("font-size", "12px")
+                        .attr("fill", "var(--text-light)")
+                        .text("90% CI: [" + (sData.q05 * 100).toFixed(1) + "%, " + (sData.q95 * 100).toFixed(1) + "%]");
+                    svg.append("text").attr("x", cx).attr("y", cy + 58)
+                        .attr("text-anchor", "middle").attr("font-size", "11px")
+                        .attr("fill", "var(--text-light)")
+                        .text("(0% = fully parallel, 100% = serial)");
+                }
+
+                // --- Eta corrections ---
+                if (DATA.team_params) {
+                    const tp = DATA.team_params;
+                    const buckets = ["K=2", "K=3", "K\u22654"].filter(b => tp[b]);
+                    const bColors = { "K=2": "var(--blue)", "K=3": "var(--green)", "K\u22654": "var(--orange)" };
+                    const data = buckets.map(b => ({
+                        label: b, mean: tp[b].mean, q05: tp[b].q05, q95: tp[b].q95,
+                    }));
+                    const W = 380, H = 200, M = { top: 30, right: 30, bottom: 40, left: 50 };
+                    const svg = d3.select("#eta-chart").append("svg")
+                        .attr("viewBox", `0 0 ${W} ${H}`).attr("width", "100%");
+                    svg.append("text").attr("class", "chart-title")
+                        .attr("x", W / 2).attr("y", 16).attr("text-anchor", "middle")
+                        .text("\u03b7 Corrections (beyond Amdahl)");
+                    const extent = d3.extent(data.flatMap(d => [d.q05, d.q95, d.mean]));
+                    const xPad = Math.max(20, (extent[1] - extent[0]) * 0.15);
+                    const x = d3.scaleLinear().domain([extent[0] - xPad, extent[1] + xPad])
+                        .range([M.left, W - M.right]);
+                    const y = d3.scaleBand().domain(data.map(d => d.label))
+                        .range([M.top + 20, H - M.bottom]).padding(0.35);
+                    svg.append("g").attr("class", "axis")
+                        .attr("transform", `translate(0,${H - M.bottom})`).call(d3.axisBottom(x).ticks(5));
+                    svg.append("g").attr("class", "axis")
+                        .attr("transform", `translate(${M.left},0)`).call(d3.axisLeft(y));
+                    svg.append("line").attr("x1", x(0)).attr("x2", x(0))
+                        .attr("y1", M.top + 20).attr("y2", H - M.bottom)
+                        .attr("stroke", "var(--text-light)").attr("stroke-dasharray", "4,3").attr("opacity", 0.5);
+                    svg.selectAll(".ci").data(data).join("line")
+                        .attr("x1", d => x(d.q05)).attr("x2", d => x(d.q95))
+                        .attr("y1", d => y(d.label) + y.bandwidth() / 2)
+                        .attr("y2", d => y(d.label) + y.bandwidth() / 2)
+                        .attr("stroke", d => bColors[d.label] || "#666")
+                        .attr("stroke-width", 3).attr("opacity", 0.35);
+                    svg.selectAll("rect.bar").data(data).join("rect")
+                        .attr("x", d => d.mean < 0 ? x(d.mean) : x(0))
+                        .attr("y", d => y(d.label))
+                        .attr("width", d => Math.abs(x(d.mean) - x(0)))
+                        .attr("height", y.bandwidth())
+                        .attr("fill", d => bColors[d.label] || "#666")
+                        .attr("rx", 2).attr("opacity", 0.8);
+                    svg.selectAll(".bar-val").data(data).join("text")
+                        .attr("x", d => d.mean < 0 ? x(d.mean) - 6 : x(d.mean) + 6)
+                        .attr("y", d => y(d.label) + y.bandwidth() / 2 + 4)
+                        .attr("text-anchor", d => d.mean < 0 ? "end" : "start")
+                        .attr("font-size", "12px").attr("font-weight", "600")
+                        .attr("fill", "var(--text)").text(d => (d.mean > 0 ? "+" : "") + fmt1(d.mean) + " mB");
+                }
+
+                // --- Diagnostic scatter ---
+                if (DATA.scatter) {
+                    const pts = DATA.scatter;
+                    const W = 860, H = 600, M = { top: 30, right: 30, bottom: 50, left: 60 };
+                    const svg = d3.select("#scatter-diagnostic").append("svg")
+                        .attr("viewBox", `0 0 ${W} ${H}`).attr("width", "100%");
+                    svg.append("text").attr("class", "chart-title")
+                        .attr("x", W / 2).attr("y", 16).attr("text-anchor", "middle")
+                        .text("Solo Model Predicted vs Observed (logsumexp team alpha)");
+                    const allVals = pts.flatMap(d => [d.p, d.o]);
+                    const lo = d3.min(allVals), hi = d3.max(allVals);
+                    const pad = (hi - lo) * 0.02;
+                    const x = d3.scaleLinear().domain([lo - pad, hi + pad]).range([M.left, W - M.right]);
+                    const y = d3.scaleLinear().domain([lo - pad, hi + pad]).range([H - M.bottom, M.top]);
+                    svg.append("g").attr("class", "axis")
+                        .attr("transform", `translate(0,${H - M.bottom})`).call(d3.axisBottom(x).ticks(8));
+                    svg.append("g").attr("class", "axis")
+                        .attr("transform", `translate(${M.left},0)`).call(d3.axisLeft(y).ticks(8));
+                    svg.append("line")
+                        .attr("x1", x(lo - pad)).attr("y1", y(lo - pad))
+                        .attr("x2", x(hi + pad)).attr("y2", y(hi + pad))
+                        .attr("stroke", "var(--text-light)").attr("stroke-dasharray", "4,3").attr("opacity", 0.5);
+                    const kColors = { 1: "#bbbbbb", 2: "#4a7fb5", 3: "#55a868", 4: "#dd8452", 5: "#c44e52", 6: "#8172b2", 7: "#ccb974", 8: "#64b5cd" };
+                    const groups = d3.group(pts, d => d.k);
+                    for (const k of [1, 2, 3, 4, 5, 6, 7, 8]) {
+                        const data = groups.get(k);
+                        if (!data) continue;
+                        svg.append("g").attr("class", `dots-k${k}`)
+                            .selectAll("circle").data(data).join("circle")
+                            .attr("cx", d => x(d.p)).attr("cy", d => y(d.o))
+                            .attr("r", k === 1 ? 1.2 : 2.5)
+                            .attr("fill", kColors[k])
+                            .attr("opacity", k === 1 ? 0.04 : 0.2);
+                    }
+                    svg.append("text").attr("x", W / 2).attr("y", H - 5)
+                        .attr("text-anchor", "middle").attr("font-size", "12px")
+                        .attr("fill", "var(--text-light)").text("Predicted (mB)");
+                    svg.append("text").attr("transform", "rotate(-90)")
+                        .attr("x", -H / 2).attr("y", 14).attr("text-anchor", "middle")
+                        .attr("font-size", "12px").attr("fill", "var(--text-light)")
+                        .text("Observed (mB)");
+                    d3.select("#show-solo").on("change", function() {
+                        svg.select(".dots-k1").style("display", this.checked ? null : "none");
+                    });
+                    d3.select("#show-duo").on("change", function() {
+                        svg.select(".dots-k2").style("display", this.checked ? null : "none");
+                    });
+                    d3.select("#show-group").on("change", function() {
+                        for (let k = 3; k <= 8; k++)
+                            svg.select(`.dots-k${k}`).style("display", this.checked ? null : "none");
+                    });
+                }
+
+                // --- Residual by K table ---
+                if (DATA.residual_by_k) {
+                    const tbody = d3.select("#residual-body");
+                    Object.keys(DATA.residual_by_k).map(Number).sort().forEach(k => {
+                        const r = DATA.residual_by_k[k];
+                        const pct = ((Math.pow(10, r.mean / 1000) - 1) * 100).toFixed(1);
+                        const tr = tbody.append("tr");
+                        tr.append("td").text(k === 1 ? "1 (solo)" : k);
+                        tr.append("td").attr("class", "num").text(fmtInt(r.n));
+                        tr.append("td").attr("class", "num")
+                            .style("color", r.mean < -10 ? "var(--green)" : r.mean > 10 ? "var(--red)" : "var(--text)")
+                            .text((r.mean > 0 ? "+" : "") + fmt1(r.mean));
+                        tr.append("td").attr("class", "num").text(fmt1(r.std));
+                        tr.append("td").attr("class", "num").text(k === 1 ? "\u2014" : pct + "%");
+                    });
+                }
+
+                // --- Alpha shift scatter ---
+                if (DATA.alpha_shift) {
+                    const data = DATA.alpha_shift.filter(d => d.n_solo > 0);
+                    const W = 860, H = 400, M = { top: 30, right: 30, bottom: 50, left: 60 };
+                    const svg = d3.select("#alpha-scatter").append("svg")
+                        .attr("viewBox", `0 0 ${W} ${H}`).attr("width", "100%");
+                    svg.append("text").attr("class", "chart-title")
+                        .attr("x", W / 2).attr("y", 16).attr("text-anchor", "middle")
+                        .text("Alpha: Solo-Only vs Joint Model");
+                    const extent = d3.extent(data.flatMap(d => [d.alpha_solo, d.alpha_joint]));
+                    const pad = (extent[1] - extent[0]) * 0.05;
+                    const x = d3.scaleLinear().domain([extent[0] - pad, extent[1] + pad]).range([M.left, W - M.right]);
+                    const y = d3.scaleLinear().domain([extent[0] - pad, extent[1] + pad]).range([H - M.bottom, M.top]);
+                    svg.append("g").attr("class", "axis")
+                        .attr("transform", `translate(0,${H - M.bottom})`).call(d3.axisBottom(x).ticks(8));
+                    svg.append("g").attr("class", "axis")
+                        .attr("transform", `translate(${M.left},0)`).call(d3.axisLeft(y).ticks(8));
+                    svg.append("line")
+                        .attr("x1", x(extent[0] - pad)).attr("y1", y(extent[0] - pad))
+                        .attr("x2", x(extent[1] + pad)).attr("y2", y(extent[1] + pad))
+                        .attr("stroke", "var(--text-light)").attr("stroke-dasharray", "4,3").attr("opacity", 0.4);
+                    svg.selectAll("circle").data(data).join("circle")
+                        .attr("cx", d => x(d.alpha_solo)).attr("cy", d => y(d.alpha_joint))
+                        .attr("r", d => Math.min(4, 1.5 + Math.sqrt(d.n_team) * 0.5))
+                        .attr("fill", d => d.n_team > 0 ? "var(--blue)" : "var(--border)")
+                        .attr("opacity", d => d.n_team > 0 ? 0.5 : 0.15);
+                    svg.append("text").attr("x", W / 2).attr("y", H - 5)
+                        .attr("text-anchor", "middle").attr("font-size", "12px")
+                        .attr("fill", "var(--text-light)").text("Alpha (Solo-Only Model, mB)");
+                    svg.append("text").attr("transform", "rotate(-90)")
+                        .attr("x", -H / 2).attr("y", 14).attr("text-anchor", "middle")
+                        .attr("font-size", "12px").attr("fill", "var(--text-light)")
+                        .text("Alpha (Joint Model, mB)");
+                    // Alpha shift table
+                    const tbody = d3.select("#alpha-body");
+                    DATA.alpha_shift.slice(0, 30).forEach(d => {
+                        const tr = tbody.append("tr");
+                        tr.append("td").text(d.name);
+                        tr.append("td").attr("class", "num").text(fmt1(d.alpha_solo));
+                        tr.append("td").attr("class", "num").text(fmt1(d.alpha_joint));
+                        tr.append("td").attr("class", "num")
+                            .style("color", d.shift < 0 ? "var(--green)" : "var(--red)")
+                            .text((d.shift > 0 ? "+" : "") + fmt1(d.shift));
+                        tr.append("td").attr("class", "num").text(d.n_solo);
+                        tr.append("td").attr("class", "num").text(d.n_team);
+                    });
+                }
+
+                // --- Scalar comparison table ---
+                if (DATA.scalar_params) {
+                    const tbody = d3.select("#scalar-compare-body");
+                    const paramNames = Object.keys(DATA.scalar_params.solo_only);
+                    paramNames.forEach(name => {
+                        const solo = DATA.scalar_params.solo_only[name];
+                        const joint = DATA.scalar_params.joint[name];
+                        if (!solo || !joint) return;
+                        const delta = joint.mean - solo.mean;
+                        const tr = tbody.append("tr");
+                        tr.append("td").text(name);
+                        tr.append("td").attr("class", "num").text(fmt(solo.mean) + " \u00b1 " + fmt(solo.std));
+                        tr.append("td").attr("class", "num").text(fmt(joint.mean) + " \u00b1 " + fmt(joint.std));
+                        tr.append("td").attr("class", "num")
+                            .style("color", Math.abs(delta) > solo.std ? "var(--orange)" : "var(--text-light)")
+                            .text((delta > 0 ? "+" : "") + fmt(delta));
+                    });
+                }
+
+                // --- EDA Scatter ---
                 (function () {
+                    if (!DATA.eda_scatter) return;
                     const W = 400,
                         H = 300,
                         mg = { top: 28, right: 16, bottom: 44, left: 56 };
@@ -1047,7 +1379,7 @@
                         .attr("x", W / 2)
                         .attr("y", 16)
                         .attr("text-anchor", "middle")
-                        .text("Completion Time vs Pieces");
+                        .text("Completion Time vs Pieces (solo)");
                     const x = d3
                         .scaleLog()
                         .domain([80, 1100])
@@ -1058,7 +1390,7 @@
                         .range([H - mg.bottom, mg.top]);
                     makeAxis(svg, x, y, W, H, mg, "Pieces", "Time (seconds)");
                     svg.selectAll("circle")
-                        .data(DATA.scatter)
+                        .data(DATA.eda_scatter)
                         .enter()
                         .append("circle")
                         .attr("cx", (d) => x(d.p))
@@ -1381,488 +1713,7 @@
                     });
                 })();
 
-                // --- Model comparison ---
-                let activeModels = new Set(availableModels);
-                let activeResModel = availableModels.includes("model_2r")
-                    ? "model_2r"
-                    : availableModels[availableModels.length - 1];
-
-                function renderSelector(
-                    containerId,
-                    models,
-                    active,
-                    onClick,
-                    isSet,
-                ) {
-                    const c = d3.select("#" + containerId);
-                    c.html("");
-                    availableModels.forEach((key) => {
-                        const isActive = isSet
-                            ? active.has(key)
-                            : active === key;
-                        c.append("button")
-                            .attr(
-                                "class",
-                                `model-btn ${isActive ? "active" : ""}`,
-                            )
-                            .style(
-                                "border-color",
-                                isActive ? COLORS[key] : null,
-                            )
-                            .style("background", isActive ? COLORS[key] : null)
-                            .text(MODEL_NAMES[key])
-                            .on("click", () => onClick(key));
-                    });
-                }
-
-                function renderMetricsChart() {
-                    const c = d3.select("#chart-metrics");
-                    c.html("");
-                    const models = [...activeModels]
-                        .filter((m) => DATA.models[m])
-                        .sort();
-                    if (models.length === 0) return;
-                    const W = 400,
-                        H = 280,
-                        mg = { top: 28, right: 16, bottom: 60, left: 72 };
-                    const svg = c
-                        .append("svg")
-                        .attr("viewBox", `0 0 ${W} ${H}`)
-                        .attr("width", "100%");
-                    svg.append("text")
-                        .attr("class", "chart-title")
-                        .attr("x", W / 2)
-                        .attr("y", 16)
-                        .attr("text-anchor", "middle")
-                        .text("Test Set: Mean Predictive Log-Density");
-                    // Higher (less negative) is better
-                    const vals = models.map(
-                        (m) => DATA.models[m].test_mean_lpd || 0,
-                    );
-                    const yMin = d3.min(vals);
-                    const yMax = d3.max(vals);
-                    const pad = Math.max((yMax - yMin) * 0.15, 0.1);
-                    const x = d3
-                        .scaleBand()
-                        .domain(models)
-                        .range([mg.left, W - mg.right])
-                        .padding(0.3);
-                    const y = d3
-                        .scaleLinear()
-                        .domain([yMin - pad, yMax + pad])
-                        .range([H - mg.bottom, mg.top]);
-                    svg.append("g")
-                        .attr("class", "axis")
-                        .attr("transform", `translate(0,${H - mg.bottom})`)
-                        .call(
-                            d3
-                                .axisBottom(x)
-                                .tickFormat(
-                                    (m) => MODEL_NAMES[m].split(":")[0],
-                                ),
-                        )
-                        .selectAll("text")
-                        .style("font-size", "10px")
-                        .attr("transform", "rotate(-30)")
-                        .style("text-anchor", "end");
-                    svg.append("g")
-                        .attr("class", "axis")
-                        .attr("transform", `translate(${mg.left},0)`)
-                        .call(
-                            d3
-                                .axisLeft(y)
-                                .ticks(6)
-                                .tickFormat(d3.format(".2f")),
-                        );
-                    svg.append("text")
-                        .attr("transform", "rotate(-90)")
-                        .attr("x", -(mg.top + H - mg.bottom) / 2)
-                        .attr("y", 14)
-                        .attr("text-anchor", "middle")
-                        .style("font-size", "11px")
-                        .text("mean log p(y_test | θ)");
-
-                    const bestLpd = d3.max(vals);
-                    models.forEach((m) => {
-                        const v = DATA.models[m].test_mean_lpd || 0;
-                        svg.append("rect")
-                            .attr("x", x(m))
-                            .attr("y", y(Math.max(v, y.domain()[0])))
-                            .attr("width", x.bandwidth())
-                            .attr(
-                                "height",
-                                Math.max(
-                                    0,
-                                    y(y.domain()[0]) -
-                                        y(Math.max(v, y.domain()[0])),
-                                ),
-                            )
-                            .attr("fill", COLORS[m])
-                            .attr("opacity", v === bestLpd ? 1 : 0.7)
-                            .attr("rx", 2)
-                            .on("mouseover", function (event) {
-                                d3.select(this).attr("opacity", 1);
-                                showTip(
-                                    event,
-                                    `<span class="tt-label">${MODEL_NAMES[m]}</span><br><span class="tt-label">Mean LPD:</span> <span class="tt-value">${v.toFixed(4)}</span>`,
-                                );
-                            })
-                            .on("mousemove", (event) =>
-                                showTip(event, tooltip.html()),
-                            )
-                            .on("mouseout", function () {
-                                d3.select(this).attr(
-                                    "opacity",
-                                    v === bestLpd ? 1 : 0.7,
-                                );
-                                hideTip();
-                            });
-                    });
-                }
-
-                function renderLossChart() {
-                    const c = d3.select("#chart-loss");
-                    c.html("");
-                    const models = [...activeModels]
-                        .filter((m) => DATA.models[m])
-                        .sort();
-                    if (models.length === 0) return;
-                    const W = 400,
-                        H = 280,
-                        mg = { top: 28, right: 16, bottom: 44, left: 64 };
-                    const svg = c
-                        .append("svg")
-                        .attr("viewBox", `0 0 ${W} ${H}`)
-                        .attr("width", "100%");
-                    svg.append("text")
-                        .attr("class", "chart-title")
-                        .attr("x", W / 2)
-                        .attr("y", 16)
-                        .attr("text-anchor", "middle")
-                        .text("Training Loss (ELBO)");
-                    const allL = models.flatMap(
-                        (m) => DATA.models[m].loss_curve,
-                    );
-                    const yMin = d3.min(allL);
-                    const yMax = d3.quantile(
-                        allL.slice().sort((a, b) => a - b),
-                        0.95,
-                    );
-                    const pad = (yMax - yMin) * 0.05;
-                    const x = d3
-                        .scaleLinear()
-                        .domain([0, 5000])
-                        .range([mg.left, W - mg.right]);
-                    const y = d3
-                        .scaleLinear()
-                        .domain([yMin - pad, yMax + pad])
-                        .range([H - mg.bottom, mg.top]);
-                    makeAxis(svg, x, y, W, H, mg, "SVI Step", "ELBO Loss");
-                    models.forEach((m) => {
-                        const line = d3
-                            .line()
-                            .x((d, i) => x(i * 10))
-                            .y((d) => y(d))
-                            .defined((d) => d <= yMax + pad);
-                        svg.append("path")
-                            .datum(DATA.models[m].loss_curve)
-                            .attr("d", line)
-                            .attr("fill", "none")
-                            .attr("stroke", COLORS[m])
-                            .attr("stroke-width", 1.5)
-                            .attr("opacity", 0.8);
-                    });
-                }
-
-                function renderResiduals() {
-                    const c = d3.select("#chart-residuals");
-                    c.html("");
-                    if (!DATA.models[activeResModel]) {
-                        c.append("p").text("No data available for this model.");
-                        return;
-                    }
-                    const res = DATA.models[activeResModel].residuals;
-                    const W = 600,
-                        H = 400,
-                        mg = { top: 28, right: 16, bottom: 44, left: 56 };
-                    const svg = c
-                        .append("svg")
-                        .attr("viewBox", `0 0 ${W} ${H}`)
-                        .attr("width", "100%");
-                    svg.append("text")
-                        .attr("class", "chart-title")
-                        .attr("x", W / 2)
-                        .attr("y", 16)
-                        .attr("text-anchor", "middle")
-                        .text(
-                            `${MODEL_NAMES[activeResModel]}: Predicted vs Actual (test set)`,
-                        );
-                    const ext = d3.extent(res.flatMap((d) => [d.tr, d.pr]));
-                    const pad = (ext[1] - ext[0]) * 0.05;
-                    const x = d3
-                        .scaleLinear()
-                        .domain([ext[0] - pad, ext[1] + pad])
-                        .range([mg.left, W - mg.right]);
-                    const y = d3
-                        .scaleLinear()
-                        .domain([ext[0] - pad, ext[1] + pad])
-                        .range([H - mg.bottom, mg.top]);
-                    makeAxis(
-                        svg,
-                        x,
-                        y,
-                        W,
-                        H,
-                        mg,
-                        "Actual (mB)",
-                        "Predicted (mB)",
-                    );
-                    svg.append("line")
-                        .attr("x1", x(ext[0] - pad))
-                        .attr("y1", y(ext[0] - pad))
-                        .attr("x2", x(ext[1] + pad))
-                        .attr("y2", y(ext[1] + pad))
-                        .attr("stroke", "#c44e52")
-                        .attr("stroke-dasharray", "4,3")
-                        .attr("opacity", 0.6);
-                    const pcColor = d3
-                        .scaleOrdinal()
-                        .domain([100, 200, 300, 500, 1000])
-                        .range([
-                            "#4a7fb5",
-                            "#55a868",
-                            "#dd8452",
-                            "#8172b2",
-                            "#c44e52",
-                        ]);
-                    svg.selectAll("circle")
-                        .data(res)
-                        .enter()
-                        .append("circle")
-                        .attr("cx", (d) => x(d.tr))
-                        .attr("cy", (d) => y(d.pr))
-                        .attr("r", 2.5)
-                        .attr("fill", (d) => pcColor(d.pc))
-                        .attr("opacity", 0.35)
-                        .on("mouseover", function (event, d) {
-                            d3.select(this).attr("opacity", 1).attr("r", 4);
-                            showTip(
-                                event,
-                                (d.puzzler
-                                    ? `<span class="tt-label">Puzzler:</span> <span class="tt-value">${d.puzzler}</span><br>`
-                                    : "") +
-                                    (d.puzzle
-                                        ? `<span class="tt-label">Puzzle:</span> <span class="tt-value">${d.puzzle}</span><br>`
-                                        : "") +
-                                    `<span class="tt-label">Actual:</span> <span class="tt-value">${fmt2(d.tr)} mB</span> (${fmt1(Math.pow(10, d.tr / 1000))}s)<br>` +
-                                    `<span class="tt-label">Predicted:</span> <span class="tt-value">${fmt2(d.pr)} mB</span> (${fmt1(Math.pow(10, d.pr / 1000))}s)<br>` +
-                                    `<span class="tt-label">Pieces:</span> <span class="tt-value">${d.pc}</span><br>` +
-                                    `<span class="tt-label">Error:</span> <span class="tt-value">${fmt2(d.tr - d.pr)}</span>`,
-                            );
-                        })
-                        .on("mouseout", function () {
-                            d3.select(this)
-                                .attr("opacity", 0.35)
-                                .attr("r", 2.5);
-                            hideTip();
-                        });
-                    const lg = svg
-                        .append("g")
-                        .attr(
-                            "transform",
-                            `translate(${mg.left + 8}, ${mg.top + 4})`,
-                        );
-                    [100, 300, 500, 1000].forEach((pc, i) => {
-                        const g = lg
-                            .append("g")
-                            .attr("transform", `translate(0, ${i * 16})`);
-                        g.append("circle")
-                            .attr("r", 3)
-                            .attr("fill", pcColor(pc));
-                        g.append("text")
-                            .attr("x", 8)
-                            .attr("y", 4)
-                            .style("font-size", "10px")
-                            .text(`${pc} pcs`);
-                    });
-                }
-
-                function renderMetricsTable() {
-                    const t = d3.select("#metrics-table");
-                    t.html("");
-                    const thead = t.append("thead").append("tr");
-                    thead.append("th").text("Metric");
-                    Object.keys(MODEL_NAMES).forEach((m) =>
-                        thead
-                            .append("th")
-                            .text(MODEL_NAMES[m].split(":")[0])
-                            .attr("class", "num"),
-                    );
-                    thead.append("th").text("Baseline").attr("class", "num");
-                    const tbody = t.append("tbody");
-
-                    // Test predictive log-likelihood (primary metric)
-                    const bestLpd = d3.max(
-                        Object.keys(MODEL_NAMES)
-                            .map(
-                                (m) =>
-                                    DATA.models[m] &&
-                                    DATA.models[m].test_mean_lpd,
-                            )
-                            .filter((v) => v != null),
-                    );
-                    const trLpd = tbody
-                        .append("tr")
-                        .style("font-weight", "600");
-                    trLpd.append("td").text("Test Mean LPD");
-                    Object.keys(MODEL_NAMES).forEach((m) => {
-                        const md = DATA.models[m];
-                        const v = md ? md.test_mean_lpd : null;
-                        const td = trLpd.append("td").attr("class", "num");
-                        if (v != null) {
-                            td.text(v.toFixed(4));
-                            if (v === bestLpd)
-                                td.style("color", "var(--green)");
-                        } else {
-                            td.text("-");
-                        }
-                    });
-                    trLpd.append("td");
-
-                    const trTlppd = tbody.append("tr");
-                    trTlppd
-                        .append("td")
-                        .style("color", "var(--text-light)")
-                        .text("  Total Test LPPD");
-                    Object.keys(MODEL_NAMES).forEach((m) => {
-                        const md = DATA.models[m];
-                        trTlppd
-                            .append("td")
-                            .attr("class", "num")
-                            .style("color", "var(--text-light)")
-                            .text(
-                                md && md.test_lppd != null
-                                    ? fmt1(md.test_lppd)
-                                    : "-",
-                            );
-                    });
-                    trTlppd.append("td");
-
-                    // Observation counts row
-                    const trObs = tbody.append("tr");
-                    trObs.append("td").style("color", "var(--text-light)").text("  Train / Test obs");
-                    Object.keys(MODEL_NAMES).forEach((m) => {
-                        const md = DATA.models[m];
-                        trObs.append("td").attr("class", "num")
-                            .style("color", "var(--text-light)")
-                            .style("font-size", "12px")
-                            .text(md && md.n_train != null
-                                ? fmtInt(md.n_train) + " / " + fmtInt(md.n_test)
-                                : "-");
-                    });
-                    trObs.append("td");
-
-                    // Separator, then secondary metrics
-                    const metrics = [
-                        {
-                            key: "coverage_90",
-                            label: "90% Coverage",
-                            bl: null,
-                            f: fmtPct,
-                        },
-                        {
-                            key: "coverage_50",
-                            label: "50% Coverage",
-                            bl: null,
-                            f: fmtPct,
-                        },
-                        { key: "mae_log", label: "MAE (mB)", bl: null },
-                    ];
-                    metrics.forEach((mk) => {
-                        const tr = tbody.append("tr");
-                        tr.append("td").text(mk.label);
-                        const fn = mk.f || fmt;
-                        Object.keys(MODEL_NAMES).forEach((m) => {
-                            const md = DATA.models[m];
-                            const v = md ? md.test_metrics[mk.key] : null;
-                            tr.append("td")
-                                .attr("class", "num")
-                                .text(v != null ? fn(v) : "-");
-                        });
-                        tr.append("td");
-                    });
-
-                    // WAIC row
-                    const hasWaic = availableModels.some(
-                        (m) => DATA.models[m].waic != null,
-                    );
-                    if (hasWaic) {
-                        const bestWaic = d3.min(
-                            availableModels,
-                            (m) => DATA.models[m].waic,
-                        );
-                        const trW = tbody.append("tr");
-                        trW.append("td")
-                            .style("font-weight", "600")
-                            .text("WAIC");
-                        Object.keys(MODEL_NAMES).forEach((m) => {
-                            const md = DATA.models[m];
-                            const v = md && md.waic != null ? md.waic : null;
-                            const td = trW.append("td").attr("class", "num");
-                            if (v != null) {
-                                td.text(fmt1(v));
-                                if (v === bestWaic)
-                                    td.style("font-weight", "600").style(
-                                        "color",
-                                        "var(--green)",
-                                    );
-                            } else {
-                                td.text("-");
-                            }
-                        });
-                        trW.append("td");
-
-                        const trP = tbody.append("tr");
-                        trP.append("td")
-                            .style("color", "var(--text-light)")
-                            .text("  p_waic (eff. params)");
-                        Object.keys(MODEL_NAMES).forEach((m) => {
-                            const md = DATA.models[m];
-                            trP.append("td")
-                                .attr("class", "num")
-                                .style("color", "var(--text-light)")
-                                .text(
-                                    md && md.p_waic != null
-                                        ? fmt1(md.p_waic)
-                                        : "-",
-                                );
-                        });
-                        trP.append("td");
-
-                        const trD = tbody.append("tr");
-                        trD.append("td")
-                            .style("color", "var(--text-light)")
-                            .text("  \u0394WAIC");
-                        Object.keys(MODEL_NAMES).forEach((m) => {
-                            const md = DATA.models[m];
-                            const v =
-                                md && md.waic != null
-                                    ? md.waic - bestWaic
-                                    : null;
-                            trD.append("td")
-                                .attr("class", "num")
-                                .style("color", "var(--text-light)")
-                                .text(
-                                    v != null
-                                        ? v === 0
-                                            ? "0 (best)"
-                                            : "+" + fmt1(v)
-                                        : "-",
-                                );
-                        });
-                        trD.append("td");
-                    }
-                }
+                // (Old multi-model comparison code removed — team explorer uses fixed two-model comparison above)
 
                 function renderPuzzlerTable(filter = "") {
                     const t = d3.select("#puzzler-table");
@@ -1876,7 +1727,8 @@
                         "mB (Wilson)",
                         "\u0394mB/yr",
                         "Years",
-                        "Obs",
+                        "Solo",
+                        "Team",
                     ].forEach((h, i) =>
                         thead
                             .append("th")
@@ -1971,7 +1823,10 @@
                             .attr("class", "num")
                             .style("color", "var(--text-light)")
                             .text(years);
-                        tr.append("td").attr("class", "num").text(d.n);
+                        tr.append("td").attr("class", "num").text(d.n_solo != null ? d.n_solo : d.n);
+                        tr.append("td").attr("class", "num")
+                            .style("color", d.n_team > 0 ? "var(--blue)" : "var(--text-light)")
+                            .text(d.n_team != null ? d.n_team : 0);
                     });
                 }
 
@@ -2504,7 +2359,6 @@
 
                 // --- Physical basis component contributions ---
                 (function () {
-                    const M2R = DATA.model2r_detail;
                     if (!M2R || !M2R.basis_components) return;
                     const bc = M2R.basis_components;
                     const W = 600,
@@ -2579,10 +2433,10 @@
 
                 // Convert mB to human-readable time string (shared utility)
                 function mBtoTime(mB) {
-                    const seconds = Math.pow(10, mB / 1000);
-                    if (seconds < 60) return Math.round(seconds) + "s";
-                    const m = Math.floor(seconds / 60);
-                    const s = Math.round(seconds % 60);
+                    let totalSec = Math.round(Math.pow(10, mB / 1000));
+                    if (totalSec < 60) return totalSec + "s";
+                    let m = Math.floor(totalSec / 60);
+                    const s = totalSec % 60;
                     if (m < 60) return m + "m " + (s < 10 ? "0" : "") + s + "s";
                     const h = Math.floor(m / 60);
                     const rm = m % 60;
@@ -2602,6 +2456,17 @@
                     const log_w = S.log_w || [];
                     const N_REF = S.N_REF || 500;
                     const YEAR_CENTER = S.year_center || 2024;
+                    const mB_scale = 1000 / Math.LN10;
+
+                    // Team params from DATA
+                    const tp = DATA.team_params || {};
+                    const s_mean = tp.s ? tp.s.mean : 0.5;
+                    const sigma_team = tp.sigma_team ? tp.sigma_team.mean : sigma;
+                    const eta_means = {
+                        2: tp["K=2"] ? tp["K=2"].mean : 0,
+                        3: tp["K=3"] ? tp["K=3"].mean : 0,
+                        4: tp["K\u22654"] ? tp["K\u22654"].mean : 0,
+                    };
 
                     // Box-Muller normal sampling
                     function randn() {
@@ -2648,6 +2513,17 @@
                         return 1000 / Math.LN10 * (Math.log(time_N) - Math.log(time_ref));
                     }
 
+                    // Logsumexp of team alphas: alpha_parallel = -mB_scale * log(sum exp(-alpha_i / mB_scale))
+                    function logsumexp(alphas) {
+                        if (alphas.length === 1) return alphas[0];
+                        // Numerically stable: shift by max(-alpha_i / mB_scale)
+                        const negRates = alphas.map(a => -a / mB_scale);
+                        const maxNR = Math.max(...negRates);
+                        let sumExp = 0;
+                        for (const nr of negRates) sumExp += Math.exp(nr - maxNR);
+                        return -mB_scale * (maxNR + Math.log(sumExp));
+                    }
+
                     // Populate datalists
                     const puzzlerList = document.getElementById("pred-puzzler-list");
                     DATA.puzzlers.forEach(d => {
@@ -2655,7 +2531,6 @@
                         opt.value = d.name;
                         puzzlerList.appendChild(opt);
                     });
-                    // Puzzles with enough observations for meaningful estimates
                     const topPuzzles = DATA.puzzles.filter(d => d.n >= 3);
                     const puzzleList = document.getElementById("pred-puzzle-list");
                     topPuzzles.forEach(d => {
@@ -2674,17 +2549,148 @@
                         if (d.puzzle_id) puzzleMap[d.puzzle_id] = d;
                     });
 
-                    // Gamma from model_2r for practice effect
-                    const gamma_2r = DATA.model2r_detail && DATA.model2r_detail.scalar_params.gamma
-                        ? DATA.model2r_detail.scalar_params.gamma.mean : 0;
+                    // Gamma from model_team_detail for practice effect
+                    const gamma_2r = M2R && M2R.scalar_params && M2R.scalar_params.gamma
+                        ? M2R.scalar_params.gamma.mean : 0;
+
+                    // --- Team member UI ---
+                    const teamSlots = document.getElementById("team-member-slots");
+                    const addBtn = document.getElementById("add-team-member");
+                    let teamMemberCount = 0;
+
+                    function addTeamMemberSlot() {
+                        if (teamMemberCount >= 7) return; // max 8 total (1 primary + 7 extra)
+                        teamMemberCount++;
+                        const div = document.createElement("div");
+                        div.style.marginTop = "4px";
+                        div.style.display = "flex";
+                        div.style.alignItems = "center";
+                        div.style.gap = "4px";
+                        div.className = "team-member-slot";
+                        const input = document.createElement("input");
+                        input.type = "text";
+                        input.setAttribute("list", "pred-puzzler-list");
+                        input.placeholder = "Team member " + (teamMemberCount + 1);
+                        input.style.flex = "1";
+                        input.addEventListener("input", renderPrediction);
+                        const removeBtn = document.createElement("button");
+                        removeBtn.type = "button";
+                        removeBtn.textContent = "\u00d7";
+                        removeBtn.style.cssText = "padding:2px 8px;font-size:16px;border:1px solid var(--border);border-radius:3px;background:var(--bg);cursor:pointer;color:var(--red);";
+                        removeBtn.addEventListener("click", () => {
+                            div.remove();
+                            teamMemberCount--;
+                            renderPrediction();
+                        });
+                        div.appendChild(input);
+                        div.appendChild(removeBtn);
+                        teamSlots.appendChild(div);
+                        renderPrediction();
+                    }
+                    addBtn.addEventListener("click", addTeamMemberSlot);
+
+                    // --- Puzzle slot UI ---
+                    const puzzleSlots = document.getElementById("puzzle-slots");
+                    const addPuzzleBtn = document.getElementById("add-puzzle");
+                    let puzzleSlotCount = 0;
+
+                    function addPuzzleSlot() {
+                        if (puzzleSlotCount >= 7) return; // max 8 puzzles total
+                        puzzleSlotCount++;
+                        const div = document.createElement("div");
+                        div.style.marginTop = "4px";
+                        div.style.display = "flex";
+                        div.style.alignItems = "center";
+                        div.style.gap = "4px";
+                        div.className = "puzzle-slot";
+                        const input = document.createElement("input");
+                        input.type = "text";
+                        input.setAttribute("list", "pred-puzzle-list");
+                        input.placeholder = "Puzzle " + (puzzleSlotCount + 1);
+                        input.style.flex = "1";
+                        input.addEventListener("input", renderPrediction);
+                        const removeBtn = document.createElement("button");
+                        removeBtn.type = "button";
+                        removeBtn.textContent = "\u00d7";
+                        removeBtn.style.cssText = "padding:2px 8px;font-size:16px;border:1px solid var(--border);border-radius:3px;background:var(--bg);cursor:pointer;color:var(--red);";
+                        removeBtn.addEventListener("click", () => {
+                            div.remove();
+                            puzzleSlotCount--;
+                            renderPrediction();
+                        });
+                        div.appendChild(input);
+                        div.appendChild(removeBtn);
+                        puzzleSlots.appendChild(div);
+                        renderPrediction();
+                    }
+                    addPuzzleBtn.addEventListener("click", addPuzzleSlot);
+
+                    // Collect all team member inputs (empty slots → "" → average puzzler)
+                    function getTeamMembers() {
+                        const members = [];
+                        members.push(document.getElementById("pred-puzzler").value.trim());
+                        teamSlots.querySelectorAll(".team-member-slot input").forEach(inp => {
+                            members.push(inp.value.trim());
+                        });
+                        return members;
+                    }
+
+                    // Collect all puzzle inputs
+                    function getPuzzleInputs() {
+                        const puzzles = [];
+                        puzzles.push(document.getElementById("pred-puzzle").value.trim());
+                        puzzleSlots.querySelectorAll(".puzzle-slot input").forEach(inp => {
+                            puzzles.push(inp.value.trim());
+                        });
+                        return puzzles;
+                    }
+
+                    // Resolve a puzzle input to {beta, std, pc, fN, label}
+                    function resolvePuzzle(name) {
+                        const puzzle = puzzleMap[name];
+                        if (puzzle) {
+                            return {
+                                beta: puzzle.beta, std: puzzle.std,
+                                pc: puzzle.pc, fN: computeBasis(puzzle.pc),
+                                label: puzzle.name, known: true,
+                            };
+                        }
+                        const pc = parseInt(document.getElementById("pred-pieces").value) || 500;
+                        return {
+                            beta: 0, std: sigma_beta,
+                            pc, fN: computeBasis(pc),
+                            label: name || "Average Puzzle (" + pc + " pcs)", known: false,
+                        };
+                    }
+
+                    // Resolve a puzzler name to {alpha, std, velocity, velocity_std, label}
+                    function resolvePuzzler(name, year) {
+                        const p = puzzlerMap[name];
+                        if (p) {
+                            const dt = year - (S.ranking_year || 2026);
+                            return {
+                                alpha: p.alpha_proj - p.velocity * dt,
+                                std: Math.sqrt(p.std * p.std + p.velocity_std * p.velocity_std * dt * dt),
+                                velocity: p.velocity,
+                                velocity_std: p.velocity_std,
+                                label: p.name,
+                                known: true,
+                            };
+                        }
+                        return {
+                            alpha: 0, std: sigma_alpha,
+                            velocity: -delta_0, velocity_std: sigma_delta,
+                            label: name || "Average Puzzler",
+                            known: false,
+                        };
+                    }
 
                     function renderPrediction() {
-                        const puzzlerInput = document.getElementById("pred-puzzler").value.trim();
-                        const puzzleInput = document.getElementById("pred-puzzle").value.trim();
                         const year = parseFloat(document.getElementById("pred-year").value);
                         const solveNum = parseInt(document.getElementById("pred-solve-num").value) || 1;
                         document.getElementById("pred-year-val").textContent = year.toFixed(1);
                         document.getElementById("pred-solve-num-val").textContent = solveNum;
+
                         // Practice effect annotation
                         const practiceEffect = gamma_2r * Math.log(solveNum);
                         const practiceNote = document.getElementById("pred-practice-note");
@@ -2696,62 +2702,76 @@
                             practiceNote.style.display = "none";
                         }
 
-                        // Resolve puzzler
-                        const puzzler = puzzlerMap[puzzlerInput];
-                        let alpha_eff, alpha_std, vel, vel_std, puzzlerLabel;
-                        if (puzzler) {
-                            const dt = year - (S.ranking_year || 2026);
-                            alpha_eff = puzzler.alpha_proj - puzzler.velocity * dt;
-                            // std grows with extrapolation from ranking year
-                            alpha_std = Math.sqrt(puzzler.std * puzzler.std + puzzler.velocity_std * puzzler.velocity_std * dt * dt);
-                            vel = puzzler.velocity;
-                            vel_std = puzzler.velocity_std;
-                            puzzlerLabel = puzzler.name;
-                        } else {
-                            alpha_eff = 0;
-                            alpha_std = sigma_alpha;
-                            vel = -delta_0;
-                            vel_std = sigma_delta;
-                            puzzlerLabel = "Average Puzzler";
-                        }
+                        // Resolve all team members
+                        const memberNames = getTeamMembers();
+                        const K = Math.max(1, memberNames.length);
+                        const members = memberNames.length > 0
+                            ? memberNames.map(n => resolvePuzzler(n, year))
+                            : [resolvePuzzler("", year)];
 
-                        // Resolve puzzle
-                        const puzzle = puzzleMap[puzzleInput];
-                        let beta_val, beta_std_val, pc, puzzleLabel;
-                        if (puzzle) {
-                            beta_val = puzzle.beta;
-                            beta_std_val = puzzle.std;
-                            pc = puzzle.pc;
-                            puzzleLabel = puzzle.name;
-                        } else {
-                            beta_val = 0;
-                            beta_std_val = sigma_beta;
-                            pc = parseInt(document.getElementById("pred-pieces").value) || 500;
-                            puzzleLabel = "Average Puzzle (" + pc + " pcs)";
-                            document.getElementById("pred-custom-pieces").style.display = "";
-                        }
-                        if (puzzle) {
-                            document.getElementById("pred-custom-pieces").style.display = "none";
-                        }
+                        // Compute alpha_eff via logsumexp + Amdahl + eta
+                        const memberAlphas = members.map(m => m.alpha);
+                        const alpha_parallel = logsumexp(memberAlphas);
+                        const amdahlCorr = K > 1 ? mB_scale * Math.log(1 + s_mean * (K - 1)) : 0;
+                        const etaBucket = K <= 1 ? 0 : K === 2 ? 2 : K === 3 ? 3 : 4;
+                        const etaCorr = K > 1 ? (eta_means[etaBucket] || 0) : 0;
+                        const alpha_eff = alpha_parallel + amdahlCorr + etaCorr;
 
-                        const fN = computeBasis(pc);
+                        // Resolve all puzzles
+                        const puzzleInputs = getPuzzleInputs();
+                        const puzzles = puzzleInputs.map(n => resolvePuzzle(n));
+                        const nPuzzles = puzzles.length;
+
+                        // Show custom piece count only when no puzzle is recognized
+                        const anyKnown = puzzles.some(p => p.known);
+                        const allKnown = puzzles.every(p => p.known);
+                        document.getElementById("pred-custom-pieces").style.display = allKnown ? "none" : "";
+
                         const practiceAdj = gamma_2r * Math.log(solveNum);
-                        const pointEst = mu + alpha_eff + beta_val + fN + practiceAdj;
+                        const noiseScale = K > 1 ? sigma_team : sigma;
 
-                        // MC sampling (10K)
+                        // Per-puzzle point estimates (mB)
+                        const perPuzzlePointMB = puzzles.map(pz =>
+                            mu + alpha_eff + pz.beta + pz.fN + practiceAdj);
+
+                        // mB → seconds helper
+                        const mBtoSec = mB => Math.pow(10, mB / 1000);
+
+                        // Total point estimate: sum in seconds, back to mB
+                        const totalPointSec = perPuzzlePointMB.reduce((s, mB) => s + mBtoSec(mB), 0);
+                        const pointEst = nPuzzles === 1 ? perPuzzlePointMB[0] : 1000 * Math.log10(totalPointSec);
+
+                        // MC sampling (10K) — shared alpha draws, independent beta/noise per puzzle
                         const N_MC = 10000;
                         const samples = new Float64Array(N_MC);
                         for (let i = 0; i < N_MC; i++) {
-                            const a = alpha_eff + alpha_std * randn();
-                            const b = beta_val + beta_std_val * randn();
-                            const noise = sampleStudentT(nu, sigma);
-                            samples[i] = mu + a + b + fN + practiceAdj + noise;
+                            // Shared: sample team alphas once for all puzzles
+                            const sampledAlphas = members.map(m => m.alpha + m.std * randn());
+                            const aP = logsumexp(sampledAlphas);
+                            const aEff = aP + amdahlCorr + etaCorr;
+
+                            if (nPuzzles === 1) {
+                                const pz = puzzles[0];
+                                const b = pz.beta + pz.std * randn();
+                                const noise = sampleStudentT(nu, noiseScale);
+                                samples[i] = mu + aEff + b + pz.fN + practiceAdj + noise;
+                            } else {
+                                // Multiple puzzles: sum times in seconds
+                                let totalSec = 0;
+                                for (let p = 0; p < nPuzzles; p++) {
+                                    const pz = puzzles[p];
+                                    const b = pz.beta + pz.std * randn();
+                                    const noise = sampleStudentT(nu, noiseScale);
+                                    const mB_p = mu + aEff + b + pz.fN + practiceAdj + noise;
+                                    totalSec += mBtoSec(mB_p);
+                                }
+                                samples[i] = 1000 * Math.log10(totalSec);
+                            }
                         }
                         samples.sort();
 
                         // Quantiles
                         const q = p => samples[Math.min(Math.floor(p * N_MC), N_MC - 1)];
-                        const median = q(0.5);
                         const ci50 = [q(0.25), q(0.75)];
                         const ci80 = [q(0.10), q(0.90)];
                         const ci95 = [q(0.025), q(0.975)];
@@ -2764,10 +2784,10 @@
                         const summary = d3.select("#pred-summary");
                         summary.html("");
                         const cards = [
-                            { label: "Predicted time", value: mBtoTime(pointEst), sub: Math.round(pointEst) + " mB" },
-                            { label: "50% CI", value: mBtoTime(ci50[0]) + " – " + mBtoTime(ci50[1]), sub: Math.round(ci50[0]) + " – " + Math.round(ci50[1]) + " mB" },
-                            { label: "80% CI", value: mBtoTime(ci80[0]) + " – " + mBtoTime(ci80[1]), sub: Math.round(ci80[0]) + " – " + Math.round(ci80[1]) + " mB" },
-                            { label: "95% CI", value: mBtoTime(ci95[0]) + " – " + mBtoTime(ci95[1]), sub: Math.round(ci95[0]) + " – " + Math.round(ci95[1]) + " mB" },
+                            { label: nPuzzles > 1 ? "Total time (" + nPuzzles + " puzzles)" : "Predicted time", value: mBtoTime(pointEst), sub: Math.round(pointEst) + " mB" },
+                            { label: "50% CI", value: mBtoTime(ci50[0]) + " \u2013 " + mBtoTime(ci50[1]), sub: Math.round(ci50[0]) + " \u2013 " + Math.round(ci50[1]) + " mB" },
+                            { label: "80% CI", value: mBtoTime(ci80[0]) + " \u2013 " + mBtoTime(ci80[1]), sub: Math.round(ci80[0]) + " \u2013 " + Math.round(ci80[1]) + " mB" },
+                            { label: "95% CI", value: mBtoTime(ci95[0]) + " \u2013 " + mBtoTime(ci95[1]), sub: Math.round(ci95[0]) + " \u2013 " + Math.round(ci95[1]) + " mB" },
                         ];
                         cards.forEach(c => {
                             const card = summary.append("div").attr("class", "pred-card");
@@ -2782,7 +2802,6 @@
                         const W = 500, H = 240;
                         const mg = { top: 28, right: 16, bottom: 48, left: 50 };
 
-                        // Clip to 0.5-99.5 percentile
                         const xMin = q(0.005), xMax = q(0.995);
                         const nBins = 80;
                         const binW = (xMax - xMin) / nBins;
@@ -2800,30 +2819,31 @@
                         const y = d3.scaleLinear().domain([0, maxDensity * 1.1]).range([H - mg.bottom, mg.top]);
 
                         const svg = chartEl.append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("width", "100%");
+                        let titleText = "Predicted Time Distribution";
+                        if (K > 1 && nPuzzles > 1) titleText = `Team of ${K}, ${nPuzzles} Puzzles: Total Time`;
+                        else if (K > 1) titleText = `Team of ${K}: Predicted Time Distribution`;
+                        else if (nPuzzles > 1) titleText = `${nPuzzles} Puzzles: Total Time Distribution`;
                         svg.append("text").attr("class", "chart-title").attr("x", W/2).attr("y", 16)
-                            .attr("text-anchor", "middle").text("Predicted Time Distribution");
+                            .attr("text-anchor", "middle").text(titleText);
 
                         // CI bands
-                        const bandData = [
-                            { range: ci95, color: "var(--blue)", opacity: 0.08, label: "95%" },
-                            { range: ci80, color: "var(--blue)", opacity: 0.12, label: "80%" },
-                            { range: ci50, color: "var(--blue)", opacity: 0.18, label: "50%" },
-                        ];
-                        bandData.forEach(b => {
+                        [
+                            { range: ci95, opacity: 0.08 },
+                            { range: ci80, opacity: 0.12 },
+                            { range: ci50, opacity: 0.18 },
+                        ].forEach(b => {
                             svg.append("rect")
                                 .attr("x", x(Math.max(b.range[0], xMin)))
                                 .attr("y", mg.top)
                                 .attr("width", x(Math.min(b.range[1], xMax)) - x(Math.max(b.range[0], xMin)))
                                 .attr("height", H - mg.bottom - mg.top)
-                                .attr("fill", b.color)
+                                .attr("fill", "var(--blue)")
                                 .attr("opacity", b.opacity);
                         });
 
                         // Density area
                         const area = d3.area()
-                            .x(d => x(d.xMid))
-                            .y0(y(0))
-                            .y1(d => y(d.density))
+                            .x(d => x(d.xMid)).y0(y(0)).y1(d => y(d.density))
                             .curve(d3.curveBasis);
                         svg.append("path").datum(bins).attr("d", area)
                             .attr("fill", "var(--blue)").attr("opacity", 0.35)
@@ -2842,9 +2862,6 @@
                             .call(d3.axisBottom(x).ticks(6).tickFormat(d => Math.round(d) + " mB"));
 
                         // Secondary time axis
-                        const timeTicks = d3.range(xMin, xMax, (xMax - xMin) / 6).map(mB => ({
-                            mB, label: mBtoTime(mB)
-                        }));
                         svg.append("g").attr("class", "axis")
                             .attr("transform", `translate(0,${H - mg.bottom + 20})`)
                             .call(d3.axisBottom(x).ticks(6).tickFormat(d => mBtoTime(d)).tickSize(0))
@@ -2856,31 +2873,81 @@
                             .call(d3.axisLeft(y).ticks(4).tickFormat(() => ""));
 
                         // Decomposition table
-                        const dt_yr = year - YEAR_CENTER;
-                        const velEffect = puzzler ? -puzzler.velocity * (year - (S.ranking_year || 2026)) : 0;
-                        const velEffectStd = vel_std * Math.abs(year - (S.ranking_year || 2026));
-                        const totalParamStd = Math.sqrt(alpha_std * alpha_std + beta_std_val * beta_std_val + velEffectStd * velEffectStd);
-                        const decomp = [
-                            { term: "μ (intercept)", mB: mu, std: 0, desc: "Fixed" },
-                            { term: "Puzzler skill (α)", mB: puzzler ? puzzler.alpha_proj : 0, std: alpha_std, desc: puzzlerLabel },
-                            { term: "Velocity effect", mB: velEffect, std: velEffectStd, desc: vel != null ? (vel > 0 ? "+" : "") + vel.toFixed(1) + " mB/yr" : "—" },
-                            { term: "Puzzle difficulty (β)", mB: beta_val, std: beta_std_val, desc: puzzleLabel },
-                            { term: "Piece-count f(N)", mB: fN, std: null, desc: pc + " pieces" },
-                            { term: "Practice effect (γ)", mB: practiceAdj, std: null, desc: solveNum > 1 ? "Solve #" + solveNum : "First attempt (no effect)" },
-                            { term: "= Point estimate", mB: pointEst, std: totalParamStd, desc: mBtoTime(pointEst) },
-                            { term: "Noise σ", mB: sigma, std: null, desc: "Student-t, ν=" + nu.toFixed(1) },
-                        ];
+                        const decomp = [];
+                        decomp.push({ term: "\u03bc (intercept)", mB: mu, std: 0, desc: "Fixed" });
+                        if (K > 1) {
+                            // Show each member's alpha with velocity breakdown
+                            const dtRank = year - (S.ranking_year || 2026);
+                            members.forEach((m, i) => {
+                                const baseAlpha = m.known ? m.alpha + m.velocity * dtRank : m.alpha;
+                                const velEffect = m.known ? -m.velocity * dtRank : 0;
+                                const velStr = m.known && m.velocity != null
+                                    ? ` (${(m.velocity > 0 ? "+" : "")}${m.velocity.toFixed(0)} mB/yr)`
+                                    : "";
+                                decomp.push({
+                                    term: `Member ${i + 1} \u03b1(t)`,
+                                    mB: m.alpha, std: m.std,
+                                    desc: m.label + (m.known ? velStr : " (avg)"),
+                                });
+                            });
+                            decomp.push({ term: "\u2192 Logsumexp", mB: alpha_parallel, std: null, desc: "Combined team rate" });
+                            decomp.push({ term: "+ Amdahl (s=" + (s_mean * 100).toFixed(0) + "%)", mB: amdahlCorr, std: null, desc: "Serial overhead" });
+                            decomp.push({ term: "+ \u03b7[K=" + K + "]", mB: etaCorr, std: null, desc: "Per-bucket correction" });
+                            decomp.push({ term: "= Team \u03b1_eff", mB: alpha_eff, std: null, desc: "" });
+                        } else {
+                            const m = members[0];
+                            const dtRank = year - (S.ranking_year || 2026);
+                            const baseAlpha = m.known ? m.alpha + m.velocity * dtRank : m.alpha;
+                            const velEffect = m.known ? -m.velocity * dtRank : 0;
+                            const velEffectStd = m.velocity_std * Math.abs(dtRank);
+                            decomp.push({ term: "Puzzler skill (\u03b1)", mB: baseAlpha, std: m.std, desc: m.label });
+                            decomp.push({ term: "Velocity effect", mB: velEffect, std: velEffectStd,
+                                desc: m.velocity != null ? (m.velocity > 0 ? "+" : "") + m.velocity.toFixed(1) + " mB/yr" : "\u2014" });
+                        }
+                        if (nPuzzles === 1) {
+                            const pz = puzzles[0];
+                            decomp.push({ term: "Puzzle difficulty (\u03b2)", mB: pz.beta, std: pz.std, desc: pz.label });
+                            decomp.push({ term: "Piece-count f(N)", mB: pz.fN, std: null, desc: pz.pc + " pieces" });
+                            decomp.push({ term: "Practice (\u03b3)", mB: practiceAdj, std: null,
+                                desc: solveNum > 1 ? "Solve #" + solveNum : "First attempt" });
+                            decomp.push({ term: "= Point estimate", mB: pointEst, std: null, desc: mBtoTime(pointEst) });
+                            decomp.push({ term: "Noise \u03c3", mB: noiseScale, std: null,
+                                desc: (K > 1 ? "\u03c3_team" : "\u03c3") + ", Student-t \u03bd=" + nu.toFixed(1) });
+                        } else {
+                            // Multi-puzzle: show per-puzzle then sum
+                            decomp.push({ term: "Practice (\u03b3)", mB: practiceAdj, std: null,
+                                desc: solveNum > 1 ? "Solve #" + solveNum : "First attempt" });
+                            decomp.push({ term: "Noise \u03c3", mB: noiseScale, std: null,
+                                desc: (K > 1 ? "\u03c3_team" : "\u03c3") + " per puzzle, Student-t \u03bd=" + nu.toFixed(1) });
+                            decomp.push({ term: "", mB: null, std: null, desc: "" }); // spacer
+                            puzzles.forEach((pz, idx) => {
+                                const pzMB = perPuzzlePointMB[idx];
+                                const pzDesc = pz.known
+                                    ? pz.label + " (" + pz.pc + " pc)"
+                                    : pz.label;
+                                decomp.push({
+                                    term: `Puzzle ${idx + 1}: \u03b2 + f(N)`,
+                                    mB: Math.round(pz.beta + pz.fN),
+                                    std: pz.std,
+                                    desc: pzDesc + " \u2192 " + mBtoTime(pzMB),
+                                });
+                            });
+                            decomp.push({ term: "= Total time", mB: pointEst, std: null,
+                                desc: mBtoTime(pointEst) + " (sum of " + nPuzzles + " puzzles in seconds)" });
+                        }
+
                         const dtable = d3.select("#pred-decomp-table");
                         dtable.html("");
                         const dthead = dtable.append("thead").append("tr");
-                        ["Component", "mB", "σ", "Detail"].forEach(h => dthead.append("th").text(h));
+                        ["Component", "mB", "\u03c3", "Detail"].forEach(h => dthead.append("th").text(h));
                         const dtbody = dtable.append("tbody");
                         decomp.forEach(d => {
                             const tr = dtbody.append("tr");
                             if (d.term.startsWith("=")) tr.style("font-weight", "600").style("border-top", "2px solid var(--border)");
+                            if (d.term.startsWith("\u2192") || d.term.startsWith("+")) tr.style("color", "var(--text-light)");
                             tr.append("td").text(d.term);
-                            tr.append("td").attr("class", "num").text(d.mB != null ? Math.round(d.mB) : "—");
-                            tr.append("td").attr("class", "num").style("color", "var(--text-light)").text(d.std != null ? Math.round(d.std) : "—");
+                            tr.append("td").attr("class", "num").text(d.mB != null ? Math.round(d.mB) : "\u2014");
+                            tr.append("td").attr("class", "num").style("color", "var(--text-light)").text(d.std != null ? Math.round(d.std) : "\u2014");
                             tr.append("td").style("font-size", "13px").style("color", "var(--text-light)").text(d.desc);
                         });
                     }
@@ -2895,9 +2962,8 @@
                     renderPrediction();
                 })();
 
-                // --- Model 2r Deep Dive ---
-                if (DATA.model2r_detail) {
-                    const M2R = DATA.model2r_detail;
+                // --- Model Deep Dive ---
+                if (M2R) {
 
                     // Model specification table (mB scale)
                     (function () {
@@ -3413,7 +3479,8 @@
                         renderBasisFractions("#chart-basis-fractions-2r", M2R.basis_fractions, "Process Contributions to Solving Time");
                     })();
                 } else {
-                    document.getElementById("section-model2r").style.display = "none";
+                    const mdEl = document.getElementById("section-model-deep");
+                    if (mdEl) mdEl.style.display = "none";
                 }
 
                 // --- Shared: basis fractions stacked area chart ---
@@ -3537,41 +3604,6 @@
                 }
 
                 // --- Wire up interactivity ---
-                function updateAll() {
-                    renderSelector(
-                        "model-selector",
-                        MODEL_NAMES,
-                        activeModels,
-                        (key) => {
-                            if (activeModels.has(key)) activeModels.delete(key);
-                            else activeModels.add(key);
-                            updateAll();
-                        },
-                        true,
-                    );
-                    renderMetricsChart();
-                    renderLossChart();
-                }
-
-                function onResidualSelect(key) {
-                    activeResModel = key;
-                    renderSelector(
-                        "residual-selector",
-                        MODEL_NAMES,
-                        activeResModel,
-                        onResidualSelect,
-                        false,
-                    );
-                    renderResiduals();
-                }
-                renderSelector(
-                    "residual-selector",
-                    MODEL_NAMES,
-                    activeResModel,
-                    onResidualSelect,
-                    false,
-                );
-
                 document
                     .getElementById("puzzler-search")
                     .addEventListener("input", function () {
@@ -3631,7 +3663,7 @@
                     ddDetails.addEventListener("toggle", function() {
                         if (ddDetails.open && !OBS_DATA) {
                             ddLoading.style.display = "";
-                            fetch("explorer_puzzler_obs.json")
+                            fetch("explorer_team_puzzler_obs.json")
                                 .then(r => r.json())
                                 .then(data => {
                                     OBS_DATA = data;
@@ -3639,7 +3671,7 @@
                                     if (ddSearch.value.trim()) renderDeepDive(ddSearch.value.trim());
                                 })
                                 .catch(err => {
-                                    ddLoading.textContent = "Failed to load explorer_puzzler_obs.json: " + err.message;
+                                    ddLoading.textContent = "Failed to load explorer_team_puzzler_obs.json: " + err.message;
                                 });
                         }
                     });
@@ -3830,9 +3862,6 @@
                     }
                 })();
 
-                updateAll();
-                renderResiduals();
-                renderMetricsTable();
                 renderPuzzlerTable();
                 renderPuzzleTable();
                 renderEasyPuzzleTable();

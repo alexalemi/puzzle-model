@@ -5,6 +5,9 @@ DEST="nubo:~/static/puzzle-model/"
 
 rsync -avzL --info=progress2 \
   explorer.html \
+  explorer_team_data.json \
+  explorer_team_puzzler_obs.json \
+  explorer_solo.html \
   explorer_data.json \
   explorer_puzzler_obs.json \
   "$DEST"
