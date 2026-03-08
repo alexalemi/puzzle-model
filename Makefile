@@ -1,10 +1,13 @@
-.PHONY: deploy refit combine suggest
+.PHONY: deploy refit refit-team combine suggest
 
-deploy: refit
+deploy: refit refit-team
 	bash deploy.sh
 
 refit: combine
 	uv run python scripts/refit_all.py
+
+refit-team: combine
+	uv run python scripts/refit_team.py
 
 combine:
 	uv run python -m scraper.combine
