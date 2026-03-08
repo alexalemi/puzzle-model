@@ -7,6 +7,7 @@ Also downloads puzzle images for later analysis.
 Usage:
     uv run python -m scraper.myspeedpuzzling                  # scrape data + download images
     uv run python -m scraper.myspeedpuzzling --no-images      # scrape data only (skip image downloads)
+    uv run python -m scraper.myspeedpuzzling --duo-group      # fetch only duo/group tabs for existing puzzles
 
 Output: data/raw/myspeedpuzzling/ directory with CSV/JSON files and images/ subdirectory.
 """
@@ -680,8 +681,44 @@ def load_scraped_ids(path: Path, id_field: str) -> set[str]:
 # ---------------------------------------------------------------------------
 
 
+def scrape_duo_group_only(url: str, puzzle_id: str) -> list[SolvingTime]:
+    """Fetch only duo/group tabs for a puzzle, skipping solo and metadata."""
+    resp = fetcher.get(url)
+    if resp is None:
+        return []
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    tab_counts = _parse_tab_counts(soup)
+    if tab_counts.get("duo", 0) == 0 and tab_counts.get("group", 0) == 0:
+        return []
+
+    live_info = _extract_live_props(soup)
+    if live_info is None:
+        log.warning("Puzzle %s has duo/group data but no Live Component props", puzzle_id[:8])
+        return []
+
+    component_url, props = live_info
+    solving_times: list[SolvingTime] = []
+    for category in ("duo", "group"):
+        if tab_counts.get(category, 0) == 0:
+            continue
+        log.info("  Fetching %s tab (%d entries)...", category, tab_counts[category])
+        html = fetcher.post_live_action(
+            component_url, "changeResultsCategory", props, {"category": category},
+        )
+        if html:
+            frag = BeautifulSoup(html, "html.parser")
+            for table in frag.select("table.custom-table"):
+                for row in table.select("tbody tr"):
+                    st = _parse_solving_time_row(row, puzzle_id, category)
+                    if st:
+                        solving_times.append(st)
+    return solving_times
+
+
 def main():
     download_images = "--no-images" not in sys.argv
+    duo_group_only = "--duo-group" in sys.argv
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     if download_images:
@@ -717,43 +754,66 @@ def main():
     batch_puzzles: list[Puzzle] = []
     batch_times: list[SolvingTime] = []
 
-    for i, url in enumerate(puzzle_urls):
-        pid = extract_puzzle_id_from_url(url)
-        if pid in scraped_puzzle_ids:
-            continue
+    def _collect_player_ids(times: list[SolvingTime]):
+        for t in times:
+            if t.player_id:
+                discovered_player_ids.add(t.player_id)
+            if t.team_members:
+                for member in t.team_members.split(","):
+                    parts = member.rsplit(":", 1)
+                    if len(parts) == 2 and parts[1]:
+                        discovered_player_ids.add(parts[1])
 
-        log.info("[%d/%d] Scraping puzzle %s", i + 1, len(puzzle_urls), pid[:8])
-        puzzle, times = scrape_puzzle_detail(url, pid, download_images=download_images)
+    if duo_group_only:
+        # --- Duo/group-only mode: re-visit already-scraped puzzles ---
+        log.info("Duo/group mode: re-visiting %d puzzles for duo/group tabs only",
+                 len(puzzle_urls))
+        for i, url in enumerate(puzzle_urls):
+            pid = extract_puzzle_id_from_url(url)
+            log.info("[%d/%d] Checking duo/group for %s", i + 1, len(puzzle_urls), pid[:8])
+            times = scrape_duo_group_only(url, pid)
+            if times:
+                new_time_count += len(times)
+                batch_times.extend(times)
+                _collect_player_ids(times)
 
-        if puzzle:
-            new_puzzle_count += 1
-            new_time_count += len(times)
-            batch_puzzles.append(puzzle)
-            batch_times.extend(times)
+            if len(batch_times) >= 200:
+                _append_csv(times_csv, SOLVING_TIME_FIELDS, [asdict(t) for t in batch_times])
+                log.info("Saved batch: %d duo/group times (total: %d)", len(batch_times), new_time_count)
+                batch_times = []
 
-            for t in times:
-                if t.player_id:
-                    discovered_player_ids.add(t.player_id)
-                # Also collect registered player_ids from team_members
-                if t.team_members:
-                    for member in t.team_members.split(","):
-                        parts = member.rsplit(":", 1)
-                        if len(parts) == 2 and parts[1]:
-                            discovered_player_ids.add(parts[1])
+        if batch_times:
+            _append_csv(times_csv, SOLVING_TIME_FIELDS, [asdict(t) for t in batch_times])
+    else:
+        # --- Normal mode: scrape new puzzles ---
+        for i, url in enumerate(puzzle_urls):
+            pid = extract_puzzle_id_from_url(url)
+            if pid in scraped_puzzle_ids:
+                continue
 
-        # Periodic save every 50 puzzles
-        if len(batch_puzzles) >= 50:
+            log.info("[%d/%d] Scraping puzzle %s", i + 1, len(puzzle_urls), pid[:8])
+            puzzle, times = scrape_puzzle_detail(url, pid, download_images=download_images)
+
+            if puzzle:
+                new_puzzle_count += 1
+                new_time_count += len(times)
+                batch_puzzles.append(puzzle)
+                batch_times.extend(times)
+                _collect_player_ids(times)
+
+            # Periodic save every 50 puzzles
+            if len(batch_puzzles) >= 50:
+                _append_csv(puzzles_csv, PUZZLE_FIELDS, [asdict(p) for p in batch_puzzles])
+                _append_csv(times_csv, SOLVING_TIME_FIELDS, [asdict(t) for t in batch_times])
+                log.info("Saved batch: %d puzzles, %d times (total new: %d puzzles)",
+                         len(batch_puzzles), len(batch_times), new_puzzle_count)
+                batch_puzzles = []
+                batch_times = []
+
+        # Save remaining batch
+        if batch_puzzles:
             _append_csv(puzzles_csv, PUZZLE_FIELDS, [asdict(p) for p in batch_puzzles])
             _append_csv(times_csv, SOLVING_TIME_FIELDS, [asdict(t) for t in batch_times])
-            log.info("Saved batch: %d puzzles, %d times (total new: %d puzzles)",
-                     len(batch_puzzles), len(batch_times), new_puzzle_count)
-            batch_puzzles = []
-            batch_times = []
-
-    # Save remaining batch
-    if batch_puzzles:
-        _append_csv(puzzles_csv, PUZZLE_FIELDS, [asdict(p) for p in batch_puzzles])
-        _append_csv(times_csv, SOLVING_TIME_FIELDS, [asdict(t) for t in batch_times])
 
     # Note: Ladder pages use lazy-loaded Live Components (placeholder skeletons
     # in initial HTML, real data loaded via JavaScript). All solving times are

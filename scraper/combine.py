@@ -9,7 +9,7 @@ Sources:
 Output schema:
     source, event_id, year, division, round, rank, competitor_name, origin,
     time_seconds, completed, pieces_completed, puzzle_pieces, puzzle_brand,
-    puzzle_name, time_limit_seconds, first_attempt
+    puzzle_name, time_limit_seconds, first_attempt, team_members
 """
 
 import hashlib
@@ -382,6 +382,7 @@ def load_myspeedpuzzling(player_links: dict[str, str] | None = None) -> pd.DataF
         "time_limit_seconds": None,
         "first_attempt": df["first_attempt"],
         "finished_date": df["finished_date_parsed"],
+        "team_members": df["team_members"],
     })
 
 

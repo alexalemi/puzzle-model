@@ -17,6 +17,7 @@ to mB centered at N_REF. This gives sensible extrapolation (log-time grows as at
 most 2*log(N), not exponentially).
 """
 
+import jax
 import jax.numpy as jnp
 import numpyro
 import numpyro.distributions as dist
@@ -175,6 +176,109 @@ def model_2r(
         numpyro.sample("log_time", dist.StudentT(nu, mean, sigma), obs=log_time)
 
 
+def model_team(
+    puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles,
+    mu_fixed=None, year=None, log_time=None,
+    solve_number=None,
+    team_member_idx=None,   # (n_obs, MAX_TEAM_SIZE) int
+    team_mask=None,          # (n_obs, MAX_TEAM_SIZE) bool
+    team_size=None,          # (n_obs,) int
+    **kwargs,
+):
+    """Joint solo+team model: logsumexp team alpha + Amdahl's law + per-bucket corrections.
+
+    For each team member i, compute time-adjusted alpha:
+        alpha_i(t) = alpha_i + (delta_0 + delta_i) * t
+
+    Logsumexp gives the pure-parallel prediction (rates add):
+        alpha_parallel = -mB * log(sum_i exp(-alpha_i(t) / mB))
+
+    Amdahl's law corrects for serial fraction s:
+        amdahl = mB * log(1 + s*(K-1))     [>= 0, slows teams down]
+
+    Per-bucket residual corrections (K=2, K=3, K>=4):
+        eta[bucket(K)]
+
+    For solo (K=1): all corrections vanish, reduces exactly to model_2r.
+    """
+    mu = numpyro.deterministic("mu", jnp.float32(mu_fixed))
+    sigma = numpyro.sample("sigma", dist.HalfNormal(500.0))
+    nu = numpyro.sample("nu", dist.Gamma(2.0, 0.1))
+    sigma_alpha = numpyro.sample("sigma_alpha", dist.HalfNormal(300.0))
+    sigma_beta = numpyro.sample("sigma_beta", dist.HalfNormal(300.0))
+
+    # Physical basis weights
+    log_w = numpyro.sample("log_w", dist.Normal(0, 5.0).expand([4]))
+
+    # Velocity
+    delta_0 = numpyro.sample("delta_0", dist.Normal(0, 100.0))
+    sigma_delta = numpyro.sample("sigma_delta", dist.HalfNormal(100.0))
+
+    # Practice effect (global)
+    gamma = numpyro.sample("gamma", dist.Normal(0, 200.0))
+
+    # Team parameters
+    logit_s = numpyro.sample("logit_s", dist.Normal(0, 2.0))  # serial fraction via sigmoid
+    eta_team = numpyro.sample("eta_team", dist.Normal(0, 50.0).expand([3]))  # per-bucket corrections
+    sigma_team = numpyro.sample("sigma_team", dist.HalfNormal(500.0))  # separate scale for teams
+
+    with numpyro.plate("puzzlers", n_puzzlers):
+        alpha = numpyro.sample("alpha", dist.Normal(0, sigma_alpha))
+        delta = numpyro.sample("delta", dist.Normal(0, sigma_delta))
+
+    with numpyro.plate("puzzles", n_puzzles):
+        beta = numpyro.sample("beta", dist.Normal(0, sigma_beta))
+
+    # Physical basis correction
+    N = jnp.asarray(pieces, dtype=jnp.float32)
+    g = jnp.column_stack([jnp.sqrt(N), N, N * jnp.log(N), N ** 2])
+    g_ref = jnp.array([jnp.sqrt(N_REF), N_REF, N_REF * jnp.log(N_REF), N_REF ** 2])
+    w = jnp.exp(log_w)
+    time_contrib = jnp.dot(g, w)
+    time_ref = jnp.dot(g_ref, w)
+    mB_scale = 1000.0 / jnp.log(10.0)
+    piece_correction = mB_scale * (jnp.log(time_contrib) - jnp.log(time_ref))
+
+    # Practice
+    sn = jnp.asarray(solve_number, dtype=jnp.float32) if solve_number is not None else jnp.ones(len(puzzler_idx))
+    repeat_effect = gamma * jnp.log(sn)
+
+    # --- Team alpha via logsumexp with per-member velocity ---
+    team_member_idx = jnp.asarray(team_member_idx, dtype=jnp.int32)
+    team_mask_arr = jnp.asarray(team_mask, dtype=jnp.float32)
+    team_size_arr = jnp.asarray(team_size, dtype=jnp.float32)
+
+    # Per-member velocity-adjusted alpha
+    alpha_gathered = alpha[team_member_idx]          # (n_obs, MAX_TEAM_SIZE)
+    delta_gathered = delta[team_member_idx]          # (n_obs, MAX_TEAM_SIZE)
+    t = jnp.asarray(year, dtype=jnp.float32) - YEAR_CENTER if year is not None else 0.0
+    alpha_adjusted = alpha_gathered + (delta_0 + delta_gathered) * t[:, None]
+
+    # Logsumexp: rates add, alpha_parallel = -mB * log(sum exp(-alpha_adj / mB))
+    rates = jnp.where(team_mask_arr, jnp.exp(-alpha_adjusted / mB_scale), 0.0)
+    total_rate = jnp.sum(rates, axis=1)
+    alpha_parallel = -mB_scale * jnp.log(total_rate)
+
+    # Amdahl's law correction: s = serial fraction
+    s = jax.nn.sigmoid(logit_s)
+    numpyro.deterministic("s", s)
+    amdahl_correction = mB_scale * jnp.log(1 + s * (team_size_arr - 1))
+
+    # Per-bucket residual correction (K=2->0, K=3->1, K>=4->2)
+    is_team = team_size_arr > 1
+    team_bucket = jnp.clip(team_size_arr.astype(jnp.int32) - 2, 0, 2)
+    eta_correction = jnp.where(is_team, eta_team[team_bucket], 0.0)
+
+    alpha_eff = alpha_parallel + amdahl_correction + eta_correction
+
+    # Use sigma_team for team obs, sigma for solo
+    sigma_eff = jnp.where(team_size_arr > 1, sigma_team, sigma)
+
+    mean = mu + alpha_eff + beta[puzzle_idx] + piece_correction + repeat_effect
+    with numpyro.plate("obs", len(puzzler_idx)):
+        numpyro.sample("log_time", dist.StudentT(nu, mean, sigma_eff), obs=log_time)
+
+
 # Non-centered versions for SVI/MCMC efficiency
 model_1t_nc = reparam(model_1t, config={"alpha": LocScaleReparam(0), "beta": LocScaleReparam(0)})
 model_2c_nc = reparam(model_2c, config={
@@ -186,8 +290,14 @@ model_2r_nc = reparam(model_2r, config={
     "delta": LocScaleReparam(0),
 })
 
+model_team_nc = reparam(model_team, config={
+    "alpha": LocScaleReparam(0), "beta": LocScaleReparam(0),
+    "delta": LocScaleReparam(0),
+})
+
 MODELS = {
     "model_1t": model_1t_nc,
     "model_2c": model_2c_nc,
     "model_2r": model_2r_nc,
+    "model_team": model_team_nc,
 }
