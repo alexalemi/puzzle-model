@@ -3,9 +3,9 @@
 All parameters are on the milliBel (mB) scale where 1000 mB = 1 Bel = factor of 10 in time.
 Response variable: 1000 * log10(time_seconds).
 
-mu is fixed to the empirical mean of log_time (passed as mu_fixed kwarg) to eliminate
-the additive identifiability between mu, alpha, and beta. This makes alpha=0 genuinely
-mean "average puzzler" so hierarchical shrinkage works correctly.
+mu is fixed (passed as mu_fixed kwarg) to eliminate the additive identifiability between
+mu, alpha, and beta. Default is MU_ONE_HOUR = 1000*log10(3600) ≈ 3556.3 mB, so alpha=0
+means "solves like a 1-hour reference" and hierarchical shrinkage works correctly.
 
 Model hierarchy (all use Student-t likelihood):
   Model 1t: mu_fixed + alpha_i + beta_j + c*log(N)       (robust baseline)

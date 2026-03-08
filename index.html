@@ -543,9 +543,23 @@
                     </p>
                     <p>
                         Ratings are in <strong>milliBels</strong> (mB): 1000 mB = factor of 10 in time,
-                        100 mB &approx; 26% change. The <em>Prediction Calculator</em> supports
-                        team predictions — add multiple team members and see the combined prediction
-                        with Amdahl and eta corrections applied.
+                        100 mB &approx; 26% change. Higher puzzler ratings mean faster
+                        solvers; higher puzzle ratings mean harder puzzles.
+                    </p>
+                    <p>
+                        <strong>Predicting a solve time:</strong> Look up the puzzle's
+                        Difficulty (mB) and subtract your own puzzler mB rating. If the
+                        result is negative, expect to finish in under an hour; if positive,
+                        over an hour. The magnitude tells you how far: &plusmn;100 mB &approx;
+                        &plusmn;26% from one hour. If you've solved the puzzle before,
+                        subtract about 3 mB for each doubling of your solve count (the
+                        practice effect: &gamma;&middot;ln(solve #), where &gamma; &approx;
+                        &minus;4 mB). To convert to seconds, add &mu; and raise:
+                        10<sup>(result + &mu;)/1000</sup>.
+                        Each value has an uncertainty &sigma; — you can add or subtract it to
+                        get optimistic and pessimistic estimates. The <em>Prediction Calculator</em>
+                        supports team predictions — add multiple team members and see the
+                        combined prediction with Amdahl and eta corrections applied.
                     </p>
                     <p style="margin-bottom: 0;">
                         <strong>How to use this page:</strong> <em>Data Overview</em> summarizes the
@@ -641,19 +655,33 @@
   <details open>
     <summary>Hardest puzzles</summary>
     <div class="details-content">
+      <details style="margin-bottom: 12px;">
+        <summary>How to read this table</summary>
+        <div class="details-content">
+          <p style="margin-bottom: 0;">The <strong>Difficulty</strong> column is the raw difficulty of the puzzle, including its piece-count contribution. If it's higher than your puzzler rating, expect it to take more than an hour; if lower, less than an hour. The <strong>Wilson</strong> column is a <em>relative</em> difficulty: it measures how hard this puzzle is compared to other puzzles of the same size. A high Wilson score means the puzzle is unusually difficult for its piece count (e.g. a tricky image or irregular cuts), not just that it has many pieces.</p>
+        </div>
+      </details>
       <input type="text" class="search-box" id="puzzle-search" placeholder="Search puzzles..." style="display:inline-block; width:auto;">
       <select id="puzzle-pc-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="0">All pieces</option></select>
       <select id="puzzle-source-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="">All sources</option></select>
       <table id="puzzle-table"></table>
+      <p class="footnote">Total difficulty = &beta; + piece-count correction (mB relative to ELO center). Wilson bound uses &beta; only (puzzle-specific effect, excluding piece count).</p>
     </div>
   </details>
   <details>
     <summary>Easiest puzzles</summary>
     <div class="details-content">
+      <details style="margin-bottom: 12px;">
+        <summary>How to read this table</summary>
+        <div class="details-content">
+          <p style="margin-bottom: 0;">The <strong>Difficulty</strong> column is the raw difficulty including piece count. If it's higher than your puzzler rating, expect it to take more than an hour; if lower, less than an hour. The <strong>Wilson</strong> column is the <em>relative</em> difficulty: how easy this puzzle is compared to others of the same size. A very negative Wilson means the puzzle is unusually easy for its piece count.</p>
+        </div>
+      </details>
       <input type="text" class="search-box" id="easy-puzzle-search" placeholder="Search puzzles..." style="display:inline-block; width:auto;">
       <select id="easy-puzzle-pc-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="0">All pieces</option></select>
       <select id="easy-puzzle-source-filter" style="margin-left:8px; padding:4px 8px; font-size:13px;"><option value="">All sources</option></select>
       <table id="easy-puzzle-table"></table>
+      <p class="footnote">Total difficulty = &beta; + piece-count correction. Negative values = easier/faster than average. Wilson bound uses &beta; only.</p>
     </div>
   </details>
   <details>
@@ -1904,10 +1932,9 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                     const tbody = t.append("tbody");
                     const diffFn = (d) =>
                         d.difficulty != null
-                            ? Math.round((DATA.stats.elo_center || 1500) + DATA.stats.mu + d.difficulty)
+                            ? Math.round((DATA.stats.elo_center || 1500) + d.difficulty)
                             : Math.round(
                                   (DATA.stats.elo_center || 1500) +
-                                      DATA.stats.mu +
                                       d.beta,
                               );
                     const limit = filter ? filtered.length : 50;
@@ -1922,7 +1949,6 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                                 ? d.elo_hard
                                 : Math.round(
                                       (DATA.stats.elo_center || 1500) +
-                                          DATA.stats.mu +
                                           d.beta -
                                           3 * d.std,
                                   );
@@ -1966,9 +1992,9 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                     .sort(
                         (a, b) =>
                             (a.elo_easy ||
-                                EC + DATA.stats.mu + a.beta + 3 * a.std) -
+                                EC + a.beta + 3 * a.std) -
                             (b.elo_easy ||
-                                EC + DATA.stats.mu + b.beta + 3 * b.std),
+                                EC + b.beta + 3 * b.std),
                     );
                 function renderEasyPuzzleTable(filter = "") {
                     const t = d3.select("#easy-puzzle-table");
@@ -2005,10 +2031,9 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                     const tbody = t.append("tbody");
                     const diffFn = (d) =>
                         d.difficulty != null
-                            ? Math.round((DATA.stats.elo_center || 1500) + DATA.stats.mu + d.difficulty)
+                            ? Math.round((DATA.stats.elo_center || 1500) + d.difficulty)
                             : Math.round(
                                   (DATA.stats.elo_center || 1500) +
-                                      DATA.stats.mu +
                                       d.beta,
                               );
                     const limit = filter ? filtered.length : 50;
@@ -2023,7 +2048,6 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                                 ? d.elo_easy
                                 : Math.round(
                                       (DATA.stats.elo_center || 1500) +
-                                          DATA.stats.mu +
                                           d.beta +
                                           3 * d.std,
                                   );

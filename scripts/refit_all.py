@@ -406,8 +406,6 @@ def main():
 
     puzzle_sources = df.groupby("puzzle_idx")["source"].apply(lambda s: sorted(s.unique().tolist())).to_dict()
 
-    mu_float = mu_fixed
-
     # Compute per-puzzle piece-count correction from posterior samples
     n_puzzles_total = len(beta_mean)
     pc_array = np.array([float(puzzle_pieces.get(i, N_REF)) for i in range(n_puzzles_total)])
@@ -427,9 +425,9 @@ def main():
 
     puzzles_list = []
     for i in np.argsort(-beta_lower):
-        p_elo = ELO_CENTER + ELO_SCALE * (mu_float + float(beta_mean[i]))
-        p_elo_hard = ELO_CENTER + ELO_SCALE * (mu_float + float(beta_lower[i]))
-        p_elo_easy = ELO_CENTER + ELO_SCALE * (mu_float + float(beta_upper[i]))
+        p_elo = ELO_CENTER + ELO_SCALE * float(beta_mean[i])
+        p_elo_hard = ELO_CENTER + ELO_SCALE * float(beta_lower[i])
+        p_elo_easy = ELO_CENTER + ELO_SCALE * float(beta_upper[i])
         # Display name: strip trailing _PIECES suffix (pieces shown separately)
         raw_name = str(inv_puzzle[i])
         display_name = raw_name.rsplit("_", 1)[0] if "_" in raw_name else raw_name
@@ -590,7 +588,7 @@ def main():
     }
 
     # Puzzle difficulty distribution
-    puzzle_mB = ELO_CENTER + beta_mean + mu_fixed
+    puzzle_mB = ELO_CENTER + beta_mean
     puzzle_beta_all = {"values": [round(float(v), 3) for v in puzzle_mB],
                        "n": [int(puzzle_obs.get(i, 0)) for i in range(len(beta_mean))]}
     beta_hist_counts, beta_hist_edges = np.histogram(puzzle_mB, bins=50)

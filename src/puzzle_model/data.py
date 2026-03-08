@@ -8,6 +8,11 @@ import pandas as pd
 
 MAX_TEAM_SIZE = 8
 
+# Fixed mu: 1 hour in milliBels. Using a physical constant rather than the
+# empirical mean makes parameters stable across refits and interpretable as
+# "offset from a 1-hour solve".
+MU_ONE_HOUR = 1000.0 * np.log10(3600)  # ≈ 3556.3 mB
+
 
 def to_fractional_year(dt) -> float:
     """Convert a datetime/Timestamp to year + (day_of_year - 1) / days_in_year."""
@@ -310,12 +315,12 @@ def add_repeat_features(df: pd.DataFrame) -> pd.DataFrame:
 def prepare_model_data(df: pd.DataFrame, mu_fixed: float | None = None) -> dict:
     """Convert a DataFrame into the dict of arrays needed by NumPyro models.
 
-    If mu_fixed is None, computes it as the mean of log_time (use for training).
-    Pass the training mu_fixed explicitly for test data to keep them aligned.
+    If mu_fixed is None, uses MU_ONE_HOUR (1 hour in mB) as a stable,
+    interpretable reference point. Pass mu_fixed explicitly to override.
     """
     log_time = np.array(df["log_time"])
     if mu_fixed is None:
-        mu_fixed = float(np.mean(log_time))
+        mu_fixed = MU_ONE_HOUR
     data = {
         "puzzler_idx": np.array(df["puzzler_idx"]),
         "puzzle_idx": np.array(df["puzzle_idx"]),

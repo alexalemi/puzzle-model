@@ -542,12 +542,14 @@
                     </p>
                     <p>
                         <strong>Predicting a solve time:</strong> Look up the puzzle's
-                        Difficulty (mB) and subtract your own puzzler mB rating. If you've
-                        solved the puzzle before, subtract about 3 mB for each doubling of
-                        your solve count (the practice effect: &gamma;&middot;ln(solve #),
-                        where &gamma; &approx; &minus;4 mB). The result
-                        is a predicted log-time in milliBels, which you can convert back to
-                        seconds with 10<sup>mB/1000</sup>.
+                        Difficulty (mB) and subtract your own puzzler mB rating. If the
+                        result is negative, expect to finish in under an hour; if positive,
+                        over an hour. The magnitude tells you how far: &plusmn;100 mB &approx;
+                        &plusmn;26% from one hour. If you've solved the puzzle before,
+                        subtract about 3 mB for each doubling of your solve count (the
+                        practice effect: &gamma;&middot;ln(solve #), where &gamma; &approx;
+                        &minus;4 mB). To convert to seconds, add &mu; and raise:
+                        10<sup>(result + &mu;)/1000</sup>.
                         Each value has an uncertainty &sigma; — you can add or subtract it to
                         get optimistic and pessimistic estimates. On top of that, any individual
                         solve has random noise of about &plusmn;<span id="about-sigma"></span> mB
@@ -666,8 +668,8 @@
         <tr><th>Term</th><th>Definition</th><th>Zero means</th><th>Learned scale</th></tr>
         <tr>
           <td>D<sub>j</sub></td>
-          <td>Puzzle difficulty = &mu; + &beta;<sub>j</sub></td>
-          <td>&beta;<sub>j</sub> = 0 &rarr; average puzzle (given its piece count)</td>
+          <td>Puzzle difficulty = &beta;<sub>j</sub></td>
+          <td>&beta;<sub>j</sub> = 0 &rarr; 1-hour puzzle (given its piece count)</td>
           <td id="m2r-spec-D"></td>
         </tr>
         <tr>
@@ -679,7 +681,7 @@
         <tr>
           <td>R<sub>i</sub>(y)</td>
           <td>Puzzler rating at year y = &alpha;&#x0303;<sub>i</sub> + v<sub>i</sub>(y &minus; 2026)</td>
-          <td>R = 0 &rarr; average-speed puzzler in 2026</td>
+          <td>R = 0 &rarr; 1-hour puzzler in 2026</td>
           <td id="m2r-spec-R"></td>
         </tr>
         <tr>
@@ -809,7 +811,7 @@
       <details open style="margin-bottom: 12px;">
         <summary>How to read this table</summary>
         <div class="details-content">
-          <p style="margin-bottom: 0;">The <strong>Difficulty</strong> column is the raw difficulty of the puzzle, including its piece-count contribution — you can use it directly with your puzzler mB rating to estimate how long the puzzle will take. The <strong>Wilson</strong> column is a <em>relative</em> difficulty: it measures how hard this puzzle is compared to other puzzles of the same size. A high Wilson score means the puzzle is unusually difficult for its piece count (e.g. a tricky image or irregular cuts), not just that it has many pieces.</p>
+          <p style="margin-bottom: 0;">The <strong>Difficulty</strong> column is the raw difficulty of the puzzle, including its piece-count contribution. If it's higher than your puzzler rating, expect it to take more than an hour; if lower, less than an hour. The <strong>Wilson</strong> column is a <em>relative</em> difficulty: it measures how hard this puzzle is compared to other puzzles of the same size. A high Wilson score means the puzzle is unusually difficult for its piece count (e.g. a tricky image or irregular cuts), not just that it has many pieces.</p>
         </div>
       </details>
       <input type="text" class="search-box" id="puzzle-search" placeholder="Search puzzles..." style="display:inline-block; width:auto;">
@@ -825,7 +827,7 @@
       <details open style="margin-bottom: 12px;">
         <summary>How to read this table</summary>
         <div class="details-content">
-          <p style="margin-bottom: 0;">The <strong>Difficulty</strong> column is the raw difficulty including piece count — use it with your puzzler rating to estimate solve time. The <strong>Wilson</strong> column is the <em>relative</em> difficulty: how easy this puzzle is compared to others of the same size. A very negative Wilson means the puzzle is unusually easy for its piece count.</p>
+          <p style="margin-bottom: 0;">The <strong>Difficulty</strong> column is the raw difficulty including piece count. If it's higher than your puzzler rating, expect it to take more than an hour; if lower, less than an hour. The <strong>Wilson</strong> column is the <em>relative</em> difficulty: how easy this puzzle is compared to others of the same size. A very negative Wilson means the puzzle is unusually easy for its piece count.</p>
         </div>
       </details>
       <input type="text" class="search-box" id="easy-puzzle-search" placeholder="Search puzzles..." style="display:inline-block; width:auto;">
@@ -2048,10 +2050,9 @@
                     const tbody = t.append("tbody");
                     const diffFn = (d) =>
                         d.difficulty != null
-                            ? Math.round((DATA.stats.elo_center || 1500) + DATA.stats.mu + d.difficulty)
+                            ? Math.round((DATA.stats.elo_center || 1500) + d.difficulty)
                             : Math.round(
                                   (DATA.stats.elo_center || 1500) +
-                                      DATA.stats.mu +
                                       d.beta,
                               );
                     const limit = filter ? filtered.length : 50;
@@ -2066,7 +2067,6 @@
                                 ? d.elo_hard
                                 : Math.round(
                                       (DATA.stats.elo_center || 1500) +
-                                          DATA.stats.mu +
                                           d.beta -
                                           3 * d.std,
                                   );
@@ -2110,9 +2110,9 @@
                     .sort(
                         (a, b) =>
                             (a.elo_easy ||
-                                EC + DATA.stats.mu + a.beta + 3 * a.std) -
+                                EC + a.beta + 3 * a.std) -
                             (b.elo_easy ||
-                                EC + DATA.stats.mu + b.beta + 3 * b.std),
+                                EC + b.beta + 3 * b.std),
                     );
                 function renderEasyPuzzleTable(filter = "") {
                     const t = d3.select("#easy-puzzle-table");
@@ -2149,10 +2149,9 @@
                     const tbody = t.append("tbody");
                     const diffFn = (d) =>
                         d.difficulty != null
-                            ? Math.round((DATA.stats.elo_center || 1500) + DATA.stats.mu + d.difficulty)
+                            ? Math.round((DATA.stats.elo_center || 1500) + d.difficulty)
                             : Math.round(
                                   (DATA.stats.elo_center || 1500) +
-                                      DATA.stats.mu +
                                       d.beta,
                               );
                     const limit = filter ? filtered.length : 50;
@@ -2167,7 +2166,6 @@
                                 ? d.elo_easy
                                 : Math.round(
                                       (DATA.stats.elo_center || 1500) +
-                                          DATA.stats.mu +
                                           d.beta +
                                           3 * d.std,
                                   );
