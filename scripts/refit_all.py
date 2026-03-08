@@ -390,12 +390,15 @@ def main():
     beta_upper = beta_mean + 3 * beta_std
 
     # Build image lookup (use MSP image URLs directly)
+    # Iterate all rows (not drop_duplicates) so cross-source puzzles find their MSP image
     img_lookup = {}
     if puzzles_csv.exists():
         img_df = pd.read_csv(puzzles_csv, usecols=["puzzle_id", "image_url"])
         prefix_to_img_url = {pid[:8]: url for pid, url in zip(img_df["puzzle_id"], img_df["image_url"]) if pd.notna(url)}
-        for _, row in df.drop_duplicates("puzzle_id").iterrows():
+        for _, row in df.iterrows():
             pid = row["puzzle_id"]
+            if pid in img_lookup:
+                continue
             eid = str(row.get("event_id", ""))
             m = re.match(r"msp_([0-9a-f]+)", eid)
             if m and m.group(1) in prefix_to_img_url:
