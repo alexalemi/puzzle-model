@@ -1,9 +1,12 @@
 """Data loading, cleaning, and encoding for puzzle model."""
 
 import calendar
+import re
 
 import numpy as np
 import pandas as pd
+
+MAX_TEAM_SIZE = 8
 
 
 def to_fractional_year(dt) -> float:
@@ -55,6 +58,182 @@ def load_solo_completed(
     return df.reset_index(drop=True)
 
 
+def load_completed(
+    path: str = "data/processed/combined_results.csv",
+    divisions: tuple[str, ...] = ("solo",),
+    source: str | None = None,
+) -> pd.DataFrame:
+    """Load and filter to completed results with valid times and piece counts.
+
+    Args:
+        divisions: Tuple of divisions to include (e.g. ("solo",) or ("solo", "duo", "group")).
+        source: If given, filter to that source only.
+    """
+    df = pd.read_csv(path, low_memory=False)
+    mask = (
+        df["division"].isin(divisions)
+        & (df["completed"] == True)
+        & df["time_seconds"].notna()
+        & df["puzzle_pieces"].notna()
+        & df["competitor_name"].notna()
+        & (df["time_seconds"] > 0)
+        & (df["puzzle_pieces"] > 0)
+    )
+    if source is not None:
+        mask = mask & (df["source"] == source)
+    df = df[mask].copy()
+    df["log_time"] = 1000.0 * np.log10(df["time_seconds"])
+    df["puzzle_pieces"] = df["puzzle_pieces"].astype(int)
+    if "finished_date" in df.columns:
+        df["finished_date"] = pd.to_datetime(df["finished_date"], format="mixed", errors="coerce")
+    if "first_attempt" in df.columns:
+        df["first_attempt"] = df["first_attempt"].fillna(True).astype(bool)
+    # Compute fractional year
+    has_date = df.get("finished_date") is not None and df["finished_date"].notna().any()
+    if has_date:
+        df["year_frac"] = df.apply(
+            lambda r: to_fractional_year(r["finished_date"])
+            if pd.notna(r.get("finished_date"))
+            else r["year"] + 0.5,
+            axis=1,
+        )
+    else:
+        df["year_frac"] = df["year"].astype(float) + 0.5
+    # Drop teams larger than MAX_TEAM_SIZE
+    if "team_members" in df.columns:
+        too_large = df["team_members"].fillna("").apply(
+            lambda tm: len([m for m in tm.split(",") if m.strip()]) > MAX_TEAM_SIZE if tm else False
+        )
+        n_dropped = too_large.sum()
+        if n_dropped:
+            print(f"  Dropped {n_dropped} obs with team_size > {MAX_TEAM_SIZE}")
+        df = df[~too_large]
+    return df.reset_index(drop=True)
+
+
+def parse_team_members(tm_string: str) -> list[tuple[str, str]]:
+    """Parse team_members string into list of (name, player_id) tuples.
+
+    Format: "Name1:uuid1,Name2:,Name3:uuid3"
+    Returns: [("Name1", "uuid1"), ("Name2", ""), ("Name3", "uuid3")]
+    """
+    if not tm_string or pd.isna(tm_string):
+        return []
+    members = []
+    for part in tm_string.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        # Split on last colon (name may contain colons, though unlikely)
+        idx = part.rfind(":")
+        if idx == -1:
+            members.append((part, ""))
+        else:
+            name = part[:idx]
+            pid = part[idx + 1:]
+            members.append((name, pid))
+    return members
+
+
+def _msp_competitor_name(display_name: str, player_id: str, player_links: dict[str, str] | None = None) -> str:
+    """Build the canonical competitor_name for an MSP player.
+
+    Uses the same format as combine.py: "Display Name (msp:short_id)".
+    If the player_id is in player_links, uses the linked SP name instead.
+    """
+    if player_links and player_id in player_links:
+        return player_links[player_id]
+    if player_id:
+        return f"{display_name} (msp:{player_id[:8]})"
+    return ""
+
+
+UNKNOWN_PUZZLER = "__unknown__"
+
+
+def encode_indices(
+    df: pd.DataFrame,
+    player_links: dict[str, str] | None = None,
+) -> tuple[pd.DataFrame, dict, dict]:
+    """Map puzzler names and puzzle IDs to contiguous integer indices.
+
+    If the DataFrame contains team_members, also registers all registered
+    team members in the puzzler lookup (plus __unknown__ for unregistered).
+
+    Returns (df_with_indices, puzzler_lookup, puzzle_lookup) where lookups
+    map names/IDs to integer indices.
+    """
+    df = df.copy()
+
+    # Start with all competitor_names from the data
+    all_names = set(df["competitor_name"].unique())
+
+    # Also register team members so they share the same index space
+    if "team_members" in df.columns:
+        for tm in df["team_members"].dropna():
+            for name, pid in parse_team_members(tm):
+                comp_name = _msp_competitor_name(name, pid, player_links)
+                if comp_name:
+                    all_names.add(comp_name)
+        all_names.add(UNKNOWN_PUZZLER)
+
+    puzzlers = sorted(all_names)
+    puzzler_lookup = {name: i for i, name in enumerate(puzzlers)}
+    df["puzzler_idx"] = df["competitor_name"].map(puzzler_lookup)
+
+    puzzles = df["puzzle_id"].unique()
+    puzzle_lookup = {pid: i for i, pid in enumerate(puzzles)}
+    df["puzzle_idx"] = df["puzzle_id"].map(puzzle_lookup)
+
+    return df, puzzler_lookup, puzzle_lookup
+
+
+def build_team_arrays(
+    df: pd.DataFrame,
+    puzzler_lookup: dict[str, int],
+    player_links: dict[str, str] | None = None,
+) -> dict[str, np.ndarray]:
+    """Build padded team arrays for the joint solo+team model.
+
+    For solo obs: team_member_idx = [puzzler_idx, 0, ...], mask = [True, False, ...], size = 1
+    For duo/group: parse team_members, look up each member's index, pad, mask.
+
+    Returns dict with:
+        team_member_idx: (n_obs, MAX_TEAM_SIZE) int array
+        team_mask: (n_obs, MAX_TEAM_SIZE) bool array
+        team_size: (n_obs,) int array
+    """
+    n = len(df)
+    member_idx = np.zeros((n, MAX_TEAM_SIZE), dtype=np.int32)
+    mask = np.zeros((n, MAX_TEAM_SIZE), dtype=bool)
+    sizes = np.ones(n, dtype=np.int32)  # default solo = 1
+
+    unknown_idx = puzzler_lookup.get(UNKNOWN_PUZZLER, 0)
+    has_tm = "team_members" in df.columns
+
+    for i, (_, row) in enumerate(df.iterrows()):
+        tm = row.get("team_members", "") if has_tm else ""
+        if not tm or pd.isna(tm):
+            # Solo observation
+            member_idx[i, 0] = row["puzzler_idx"]
+            mask[i, 0] = True
+        else:
+            members = parse_team_members(tm)
+            size = min(len(members), MAX_TEAM_SIZE)
+            sizes[i] = size
+            for j, (name, pid) in enumerate(members[:MAX_TEAM_SIZE]):
+                comp_name = _msp_competitor_name(name, pid, player_links)
+                idx = puzzler_lookup.get(comp_name, unknown_idx)
+                member_idx[i, j] = idx
+                mask[i, j] = True
+
+    return {
+        "team_member_idx": member_idx,
+        "team_mask": mask,
+        "team_size": sizes,
+    }
+
+
 def create_puzzle_id(df: pd.DataFrame) -> pd.DataFrame:
     """Create a unique puzzle identifier from name and piece count.
 
@@ -68,25 +247,6 @@ def create_puzzle_id(df: pd.DataFrame) -> pd.DataFrame:
         + df["puzzle_pieces"].astype(str)
     )
     return df
-
-
-def encode_indices(df: pd.DataFrame) -> tuple[pd.DataFrame, dict, dict]:
-    """Map puzzler names and puzzle IDs to contiguous integer indices.
-
-    Returns (df_with_indices, puzzler_lookup, puzzle_lookup) where lookups
-    map names/IDs to integer indices.
-    """
-    df = df.copy()
-
-    puzzlers = df["competitor_name"].unique()
-    puzzler_lookup = {name: i for i, name in enumerate(puzzlers)}
-    df["puzzler_idx"] = df["competitor_name"].map(puzzler_lookup)
-
-    puzzles = df["puzzle_id"].unique()
-    puzzle_lookup = {pid: i for i, pid in enumerate(puzzles)}
-    df["puzzle_idx"] = df["puzzle_id"].map(puzzle_lookup)
-
-    return df, puzzler_lookup, puzzle_lookup
 
 
 def train_test_split(
