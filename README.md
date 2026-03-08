@@ -70,6 +70,6 @@ src/puzzle_model/        # Core package
   evaluate.py            # RMSE, MAE, coverage, WAIC
 
 scraper/                 # Data collection scripts
-explorer.html            # Interactive explorer (joint solo+team model)
+index.html               # Interactive explorer (joint solo+team model)
 explorer_solo.html       # Solo-only model explorer
 ```
