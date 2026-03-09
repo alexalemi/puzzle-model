@@ -1,7 +1,7 @@
 """Parse 2026 USA Jigsaw Nationals HTML heat assignments into JSON.
 
-Reads saved Google Sheets HTML files from tournament/ and produces
-tournament/nationals_2026.json with structured heat/pair/team data.
+Reads saved Google Sheets HTML files from data/tournament/ and produces
+data/tournament/nationals_2026.json with structured heat/pair/team data.
 
 Usage: uv run python scripts/parse_tournament.py
 """
@@ -11,7 +11,7 @@ import re
 from html.parser import HTMLParser
 from pathlib import Path
 
-TOURNAMENT_DIR = Path("tournament")
+TOURNAMENT_DIR = Path("data/tournament")
 OUTPUT = TOURNAMENT_DIR / "nationals_2026.json"
 
 

@@ -1,7 +1,7 @@
 """Monte Carlo simulation of the 2026 USA Jigsaw Nationals.
 
 Loads model posteriors from explorer_team_data.json and tournament
-structure from tournament/nationals_2026.json, runs N_MC stochastic
+structure from data/tournament/nationals_2026.json, runs N_MC stochastic
 simulations, and writes prediction_data.json for the explorer.
 
 Usage: uv run python scripts/simulate_nationals.py
@@ -30,7 +30,7 @@ COLD_START_STD = 63.0    # mB (vs model sigma_alpha=219)
 
 # --- File paths ---
 MODEL_DATA = Path("explorer_team_data.json")
-TOURNAMENT_DATA = Path("tournament/nationals_2026.json")
+TOURNAMENT_DATA = Path("data/tournament/nationals_2026.json")
 OUTPUT = Path("prediction_data.json")
 
 # --- Constants ---
