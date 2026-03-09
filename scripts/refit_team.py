@@ -233,18 +233,120 @@ def main():
     print(f"  Joint solo test mean LPD: {mean_lpd_joint:.4f}")
     print(f"  Metrics: {metrics_joint}")
 
+    # ── Fit GMM variant: model_team_gmm on same joint data ──
+    print(f"\n{'='*60}")
+    print("Fitting model_team_gmm (joint solo+team, contaminated Normal)...")
+    model_team_gmm = MODELS["model_team_gmm"]
+    # Warm-start near empirical GMM values to avoid component collapse.
+    gmm_init = {
+        "sigma": jnp.array(60.0),
+        "sigma_team": jnp.array(80.0),
+        "w_raw": jnp.array(0.9),   # → w_clean ≈ 0.95
+        "k_raw": jnp.array(3.7),   # → k_sigma ≈ 4.7
+    }
+    guide_gmm, result_gmm = run_svi(
+        model_team_gmm, joint_train_data,
+        num_steps=5000, lr=0.005, seed=0, init_values=gmm_init,
+    )
+
+    # Evaluate GMM on solo test
+    posterior_gmm = guide_gmm.sample_posterior(
+        jax.random.PRNGKey(1), result_gmm.params, sample_shape=(500,)
+    )
+    te_gmm = {k: v for k, v in solo_test_data.items() if k != "log_time"}
+    te_gmm.update(solo_test_team)
+    pred_gmm = Predictive(model_team_gmm, guide=guide_gmm, params=result_gmm.params, num_samples=200)
+    pred_gmm_test = pred_gmm(jax.random.PRNGKey(1), **te_gmm)
+    metrics_gmm_solo = evaluate_predictions(
+        np.array(pred_gmm_test["log_time"]),
+        np.array(solo_test_data["log_time"]),
+    )
+
+    # Test log-likelihood for GMM on solo test
+    te_gmm_with_obs = dict(solo_test_data)
+    te_gmm_with_obs.update(solo_test_team)
+    ll_gmm = log_likelihood(model_team_gmm, posterior_gmm, **te_gmm_with_obs)
+    ll_gmm_matrix = np.array(ll_gmm["log_time"])
+    lppd_gmm_i = np.logaddexp.reduce(ll_gmm_matrix, axis=0) - np.log(ll_gmm_matrix.shape[0])
+    mean_lpd_gmm = float(np.mean(lppd_gmm_i))
+    print(f"  GMM solo test mean LPD: {mean_lpd_gmm:.4f}")
+    print(f"  Metrics: {metrics_gmm_solo}")
+
+    # GMM parameters
+    w_clean_vals = np.array(posterior_gmm["w_clean"])
+    k_sigma_vals = np.array(posterior_gmm["k_sigma"])
+    sigma_gmm_vals = np.array(posterior_gmm["sigma"])
+    sigma_team_gmm_vals = np.array(posterior_gmm["sigma_team"])
+    print(f"  w_clean: {np.mean(w_clean_vals):.3f} ± {np.std(w_clean_vals):.3f}")
+    print(f"  k_sigma: {np.mean(k_sigma_vals):.2f} ± {np.std(k_sigma_vals):.2f}")
+    print(f"  sigma (narrow): {np.mean(sigma_gmm_vals):.1f} ± {np.std(sigma_gmm_vals):.1f} mB")
+    print(f"  sigma_team (narrow): {np.mean(sigma_team_gmm_vals):.1f} ± {np.std(sigma_team_gmm_vals):.1f} mB")
+    print(f"  sigma*k (wide): {np.mean(sigma_gmm_vals * k_sigma_vals):.1f} mB")
+
+    # ── Fit NST variant: model_team_nst (Normal + Student-t mixture) ──
+    print(f"\n{'='*60}")
+    print("Fitting model_team_nst (joint solo+team, Normal + Student-t mixture)...")
+    model_team_nst = MODELS["model_team_nst"]
+    # Warm-start near empirical values (same sigma/k as GMM, plus nu for Student-t tails).
+    nst_init = {
+        "sigma": jnp.array(60.0),
+        "sigma_team": jnp.array(80.0),
+        "w_raw": jnp.array(0.9),   # → w_clean ≈ 0.95
+        "k_raw": jnp.array(3.7),   # → k_sigma ≈ 4.7
+    }
+    guide_nst, result_nst = run_svi(
+        model_team_nst, joint_train_data,
+        num_steps=5000, lr=0.005, seed=0, init_values=nst_init,
+    )
+
+    # Evaluate NST on solo test
+    posterior_nst = guide_nst.sample_posterior(
+        jax.random.PRNGKey(1), result_nst.params, sample_shape=(500,)
+    )
+    te_nst = {k: v for k, v in solo_test_data.items() if k != "log_time"}
+    te_nst.update(solo_test_team)
+    pred_nst = Predictive(model_team_nst, guide=guide_nst, params=result_nst.params, num_samples=200)
+    pred_nst_test = pred_nst(jax.random.PRNGKey(1), **te_nst)
+    metrics_nst_solo = evaluate_predictions(
+        np.array(pred_nst_test["log_time"]),
+        np.array(solo_test_data["log_time"]),
+    )
+
+    # Test log-likelihood for NST on solo test
+    te_nst_with_obs = dict(solo_test_data)
+    te_nst_with_obs.update(solo_test_team)
+    ll_nst = log_likelihood(model_team_nst, posterior_nst, **te_nst_with_obs)
+    ll_nst_matrix = np.array(ll_nst["log_time"])
+    lppd_nst_i = np.logaddexp.reduce(ll_nst_matrix, axis=0) - np.log(ll_nst_matrix.shape[0])
+    mean_lpd_nst = float(np.mean(lppd_nst_i))
+    print(f"  NST solo test mean LPD: {mean_lpd_nst:.4f}")
+    print(f"  Metrics: {metrics_nst_solo}")
+
+    # NST parameters
+    w_clean_nst = np.array(posterior_nst["w_clean"])
+    nu_nst = np.array(posterior_nst["nu"])
+    k_sigma_nst = np.array(posterior_nst["k_sigma"])
+    sigma_nst = np.array(posterior_nst["sigma"])
+    sigma_team_nst = np.array(posterior_nst["sigma_team"])
+    print(f"  w_clean: {np.mean(w_clean_nst):.3f} ± {np.std(w_clean_nst):.3f}")
+    print(f"  nu: {np.mean(nu_nst):.2f} ± {np.std(nu_nst):.2f}")
+    print(f"  k_sigma: {np.mean(k_sigma_nst):.2f} ± {np.std(k_sigma_nst):.2f}")
+    print(f"  sigma (core): {np.mean(sigma_nst):.1f} ± {np.std(sigma_nst):.1f} mB")
+    print(f"  sigma*k (Student-t): {np.mean(sigma_nst * k_sigma_nst):.1f} mB")
+    print(f"  sigma_team (core): {np.mean(sigma_team_nst):.1f} ± {np.std(sigma_team_nst):.1f} mB")
+
     # ── Held-out team evaluation ──
-    def eval_team_subset(label, data_dict, arrays_dict):
-        """Evaluate joint model on a held-out team subset."""
+    def eval_team_subset(label, data_dict, arrays_dict, model_fn, guide, params, posterior):
+        """Evaluate a model on a held-out team subset."""
         te = {k: v for k, v in data_dict.items() if k != "log_time"}
         te.update(arrays_dict)
-        pred = Predictive(model_team, guide=guide_joint, params=result_joint.params, num_samples=200)
+        pred = Predictive(model_fn, guide=guide, params=params, num_samples=200)
         pred_samples = pred(jax.random.PRNGKey(3), **te)
         m = evaluate_predictions(np.array(pred_samples["log_time"]), np.array(data_dict["log_time"]))
         # Log-likelihood
         te_obs = dict(data_dict)
         te_obs.update(arrays_dict)
-        ll = log_likelihood(model_team, posterior_joint, **te_obs)
+        ll = log_likelihood(model_fn, posterior, **te_obs)
         ll_mat = np.array(ll["log_time"])
         lppd_i = np.logaddexp.reduce(ll_mat, axis=0) - np.log(ll_mat.shape[0])
         mlpd = float(np.mean(lppd_i))
@@ -253,36 +355,76 @@ def main():
         return mlpd, m
 
     print(f"\n{'='*60}")
-    print("Held-out team evaluation (joint model):")
-    mlpd_team_all, metrics_team_all = eval_team_subset("All team", team_test_data, team_test_arrays)
-    mlpd_duo, metrics_duo = eval_team_subset("Duo only", duo_test_data, duo_test_arrays)
+    print("Held-out team evaluation (Student-t model):")
+    mlpd_team_all, metrics_team_all = eval_team_subset(
+        "All team", team_test_data, team_test_arrays, model_team, guide_joint, result_joint.params, posterior_joint)
+    mlpd_duo, metrics_duo = eval_team_subset(
+        "Duo only", duo_test_data, duo_test_arrays, model_team, guide_joint, result_joint.params, posterior_joint)
     if len(group_test) > 0:
-        mlpd_group, metrics_group = eval_team_subset("Group only", group_test_data, group_test_arrays)
+        mlpd_group, metrics_group = eval_team_subset(
+            "Group only", group_test_data, group_test_arrays, model_team, guide_joint, result_joint.params, posterior_joint)
     else:
         mlpd_group, metrics_group = None, None
 
+    print(f"\nHeld-out team evaluation (GMM model):")
+    mlpd_team_all_gmm, metrics_team_all_gmm = eval_team_subset(
+        "All team", team_test_data, team_test_arrays, model_team_gmm, guide_gmm, result_gmm.params, posterior_gmm)
+    mlpd_duo_gmm, metrics_duo_gmm = eval_team_subset(
+        "Duo only", duo_test_data, duo_test_arrays, model_team_gmm, guide_gmm, result_gmm.params, posterior_gmm)
+    if len(group_test) > 0:
+        mlpd_group_gmm, metrics_group_gmm = eval_team_subset(
+            "Group only", group_test_data, group_test_arrays, model_team_gmm, guide_gmm, result_gmm.params, posterior_gmm)
+    else:
+        mlpd_group_gmm, metrics_group_gmm = None, None
+
+    print(f"\nHeld-out team evaluation (NST model):")
+    mlpd_team_all_nst, metrics_team_all_nst = eval_team_subset(
+        "All team", team_test_data, team_test_arrays, model_team_nst, guide_nst, result_nst.params, posterior_nst)
+    mlpd_duo_nst, metrics_duo_nst = eval_team_subset(
+        "Duo only", duo_test_data, duo_test_arrays, model_team_nst, guide_nst, result_nst.params, posterior_nst)
+    if len(group_test) > 0:
+        mlpd_group_nst, metrics_group_nst = eval_team_subset(
+            "Group only", group_test_data, group_test_arrays, model_team_nst, guide_nst, result_nst.params, posterior_nst)
+    else:
+        mlpd_group_nst, metrics_group_nst = None, None
+
     # ── Comparison ──
     print(f"\n{'='*60}")
-    print(f"{'Subset':<25} {'N':>7} {'Mean LPD':>10} {'RMSE':>10} {'MAE':>10} {'Cov90':>8} {'Cov50':>8}")
-    print("-" * 82)
+    print(f"{'Subset':<35} {'N':>7} {'Mean LPD':>10} {'RMSE':>10} {'MAE':>10} {'Cov90':>8} {'Cov50':>8}")
+    print("-" * 92)
     rows = [
         ("Solo test (solo model)", len(solo_test), mean_lpd_solo, metrics_solo),
-        ("Solo test (joint model)", len(solo_test), mean_lpd_joint, metrics_joint),
-        ("Team test (joint model)", len(team_test), mlpd_team_all, metrics_team_all),
-        ("Duo test (joint model)", len(duo_test), mlpd_duo, metrics_duo),
+        ("Solo test (Student-t joint)", len(solo_test), mean_lpd_joint, metrics_joint),
+        ("Solo test (GMM joint)", len(solo_test), mean_lpd_gmm, metrics_gmm_solo),
+        ("Solo test (NST joint)", len(solo_test), mean_lpd_nst, metrics_nst_solo),
+        ("Team test (Student-t)", len(team_test), mlpd_team_all, metrics_team_all),
+        ("Team test (GMM)", len(team_test), mlpd_team_all_gmm, metrics_team_all_gmm),
+        ("Team test (NST)", len(team_test), mlpd_team_all_nst, metrics_team_all_nst),
+        ("Duo test (Student-t)", len(duo_test), mlpd_duo, metrics_duo),
+        ("Duo test (GMM)", len(duo_test), mlpd_duo_gmm, metrics_duo_gmm),
+        ("Duo test (NST)", len(duo_test), mlpd_duo_nst, metrics_duo_nst),
     ]
     if mlpd_group is not None:
-        rows.append(("Group test (joint model)", len(group_test), mlpd_group, metrics_group))
+        rows.append(("Group test (Student-t)", len(group_test), mlpd_group, metrics_group))
+    if mlpd_group_gmm is not None:
+        rows.append(("Group test (GMM)", len(group_test), mlpd_group_gmm, metrics_group_gmm))
+    if mlpd_group_nst is not None:
+        rows.append(("Group test (NST)", len(group_test), mlpd_group_nst, metrics_group_nst))
     for label, n, lpd, m in rows:
-        print(f"{label:<25} {n:>7,} {lpd:>10.4f} {m['rmse_log']:>10.2f} {m['mae_log']:>10.2f} "
+        print(f"{label:<35} {n:>7,} {lpd:>10.4f} {m['rmse_log']:>10.2f} {m['mae_log']:>10.2f} "
               f"{m['coverage_90']:>8.4f} {m['coverage_50']:>8.4f}")
     delta_lpd = mean_lpd_joint - mean_lpd_solo
-    print(f"\nDelta solo mean LPD (joint - solo): {delta_lpd:+.4f}")
+    delta_lpd_gmm = mean_lpd_gmm - mean_lpd_solo
+    delta_lpd_nst = mean_lpd_nst - mean_lpd_solo
+    print(f"\nDelta solo mean LPD (Student-t - solo): {delta_lpd:+.4f}")
+    print(f"Delta solo mean LPD (GMM - solo):       {delta_lpd_gmm:+.4f}")
+    print(f"Delta solo mean LPD (NST - solo):       {delta_lpd_nst:+.4f}")
+    print(f"Delta solo mean LPD (NST - Student-t):  {mean_lpd_nst - mean_lpd_joint:+.4f}")
 
-    # ── Team parameters: Amdahl's s + per-bucket eta + sigma_team ──
-    s_vals = np.array(posterior_joint["s"])
-    eta_vals = np.array(posterior_joint["eta_team"])  # (n_samples, 3)
-    sigma_team_vals = np.array(posterior_joint["sigma_team"])
+    # ── Team parameters: Amdahl's s + per-bucket eta + sigma_team (from NST production model) ──
+    s_vals = np.array(posterior_nst["s"])
+    eta_vals = np.array(posterior_nst["eta_team"])  # (n_samples, 3)
+    sigma_team_vals = np.array(posterior_nst["sigma_team"])
     bucket_labels = ["K=2", "K=3", "K≥4"]
 
     team_params = {
@@ -358,7 +500,7 @@ def main():
     scalar_names = ["sigma", "nu", "sigma_alpha", "sigma_beta", "delta_0", "sigma_delta", "gamma"]
     scalar_comparison = {"solo_only": {}, "joint": {}}
     for name in scalar_names:
-        for label, samples in [("solo_only", posterior_solo), ("joint", posterior_joint)]:
+        for label, samples in [("solo_only", posterior_solo), ("joint", posterior_nst)]:
             vals = np.array(samples[name])
             scalar_comparison[label][name] = {
                 "mean": round(float(np.mean(vals)), 4),
@@ -366,27 +508,36 @@ def main():
             }
     # Add log_w
     for k in range(4):
-        for label, samples in [("solo_only", posterior_solo), ("joint", posterior_joint)]:
+        for label, samples in [("solo_only", posterior_solo), ("joint", posterior_nst)]:
             vals = np.array(samples["log_w"][:, k])
             scalar_comparison[label][f"log_w_{k}"] = {
                 "mean": round(float(np.mean(vals)), 4),
                 "std": round(float(np.std(vals)), 4),
             }
-    # Add team-only params to joint column
+    # Add team-only params to joint column (from NST posterior)
     scalar_comparison["joint"]["s"] = {
-        "mean": round(float(np.mean(s_vals)), 4),
-        "std": round(float(np.std(s_vals)), 4),
+        "mean": round(float(np.mean(np.array(posterior_nst["s"]))), 4),
+        "std": round(float(np.std(np.array(posterior_nst["s"]))), 4),
     }
     scalar_comparison["joint"]["sigma_team"] = {
-        "mean": round(float(np.mean(sigma_team_vals)), 4),
-        "std": round(float(np.std(sigma_team_vals)), 4),
+        "mean": round(float(np.mean(np.array(posterior_nst["sigma_team"]))), 4),
+        "std": round(float(np.std(np.array(posterior_nst["sigma_team"]))), 4),
     }
     for bi, label in enumerate(["eta_2", "eta_3", "eta_4plus"]):
-        vals = np.array(posterior_joint["eta_team"][:, bi])
+        vals = np.array(posterior_nst["eta_team"][:, bi])
         scalar_comparison["joint"][label] = {
             "mean": round(float(np.mean(vals)), 4),
             "std": round(float(np.std(vals)), 4),
         }
+    # NST-specific params
+    scalar_comparison["joint"]["w_clean"] = {
+        "mean": round(float(np.mean(np.array(posterior_nst["w_clean"]))), 4),
+        "std": round(float(np.std(np.array(posterior_nst["w_clean"]))), 4),
+    }
+    scalar_comparison["joint"]["k_sigma"] = {
+        "mean": round(float(np.mean(np.array(posterior_nst["k_sigma"]))), 4),
+        "std": round(float(np.std(np.array(posterior_nst["k_sigma"]))), 4),
+    }
 
     # ── Predicted vs observed scatter (solo model, logsumexp with velocity) ──
     alpha_arr = np.mean(np.array(posterior_solo["alpha"]), axis=0)
@@ -500,7 +651,7 @@ def main():
     from datetime import date, datetime
     from scipy import stats as sp_stats
 
-    params_1 = posterior_joint  # Use joint model for rankings
+    params_1 = posterior_nst  # Use NST model for rankings
     RANKING_YEAR = to_fractional_year(datetime.now())
     ELO_SCALE = 1
 
@@ -553,6 +704,8 @@ def main():
         "sigma_alpha": round(float(np.mean(np.array(params_1["sigma_alpha"]))), 3),
         "sigma_beta": round(float(np.mean(np.array(params_1["sigma_beta"]))), 3),
         "nu": round(float(np.mean(np.array(params_1["nu"]))), 3),
+        "w_clean": round(float(np.mean(np.array(params_1["w_clean"]))), 4),
+        "k_sigma": round(float(np.mean(np.array(params_1["k_sigma"]))), 3),
     }
 
     # Puzzler rankings (projected to RANKING_YEAR)
@@ -700,7 +853,7 @@ def main():
             puzzle_beta_dist[label] = c.tolist()
 
     # ── Model team deep dive data ──
-    # Scalar params with mean/std (from joint model)
+    # Scalar params with mean/std (from NST production model)
     scalar_detail_names = ["mu", "sigma", "nu", "sigma_alpha", "sigma_beta", "delta_0", "sigma_delta", "gamma"]
     scalar_params_detail = {}
     for name in scalar_detail_names:
@@ -719,33 +872,49 @@ def main():
             "mean": round(float(np.mean(w_samples_k)), 4),
             "std": round(float(np.std(w_samples_k)), 4),
         }
-    # Team params
+    # NST mixture params
+    scalar_params_detail["w_clean"] = {
+        "mean": round(float(np.mean(np.array(params_1["w_clean"]))), 4),
+        "std": round(float(np.std(np.array(params_1["w_clean"]))), 4),
+    }
+    scalar_params_detail["k_sigma"] = {
+        "mean": round(float(np.mean(np.array(params_1["k_sigma"]))), 4),
+        "std": round(float(np.std(np.array(params_1["k_sigma"]))), 4),
+    }
+    # Team params (from NST posterior)
+    s_nst_vals = np.array(posterior_nst["s"])
+    sigma_team_nst_vals = np.array(posterior_nst["sigma_team"])
     scalar_params_detail["s"] = {
-        "mean": round(float(np.mean(s_vals)), 4),
-        "std": round(float(np.std(s_vals)), 4),
+        "mean": round(float(np.mean(s_nst_vals)), 4),
+        "std": round(float(np.std(s_nst_vals)), 4),
     }
     scalar_params_detail["sigma_team"] = {
-        "mean": round(float(np.mean(sigma_team_vals)), 4),
-        "std": round(float(np.std(sigma_team_vals)), 4),
+        "mean": round(float(np.mean(sigma_team_nst_vals)), 4),
+        "std": round(float(np.std(sigma_team_nst_vals)), 4),
     }
     for bi, elabel in enumerate(["eta_2", "eta_3", "eta_4plus"]):
-        vals = np.array(posterior_joint["eta_team"][:, bi])
+        vals = np.array(posterior_nst["eta_team"][:, bi])
         scalar_params_detail[elabel] = {
             "mean": round(float(np.mean(vals)), 4),
             "std": round(float(np.std(vals)), 4),
         }
 
-    # Student-t vs Normal comparison
+    # NST mixture vs Normal comparison
+    w_mean = float(np.mean(np.array(params_1["w_clean"])))
     nu_mean = float(np.mean(np.array(params_1["nu"])))
     sigma_mean = float(np.mean(np.array(params_1["sigma"])))
-    x_range = np.linspace(-4 * sigma_mean, 4 * sigma_mean, 200)
-    student_pdf = sp_stats.t.pdf(x_range, df=nu_mean, scale=sigma_mean)
+    k_mean = float(np.mean(np.array(params_1["k_sigma"])))
+    x_range = np.linspace(-4 * sigma_mean * k_mean, 4 * sigma_mean * k_mean, 200)
+    nst_pdf = (w_mean * sp_stats.norm.pdf(x_range, scale=sigma_mean)
+               + (1 - w_mean) * sp_stats.t.pdf(x_range, df=nu_mean, scale=k_mean * sigma_mean))
     normal_pdf = sp_stats.norm.pdf(x_range, scale=sigma_mean)
-    student_t_comparison = {
+    nst_comparison = {
+        "w_clean": round(w_mean, 3),
         "nu": round(nu_mean, 2),
         "sigma": round(sigma_mean, 2),
+        "k_sigma": round(k_mean, 2),
         "x": [round(float(v), 2) for v in x_range],
-        "student_pdf": [round(float(v), 6) for v in student_pdf],
+        "nst_pdf": [round(float(v), 6) for v in nst_pdf],
         "normal_pdf": [round(float(v), 6) for v in normal_pdf],
     }
 
@@ -822,7 +991,7 @@ def main():
 
     model_team_detail = {
         "scalar_params": scalar_params_detail,
-        "student_t_comparison": student_t_comparison,
+        "nst_comparison": nst_comparison,
         "basis_correction": basis_correction,
         "basis_components": basis_components,
         "basis_fractions": basis_fractions,
@@ -842,11 +1011,21 @@ def main():
                 "test_mean_lpd": round(mean_lpd_joint, 4),
                 **{k: round(v, 4) for k, v in metrics_joint.items()},
             },
+            "nst_solo": {
+                "test_mean_lpd": round(mean_lpd_nst, 4),
+                **{k: round(v, 4) for k, v in metrics_nst_solo.items()},
+            },
             "delta_mean_lpd": round(delta_lpd, 4),
+            "delta_mean_lpd_nst": round(delta_lpd_nst, 4),
             "team_all": {
                 "n": len(team_test),
                 "test_mean_lpd": round(mlpd_team_all, 4),
                 **{k: round(v, 4) for k, v in metrics_team_all.items()},
+            },
+            "team_all_nst": {
+                "n": len(team_test),
+                "test_mean_lpd": round(mlpd_team_all_nst, 4),
+                **{k: round(v, 4) for k, v in metrics_team_all_nst.items()},
             },
             "duo": {
                 "n": len(duo_test),
@@ -868,6 +1047,7 @@ def main():
         "loss_curves": {
             "solo_only": [round(float(v), 1) for v in result_solo.losses[::10]],
             "joint": [round(float(v), 1) for v in result_joint.losses[::10]],
+            "nst": [round(float(v), 1) for v in result_nst.losses[::10]],
         },
         "puzzlers": puzzlers_list,
         "puzzles": puzzles_list,
@@ -904,7 +1084,7 @@ def main():
     full_team = build_team_arrays(df_all, puzzler_lookup, player_links=player_links)
     full_no_obs = {k: v for k, v in full_data.items() if k != "log_time"}
     full_no_obs.update(full_team)
-    pp_predictive = Predictive(model_team, guide=guide_joint, params=result_joint.params, num_samples=500)
+    pp_predictive = Predictive(model_team_nst, guide=guide_nst, params=result_nst.params, num_samples=500)
     pp_samples = np.array(pp_predictive(jax.random.PRNGKey(42), **full_no_obs)["log_time"])
     actual = np.array(full_data["log_time"])
     pp_pred_mean = np.mean(pp_samples, axis=0)

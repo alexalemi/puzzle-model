@@ -1,0 +1,1851 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Noise Structure Explorer</title>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&family=Source+Sans+3:wght@300;400;600&family=Source+Code+Pro:wght@400&display=swap");
+
+            :root {
+                --text: #303030;
+                --text-light: #6e6e6e;
+                --accent: #d4a04a;
+                --bg: #fcfcfc;
+                --bg-alt: #f6f4f0;
+                --border: #e0ddd5;
+                --blue: #4a7fb5;
+                --red: #c44e52;
+                --green: #55a868;
+                --purple: #8172b2;
+                --orange: #dd8452;
+                --chart-bg: #fafaf7;
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                font-family: "Source Serif 4", Georgia, serif;
+                color: var(--text);
+                background: var(--bg);
+                line-height: 1.7;
+                -webkit-font-smoothing: antialiased;
+            }
+
+            .container {
+                max-width: 900px;
+                margin: 0 auto;
+                padding: 0 24px;
+            }
+
+            header {
+                border-bottom: 1px solid var(--border);
+                padding: 48px 0 32px;
+                margin-bottom: 40px;
+            }
+            header h1 {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600;
+                font-size: 36px;
+                letter-spacing: -0.5px;
+                margin-bottom: 8px;
+            }
+            header .subtitle {
+                font-size: 18px;
+                color: var(--text-light);
+                font-weight: 300;
+            }
+            header .meta {
+                margin-top: 16px;
+                font-family: "Source Sans 3", sans-serif;
+                font-size: 13px;
+                color: var(--text-light);
+                display: flex;
+                gap: 24px;
+            }
+            header .meta a {
+                color: var(--blue);
+                text-decoration: none;
+            }
+
+            section {
+                margin-bottom: 48px;
+            }
+            h2 {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600;
+                font-size: 22px;
+                margin-bottom: 16px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid var(--border);
+            }
+            h3 {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600;
+                font-size: 16px;
+                margin-bottom: 8px;
+                margin-top: 24px;
+            }
+            p {
+                margin-bottom: 16px;
+                font-size: 16px;
+            }
+
+            .stat-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 12px;
+                margin-bottom: 24px;
+            }
+            .stat-card {
+                background: var(--bg-alt);
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                padding: 16px;
+                text-align: center;
+            }
+            .stat-card .value {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600;
+                font-size: 28px;
+                color: var(--blue);
+                display: block;
+            }
+            .stat-card .label {
+                font-family: "Source Sans 3", sans-serif;
+                font-size: 12px;
+                color: var(--text-light);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .chart-container {
+                background: var(--chart-bg);
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                padding: 20px;
+                margin-bottom: 24px;
+            }
+            .chart-title {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600;
+                font-size: 14px;
+                margin-bottom: 12px;
+                text-align: center;
+            }
+
+            .equation {
+                font-family: "Source Code Pro", monospace;
+                font-size: 14px;
+                background: var(--bg-alt);
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                padding: 16px 20px;
+                margin: 16px 0;
+                line-height: 1.9;
+                overflow-x: auto;
+            }
+            .equation .comment {
+                color: var(--text-light);
+            }
+            .equation .highlight {
+                color: var(--blue);
+                font-weight: 600;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-family: "Source Sans 3", sans-serif;
+                font-size: 14px;
+                margin-bottom: 16px;
+            }
+            th {
+                text-align: left;
+                padding: 8px 12px;
+                border-bottom: 2px solid var(--border);
+                font-weight: 600;
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: var(--text-light);
+            }
+            td {
+                padding: 6px 12px;
+                border-bottom: 1px solid var(--border);
+            }
+            tr:last-child td {
+                border-bottom: none;
+            }
+            td.num {
+                text-align: right;
+                font-family: "Source Code Pro", monospace;
+                font-size: 13px;
+            }
+
+            .note {
+                background: var(--bg-alt);
+                border-left: 3px solid var(--accent);
+                padding: 12px 16px;
+                margin: 16px 0;
+                font-size: 14px;
+                color: var(--text-light);
+            }
+
+            .bar-label {
+                font-family: "Source Sans 3", sans-serif;
+                font-size: 12px;
+                fill: var(--text);
+            }
+
+            .axis text {
+                font-family: "Source Sans 3", sans-serif;
+                font-size: 11px;
+                fill: var(--text-light);
+            }
+            .axis line,
+            .axis path {
+                stroke: var(--border);
+            }
+
+            .legend {
+                font-family: "Source Sans 3", sans-serif;
+                font-size: 12px;
+            }
+
+            .tooltip {
+                position: absolute;
+                background: white;
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                padding: 8px 12px;
+                font-family: "Source Sans 3", sans-serif;
+                font-size: 13px;
+                pointer-events: none;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .implication {
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 10px 0;
+                border-bottom: 1px solid var(--border);
+            }
+            .implication:last-child {
+                border-bottom: none;
+            }
+            .implication .icon {
+                font-size: 20px;
+                flex-shrink: 0;
+                width: 28px;
+                text-align: center;
+            }
+            .implication .text {
+                font-size: 15px;
+            }
+            .implication .text strong {
+                font-weight: 600;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>Noise Structure Explorer</h1>
+                <p class="subtitle">
+                    Empirical analysis of residual noise in the speed puzzling
+                    model
+                </p>
+                <div class="meta">
+                    <span>Model: Joint Solo + Team (2r)</span>
+                    <span id="meta-obs"></span>
+                    <a href="index.html">Model Explorer</a>
+                    <a href="prediction.html">Tournament Predictions</a>
+                </div>
+            </header>
+
+            <section id="overview">
+                <h2>Overview</h2>
+                <p>
+                    The model predicts solving time as
+                    <code
+                        >log(time) = &mu; + &alpha;<sub>i</sub> +
+                        &beta;<sub>j</sub> + f(N) + &epsilon;</code
+                    >, where &alpha; is puzzler ability, &beta; is puzzle
+                    difficulty, f(N) is a piece-count correction, and &epsilon;
+                    is residual noise. This page investigates the empirical
+                    structure of &epsilon; &mdash; how it's distributed, whether
+                    it's truly independent across competitors, and what fraction
+                    is stable person-specific bias vs genuine randomness.
+                </p>
+
+                <div class="stat-grid" id="overview-stats"></div>
+
+                <p>
+                    Understanding noise structure matters for tournament
+                    simulation: if noise is correlated within events or
+                    persistent across rounds, naive independent sampling
+                    produces incorrect win probabilities.
+                </p>
+            </section>
+
+            <section id="variance-decomp">
+                <h2>1. Variance Decomposition</h2>
+                <p>
+                    How much of the total variance in log-times comes from each
+                    model component? This tells us the relative importance of
+                    puzzler ability, puzzle difficulty, piece count, and
+                    unexplained noise.
+                </p>
+                <div
+                    class="chart-container"
+                    id="variance-chart"
+                    style="min-height: 120px"
+                >
+                    <div class="chart-title">
+                        Variance decomposition of log(time)
+                    </div>
+                </div>
+                <table id="variance-table">
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th style="text-align: right">Variance (mB&sup2;)</th>
+                            <th style="text-align: right">Std (mB)</th>
+                            <th style="text-align: right">% of total</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="note" id="variance-note"></div>
+            </section>
+
+            <section id="residual-dist">
+                <h2>2. Residual Distribution</h2>
+                <p>
+                    The model assumes Student-t noise with &nu; &approx; 3
+                    degrees of freedom, giving heavier tails than a Normal
+                    distribution. How well does this match the empirical
+                    residuals?
+                </p>
+
+                <h3>Histogram of standardized residuals</h3>
+                <div
+                    class="chart-container"
+                    id="residual-histogram"
+                    style="min-height: 300px"
+                >
+                    <div class="chart-title">
+                        Standardized residuals (z-scored)
+                    </div>
+                </div>
+
+                <h3>Residuals by data source</h3>
+                <p>
+                    Splitting by source reveals whether the bimodal shape
+                    comes from mixing distinct populations.  All residuals
+                    are standardized with the <em>global</em> mean and std
+                    so the histograms are directly comparable.
+                </p>
+                <div class="chart-container" id="source-residual-histograms" style="min-height: 300px; display: flex; flex-wrap: wrap; gap: 20px;">
+                </div>
+
+                <h3>Residuals by puzzle observation count</h3>
+                <p>
+                    If the bimodality comes from beta shrinkage, puzzles with
+                    few observations should show broader, more asymmetric
+                    residuals (the model's prior pulls their difficulty toward
+                    zero). Well-observed puzzles should have tight, unimodal
+                    residuals.
+                </p>
+                <div class="chart-container" id="puzzle-n-residual-histograms" style="min-height: 300px; display: flex; flex-wrap: wrap; gap: 16px;">
+                </div>
+
+                <h3>Residuals by division</h3>
+                <p>
+                    Splitting by division (solo / duo / group) tests whether
+                    team solving introduces a distinct noise regime.  The model
+                    fits individual &alpha; parameters — for team entries these
+                    absorb the team identity, but the noise structure may differ.
+                </p>
+                <div class="chart-container" id="division-residual-histograms" style="min-height: 280px; display: flex; flex-wrap: wrap; gap: 20px;">
+                </div>
+
+                <h3>Residuals by puzzler observation count</h3>
+                <p>
+                    Analogous to the puzzle-count split above, but now grouping
+                    by how many times each <em>puzzler</em> appears.  If poorly-
+                    measured puzzlers (few observations) have wider residuals,
+                    that's &alpha; estimation noise.  If it persists for well-
+                    measured puzzlers, the model's single global &sigma; is
+                    too simple.
+                </p>
+                <div class="chart-container" id="puzzler-n-residual-histograms" style="min-height: 300px; display: flex; flex-wrap: wrap; gap: 16px;">
+                </div>
+
+                <h3>QQ Plot: Empirical vs Theoretical</h3>
+                <div
+                    class="chart-container"
+                    id="qq-plot"
+                    style="min-height: 350px"
+                >
+                    <div class="chart-title">
+                        Quantile-Quantile: Normal (red) vs Student-t (blue)
+                    </div>
+                </div>
+
+                <h3>Tail behavior</h3>
+                <p>
+                    Heavy tails mean extreme results are more likely than a
+                    Normal model predicts. The table shows the fraction of
+                    residuals exceeding various thresholds:
+                </p>
+                <table id="tail-table">
+                    <thead>
+                        <tr>
+                            <th>|z| &gt;</th>
+                            <th style="text-align: right">Empirical</th>
+                            <th style="text-align: right">Normal</th>
+                            <th style="text-align: right">
+                                Student-t (<span id="nu-display"></span>)
+                            </th>
+                            <th style="text-align: right">
+                                Empirical / Normal
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="note">
+                    Tail events occur far more often than a Normal distribution
+                    predicts. The Student-t captures this heavy-tail behavior,
+                    which is critical for modeling upsets in tournament
+                    simulation.
+                </div>
+            </section>
+
+            <section id="within-event">
+                <h2>3. Within-Event Noise Correlation</h2>
+                <p>
+                    When multiple competitors solve the same puzzle at the same
+                    event, are their residuals correlated? If so, there's a
+                    shared environmental component (venue conditions, timing,
+                    etc.) beyond the puzzle difficulty &beta;.
+                </p>
+                <p>
+                    Method: group observations by (event, puzzle). Within each
+                    group, compute residuals, subtract the group mean, and
+                    measure pairwise correlation of deviations.
+                </p>
+                <div
+                    class="chart-container"
+                    id="correlation-chart"
+                    style="min-height: 220px"
+                >
+                    <div class="chart-title">
+                        Within-event pairwise correlation by data source
+                    </div>
+                </div>
+                <table id="correlation-table">
+                    <thead>
+                        <tr>
+                            <th>Source</th>
+                            <th style="text-align: right">Correlation</th>
+                            <th style="text-align: right">Events</th>
+                            <th style="text-align: right">Observations</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+                <h3>Correlation by puzzler measurement quality</h3>
+                <p>
+                    Within speedpuzzling.com events, does the correlation depend
+                    on how well-measured each puzzler is? Poorly-measured
+                    puzzlers have noisier alpha estimates, which could mask or
+                    inflate apparent noise correlation.
+                </p>
+                <table id="sp-split-table">
+                    <thead>
+                        <tr>
+                            <th>SP subset</th>
+                            <th style="text-align: right">Correlation</th>
+                            <th style="text-align: right">Observations</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="note" id="correlation-note"></div>
+            </section>
+
+            <section id="repeat-consistency">
+                <h2>4. Repeat-Solve Consistency</h2>
+                <p>
+                    For competitors with many observations, how much of their
+                    residual is <em>stable</em> (person-specific bias in the
+                    model) vs <em>random</em> (genuine solve-to-solve noise)?
+                    The intraclass correlation (ICC) measures this: ICC = 1
+                    means residuals are perfectly consistent across solves, ICC
+                    = 0 means pure noise.
+                </p>
+
+                <div class="stat-grid" id="icc-stats"></div>
+
+                <div
+                    class="chart-container"
+                    id="within-std-histogram"
+                    style="min-height: 300px"
+                >
+                    <div class="chart-title">
+                        Distribution of within-person residual std (mB)
+                    </div>
+                </div>
+
+                <div class="note" id="icc-note"></div>
+            </section>
+
+            <section id="residual-by-source">
+                <h2>5. Residual Size by Source</h2>
+                <p>
+                    Different data sources have different residual magnitudes,
+                    reflecting differences in measurement precision and
+                    conditions.
+                </p>
+                <div
+                    class="chart-container"
+                    id="source-residual-chart"
+                    style="min-height: 180px"
+                >
+                    <div class="chart-title">Residual std by data source</div>
+                </div>
+            </section>
+
+            <section id="implications">
+                <h2>6. Implications for Tournament Simulation</h2>
+                <div id="implications-list"></div>
+            </section>
+        </div>
+
+        <div class="tooltip" id="tooltip" style="display: none"></div>
+
+        <script>
+            const tooltip = d3.select("#tooltip");
+
+            function showTooltip(event, html) {
+                tooltip
+                    .style("display", "block")
+                    .html(html)
+                    .style("left", event.pageX + 12 + "px")
+                    .style("top", event.pageY - 20 + "px");
+            }
+            function hideTooltip() {
+                tooltip.style("display", "none");
+            }
+
+            function fmtPct(v) {
+                return (v * 100).toFixed(1) + "%";
+            }
+            function fmtNum(v, d = 0) {
+                return v.toLocaleString(undefined, {
+                    maximumFractionDigits: d,
+                });
+            }
+
+            d3.json("noise_data.json").then((data) => {
+                renderOverview(data);
+                renderVarianceDecomp(data.variance_decomp);
+                renderResidualDist(data.residual_distribution);
+                renderWithinEvent(data.within_event);
+                renderRepeatConsistency(data.repeat_consistency);
+                renderSourceResiduals(data.variance_decomp.by_source);
+                renderImplications(data);
+            });
+
+            function renderOverview(data) {
+                const mp = data.model_params;
+                const rd = data.residual_distribution;
+                const rc = data.repeat_consistency;
+
+                d3.select("#meta-obs").text(
+                    `${fmtNum(rd.n_obs)} observations`,
+                );
+
+                const stats = [
+                    {
+                        value: `${mp.sigma.toFixed(1)}`,
+                        label: "Model sigma (mB)",
+                    },
+                    {
+                        value: `${mp.nu.toFixed(1)}`,
+                        label: "Model nu (d.f.)",
+                    },
+                    {
+                        value: `${rd.std.toFixed(1)}`,
+                        label: "Empirical residual std",
+                    },
+                    {
+                        value: `${rd.fitted_nu.toFixed(1)}`,
+                        label: "Fitted Student-t d.f.",
+                    },
+                    {
+                        value: `${(rc.icc * 100).toFixed(0)}%`,
+                        label: "Person-specific (ICC)",
+                    },
+                    {
+                        value: `${rd.excess_kurtosis.toFixed(1)}`,
+                        label: "Excess kurtosis",
+                    },
+                ];
+
+                const grid = d3.select("#overview-stats");
+                stats.forEach((s) => {
+                    const card = grid.append("div").attr("class", "stat-card");
+                    card.append("span").attr("class", "value").text(s.value);
+                    card.append("span").attr("class", "label").text(s.label);
+                });
+            }
+
+            function renderVarianceDecomp(vd) {
+                const colors = {
+                    "Piece count": "var(--orange)",
+                    "Puzzler (alpha)": "var(--blue)",
+                    "Puzzle (beta)": "var(--green)",
+                    "Residual (noise)": "var(--red)",
+                };
+
+                // Stacked horizontal bar
+                const container = d3.select("#variance-chart");
+                const width =
+                    container.node().getBoundingClientRect().width - 40;
+                const barH = 40;
+                const svgH = barH + 60;
+                const svg = container
+                    .append("svg")
+                    .attr("width", width)
+                    .attr("height", svgH);
+
+                let x = 0;
+                const totalVar = vd.components.reduce(
+                    (s, c) => s + c.variance,
+                    0,
+                );
+                vd.components.forEach((c) => {
+                    const w = (c.variance / totalVar) * width;
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", 0)
+                        .attr("width", w)
+                        .attr("height", barH)
+                        .attr("fill", colors[c.name] || "#999")
+                        .attr("rx", x === 0 ? 3 : 0)
+                        .on("mouseover", (e) =>
+                            showTooltip(
+                                e,
+                                `<strong>${c.name}</strong><br>${c.pct}% of variance<br>std = ${Math.sqrt(c.variance).toFixed(1)} mB`,
+                            ),
+                        )
+                        .on("mouseout", hideTooltip);
+
+                    if (w > 50) {
+                        svg.append("text")
+                            .attr("x", x + w / 2)
+                            .attr("y", barH / 2)
+                            .attr("dy", "0.35em")
+                            .attr("text-anchor", "middle")
+                            .attr("fill", "white")
+                            .attr("font-family", "Source Sans 3, sans-serif")
+                            .attr("font-size", "13px")
+                            .attr("font-weight", "600")
+                            .text(`${c.pct}%`);
+                    }
+                    x += w;
+                });
+
+                // Legend
+                let lx = 0;
+                vd.components.forEach((c) => {
+                    const g = svg
+                        .append("g")
+                        .attr(
+                            "transform",
+                            `translate(${lx}, ${barH + 20})`,
+                        );
+                    g.append("rect")
+                        .attr("width", 12)
+                        .attr("height", 12)
+                        .attr("rx", 2)
+                        .attr("fill", colors[c.name] || "#999");
+                    g.append("text")
+                        .attr("x", 16)
+                        .attr("y", 10)
+                        .attr("class", "bar-label")
+                        .text(c.name);
+                    lx += c.name.length * 8 + 32;
+                });
+
+                // Table
+                const tbody = d3.select("#variance-table tbody");
+                vd.components.forEach((c) => {
+                    const tr = tbody.append("tr");
+                    tr.append("td").text(c.name);
+                    tr.append("td")
+                        .attr("class", "num")
+                        .text(fmtNum(c.variance));
+                    tr.append("td")
+                        .attr("class", "num")
+                        .text(Math.sqrt(c.variance).toFixed(1));
+                    tr.append("td")
+                        .attr("class", "num")
+                        .text(c.pct + "%");
+                });
+
+                d3.select("#variance-note").html(
+                    `Piece count dominates because the dataset spans 100 to 5000+ pieces. ` +
+                        `The residual std of ${Math.sqrt(vd.components[3].variance).toFixed(0)} mB corresponds to ` +
+                        `&plusmn;${(
+                            (Math.pow(
+                                10,
+                                Math.sqrt(vd.components[3].variance) / 1000,
+                            ) -
+                                1) *
+                            100
+                        ).toFixed(0)}% variation in solving time, ` +
+                        `far larger than the model's fitted &sigma; = 37 mB, because residuals include ` +
+                        `alpha and beta estimation error for poorly-measured puzzlers/puzzles.`,
+                );
+            }
+
+            function renderResidualDist(rd) {
+                // Histogram
+                const container = d3.select("#residual-histogram");
+                const W =
+                    container.node().getBoundingClientRect().width - 40;
+                const H = 260;
+                const margin = { top: 10, right: 20, bottom: 40, left: 50 };
+                const w = W - margin.left - margin.right;
+                const h = H - margin.top - margin.bottom;
+
+                const svg = container
+                    .append("svg")
+                    .attr("width", W)
+                    .attr("height", H);
+                const g = svg
+                    .append("g")
+                    .attr(
+                        "transform",
+                        `translate(${margin.left},${margin.top})`,
+                    );
+
+                const bins = rd.histogram.bins;
+                const x = d3
+                    .scaleLinear()
+                    .domain([bins[0].x0, bins[bins.length - 1].x1])
+                    .range([0, w]);
+                const maxDensity = d3.max(bins, (b) => b.density);
+                const y = d3
+                    .scaleLinear()
+                    .domain([0, maxDensity * 1.1])
+                    .range([h, 0]);
+
+                g.selectAll("rect")
+                    .data(bins)
+                    .enter()
+                    .append("rect")
+                    .attr("x", (d) => x(d.x0))
+                    .attr("width", (d) =>
+                        Math.max(0, x(d.x1) - x(d.x0) - 1),
+                    )
+                    .attr("y", (d) => y(d.density))
+                    .attr("height", (d) => h - y(d.density))
+                    .attr("fill", "var(--blue)")
+                    .attr("opacity", 0.6);
+
+                // Overlay Normal curve
+                const normalPts = d3.range(-6, 6.05, 0.1).map((z) => ({
+                    z,
+                    density: Math.exp(-0.5 * z * z) / Math.sqrt(2 * Math.PI),
+                }));
+                const line = d3
+                    .line()
+                    .x((d) => x(d.z))
+                    .y((d) => y(d.density));
+                g.append("path")
+                    .datum(normalPts)
+                    .attr("d", line)
+                    .attr("fill", "none")
+                    .attr("stroke", "var(--red)")
+                    .attr("stroke-width", 2)
+                    .attr("stroke-dasharray", "6,3");
+
+                // Overlay Student-t curve
+                const nu = rd.fitted_nu;
+                function tDensity(z, nu) {
+                    // Student-t pdf
+                    const c =
+                        Math.exp(
+                            lgamma((nu + 1) / 2) - lgamma(nu / 2),
+                        ) / Math.sqrt(nu * Math.PI);
+                    return (
+                        c * Math.pow(1 + (z * z) / nu, -(nu + 1) / 2)
+                    );
+                }
+                const tPts = d3
+                    .range(-6, 6.05, 0.1)
+                    .map((z) => ({ z, density: tDensity(z, nu) }));
+                g.append("path")
+                    .datum(tPts)
+                    .attr("d", line)
+                    .attr("fill", "none")
+                    .attr("stroke", "var(--blue)")
+                    .attr("stroke-width", 2);
+
+                // Overlay Gaussian mixture
+                if (rd.gmm) {
+                    const gm = rd.gmm;
+                    const gauss = (z, s) => Math.exp(-0.5 * z * z / (s * s)) / (s * Math.sqrt(2 * Math.PI));
+                    const mixPts = d3.range(-6, 6.05, 0.05).map((z) => ({
+                        z, density: gm.weight_narrow * gauss(z, gm.sigma_narrow) + (1 - gm.weight_narrow) * gauss(z, gm.sigma_wide),
+                    }));
+                    g.append("path")
+                        .datum(mixPts)
+                        .attr("d", line)
+                        .attr("fill", "none")
+                        .attr("stroke", "var(--green)")
+                        .attr("stroke-width", 2);
+                }
+
+                // Overlay Normal + Student-t mixture (NST)
+                if (rd.nst) {
+                    const ns = rd.nst;
+                    const gauss = (z, s) => Math.exp(-0.5 * z * z / (s * s)) / (s * Math.sqrt(2 * Math.PI));
+                    const nstPts = d3.range(-6, 6.05, 0.05).map((z) => ({
+                        z, density: ns.w_normal * gauss(z, ns.sigma_normal)
+                            + (1 - ns.w_normal) * tDensity(z / ns.sigma_t, ns.nu) / ns.sigma_t,
+                    }));
+                    g.append("path")
+                        .datum(nstPts)
+                        .attr("d", line)
+                        .attr("fill", "none")
+                        .attr("stroke", "var(--orange)")
+                        .attr("stroke-width", 2);
+                }
+
+                g.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", `translate(0,${h})`)
+                    .call(d3.axisBottom(x).ticks(10));
+                g.append("g")
+                    .attr("class", "axis")
+                    .call(d3.axisLeft(y).ticks(5));
+
+                // Legend
+                const leg = svg
+                    .append("g")
+                    .attr(
+                        "transform",
+                        `translate(${margin.left + w - 310}, ${margin.top + 10})`,
+                    );
+                const legendItems = [
+                    {
+                        color: "var(--blue)",
+                        dash: "",
+                        label: `Student-t (df=${nu.toFixed(1)})`,
+                    },
+                    {
+                        color: "var(--red)",
+                        dash: "6,3",
+                        label: "Normal",
+                    },
+                ];
+                if (rd.gmm) {
+                    const gm = rd.gmm;
+                    legendItems.push({
+                        color: "var(--green)",
+                        dash: "",
+                        label: `GMM: ${(gm.weight_narrow*100).toFixed(0)}% N(σ=${gm.sigma_narrow.toFixed(2)}) + ${((1-gm.weight_narrow)*100).toFixed(0)}% N(σ=${gm.sigma_wide.toFixed(2)})`,
+                    });
+                }
+                if (rd.nst) {
+                    const ns = rd.nst;
+                    legendItems.push({
+                        color: "var(--orange)",
+                        dash: "",
+                        label: `NST: ${(ns.w_normal*100).toFixed(0)}% N(σ=${ns.sigma_normal.toFixed(2)}) + ${((1-ns.w_normal)*100).toFixed(0)}% T(ν=${ns.nu.toFixed(1)}, σ=${ns.sigma_t.toFixed(2)})`,
+                    });
+                }
+                legendItems.forEach((item, i) => {
+                    const row = leg
+                        .append("g")
+                        .attr("transform", `translate(0, ${i * 18})`);
+                    row.append("line")
+                        .attr("x1", 0)
+                        .attr("x2", 20)
+                        .attr("y1", 6)
+                        .attr("y2", 6)
+                        .attr("stroke", item.color)
+                        .attr("stroke-width", 2)
+                        .attr("stroke-dasharray", item.dash);
+                    row.append("text")
+                        .attr("x", 26)
+                        .attr("y", 10)
+                        .attr("class", "bar-label")
+                        .text(item.label);
+                });
+
+                // Per-source histograms
+                if (rd.by_source) renderSourceResidualHistograms(rd);
+                if (rd.by_puzzle_n) renderPuzzleNHistograms(rd);
+                if (rd.by_division) renderDivisionHistograms(rd);
+                if (rd.by_puzzler_n) renderPuzzlerNHistograms(rd);
+
+                // QQ plot
+                renderQQPlot(rd);
+
+                // Tail table
+                d3.select("#nu-display").text(`df=${nu.toFixed(2)}`);
+                const ttbody = d3.select("#tail-table tbody");
+                Object.entries(rd.tail_fractions).forEach(
+                    ([thresh, vals]) => {
+                        const tr = ttbody.append("tr");
+                        tr.append("td").text(thresh);
+                        tr.append("td")
+                            .attr("class", "num")
+                            .text(fmtPct(vals.empirical));
+                        tr.append("td")
+                            .attr("class", "num")
+                            .text(fmtPct(vals.normal));
+                        tr.append("td")
+                            .attr("class", "num")
+                            .text(fmtPct(vals.student_t));
+                        const ratio =
+                            vals.normal > 0
+                                ? (vals.empirical / vals.normal).toFixed(1) +
+                                  "x"
+                                : "-";
+                        tr.append("td")
+                            .attr("class", "num")
+                            .style(
+                                "color",
+                                vals.empirical / vals.normal > 2
+                                    ? "var(--red)"
+                                    : "inherit",
+                            )
+                            .text(ratio);
+                    },
+                );
+            }
+
+            function renderSourceResidualHistograms(rd) {
+                const container = d3.select("#source-residual-histograms");
+                const sourceNames = {
+                    myspeedpuzzling: "MySpeedPuzzling (self-reported)",
+                    speedpuzzling: "SpeedPuzzling (competition)",
+                    usajigsaw: "USA Jigsaw (competition)",
+                };
+                const sourceColors = {
+                    myspeedpuzzling: "var(--purple)",
+                    speedpuzzling: "var(--blue)",
+                    usajigsaw: "var(--green)",
+                };
+
+                // Use the same y-axis scale across both for direct comparison
+                let globalMaxDensity = 0;
+                Object.values(rd.by_source).forEach((src) => {
+                    const m = d3.max(src.histogram.bins, (b) => b.density);
+                    if (m > globalMaxDensity) globalMaxDensity = m;
+                });
+                // Also include Normal peak for scale
+                const normalPeak = 1 / Math.sqrt(2 * Math.PI);
+                globalMaxDensity = Math.max(globalMaxDensity, normalPeak) * 1.1;
+
+                Object.entries(rd.by_source).forEach(([src, srcData]) => {
+                    const wrapper = container.append("div")
+                        .style("flex", "1 1 400px")
+                        .style("min-width", "350px");
+                    wrapper.append("div")
+                        .attr("class", "chart-title")
+                        .text(`${sourceNames[src] || src} (n=${fmtNum(srcData.n_obs)})`);
+
+                    const W = 420;
+                    const H = 240;
+                    const margin = { top: 10, right: 20, bottom: 40, left: 50 };
+                    const w = W - margin.left - margin.right;
+                    const h = H - margin.top - margin.bottom;
+
+                    const svg = wrapper.append("svg")
+                        .attr("width", W)
+                        .attr("height", H)
+                        .attr("viewBox", `0 0 ${W} ${H}`)
+                        .style("max-width", "100%");
+                    const g = svg.append("g")
+                        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                    const bins = srcData.histogram.bins;
+                    const x = d3.scaleLinear()
+                        .domain([bins[0].x0, bins[bins.length - 1].x1])
+                        .range([0, w]);
+                    const y = d3.scaleLinear()
+                        .domain([0, globalMaxDensity])
+                        .range([h, 0]);
+
+                    g.selectAll("rect")
+                        .data(bins)
+                        .enter()
+                        .append("rect")
+                        .attr("x", (d) => x(d.x0))
+                        .attr("width", (d) => Math.max(0, x(d.x1) - x(d.x0) - 1))
+                        .attr("y", (d) => y(d.density))
+                        .attr("height", (d) => h - y(d.density))
+                        .attr("fill", sourceColors[src] || "var(--blue)")
+                        .attr("opacity", 0.6);
+
+                    // Normal overlay
+                    const normalPts = d3.range(-6, 6.05, 0.1).map((z) => ({
+                        z,
+                        density: Math.exp(-0.5 * z * z) / Math.sqrt(2 * Math.PI),
+                    }));
+                    const line = d3.line()
+                        .x((d) => x(d.z))
+                        .y((d) => y(d.density));
+                    g.append("path")
+                        .datum(normalPts)
+                        .attr("d", line)
+                        .attr("fill", "none")
+                        .attr("stroke", "var(--red)")
+                        .attr("stroke-width", 1.5)
+                        .attr("stroke-dasharray", "6,3");
+
+                    // Student-t overlay (fitted to this source)
+                    const nu = srcData.fitted_nu;
+                    function tDensity(z, nu) {
+                        const c = Math.exp(lgamma((nu + 1) / 2) - lgamma(nu / 2)) / Math.sqrt(nu * Math.PI);
+                        return c * Math.pow(1 + (z * z) / nu, -(nu + 1) / 2);
+                    }
+                    const tPts = d3.range(-6, 6.05, 0.1).map((z) => ({ z, density: tDensity(z, nu) }));
+                    g.append("path")
+                        .datum(tPts)
+                        .attr("d", line)
+                        .attr("fill", "none")
+                        .attr("stroke", sourceColors[src] || "var(--blue)")
+                        .attr("stroke-width", 1.5);
+
+                    g.append("g")
+                        .attr("class", "axis")
+                        .attr("transform", `translate(0,${h})`)
+                        .call(d3.axisBottom(x).ticks(8));
+                    g.append("g")
+                        .attr("class", "axis")
+                        .call(d3.axisLeft(y).ticks(5));
+
+                    // Annotation
+                    const info = g.append("g")
+                        .attr("transform", `translate(${w - 140}, 8)`);
+                    info.append("text")
+                        .attr("class", "bar-label")
+                        .attr("font-size", "11px")
+                        .text(`std=${srcData.std.toFixed(0)} mB, ν=${nu.toFixed(1)}`);
+                    info.append("text")
+                        .attr("class", "bar-label")
+                        .attr("font-size", "11px")
+                        .attr("y", 14)
+                        .text(`mean=${srcData.mean.toFixed(0)} mB, kurt=${srcData.excess_kurtosis.toFixed(1)}`);
+                });
+            }
+
+            function renderPuzzleNHistograms(rd) {
+                const container = d3.select("#puzzle-n-residual-histograms");
+                const colorScale = d3.scaleOrdinal()
+                    .domain(["n=1", "n=2-5", "n=6-20", "n=21-100", "n>100"])
+                    .range(["var(--red)", "var(--orange)", "var(--purple)", "var(--blue)", "var(--green)"]);
+
+                // Shared y-axis across all panels
+                let globalMaxDensity = 0;
+                Object.values(rd.by_puzzle_n).forEach((d) => {
+                    const m = d3.max(d.histogram.bins, (b) => b.density);
+                    if (m > globalMaxDensity) globalMaxDensity = m;
+                });
+                const normalPeak = 1 / Math.sqrt(2 * Math.PI);
+                globalMaxDensity = Math.max(globalMaxDensity, normalPeak) * 1.1;
+
+                Object.entries(rd.by_puzzle_n).forEach(([label, d]) => {
+                    const wrapper = container.append("div")
+                        .style("flex", "1 1 280px")
+                        .style("min-width", "250px");
+                    wrapper.append("div")
+                        .attr("class", "chart-title")
+                        .style("font-size", "13px")
+                        .text(`${label}  (${fmtNum(d.n_obs)} obs, ${fmtNum(d.n_puzzles)} puzzles)`);
+
+                    const W = 320;
+                    const H = 200;
+                    const margin = { top: 8, right: 12, bottom: 32, left: 42 };
+                    const w = W - margin.left - margin.right;
+                    const h = H - margin.top - margin.bottom;
+
+                    const svg = wrapper.append("svg")
+                        .attr("width", W)
+                        .attr("height", H)
+                        .attr("viewBox", `0 0 ${W} ${H}`)
+                        .style("max-width", "100%");
+                    const g = svg.append("g")
+                        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                    const bins = d.histogram.bins;
+                    const x = d3.scaleLinear()
+                        .domain([bins[0].x0, bins[bins.length - 1].x1])
+                        .range([0, w]);
+                    const y = d3.scaleLinear()
+                        .domain([0, globalMaxDensity])
+                        .range([h, 0]);
+
+                    g.selectAll("rect")
+                        .data(bins)
+                        .enter()
+                        .append("rect")
+                        .attr("x", (b) => x(b.x0))
+                        .attr("width", (b) => Math.max(0, x(b.x1) - x(b.x0) - 1))
+                        .attr("y", (b) => y(b.density))
+                        .attr("height", (b) => h - y(b.density))
+                        .attr("fill", colorScale(label))
+                        .attr("opacity", 0.6);
+
+                    // Normal overlay
+                    const normalPts = d3.range(-6, 6.05, 0.1).map((z) => ({
+                        z,
+                        density: Math.exp(-0.5 * z * z) / Math.sqrt(2 * Math.PI),
+                    }));
+                    const line = d3.line()
+                        .x((pt) => x(pt.z))
+                        .y((pt) => y(pt.density));
+                    g.append("path")
+                        .datum(normalPts)
+                        .attr("d", line)
+                        .attr("fill", "none")
+                        .attr("stroke", "#999")
+                        .attr("stroke-width", 1)
+                        .attr("stroke-dasharray", "4,3");
+
+                    g.append("g")
+                        .attr("class", "axis")
+                        .attr("transform", `translate(0,${h})`)
+                        .call(d3.axisBottom(x).ticks(6).tickSize(3));
+                    g.append("g")
+                        .attr("class", "axis")
+                        .call(d3.axisLeft(y).ticks(4).tickSize(3));
+
+                    // Stats annotation
+                    g.append("text")
+                        .attr("x", w - 4)
+                        .attr("y", 12)
+                        .attr("text-anchor", "end")
+                        .attr("class", "bar-label")
+                        .attr("font-size", "10px")
+                        .text(`std=${d.std.toFixed(0)} mB, mean=${d.mean.toFixed(0)} mB`);
+                });
+            }
+
+            function renderSmallMultipleHistograms(containerSel, dataMap, {
+                colorMap = {},
+                labelFn = (key, d) => `${key} (${fmtNum(d.n_obs)} obs)`,
+                annotFn = (d) => `std=${d.std.toFixed(0)} mB, mean=${d.mean.toFixed(0)} mB`,
+                drawCurves = null,
+                panelWidth = 320,
+                panelHeight = 200,
+                flexBasis = "280px",
+            } = {}) {
+                // Shared y-axis
+                let globalMaxDensity = 0;
+                Object.values(dataMap).forEach((d) => {
+                    const m = d3.max(d.histogram.bins, (b) => b.density);
+                    if (m > globalMaxDensity) globalMaxDensity = m;
+                });
+                const normalPeak = 1 / Math.sqrt(2 * Math.PI);
+                globalMaxDensity = Math.max(globalMaxDensity, normalPeak) * 1.1;
+
+                const defaultColors = ["var(--blue)", "var(--red)", "var(--green)", "var(--purple)", "var(--orange)"];
+                let ci = 0;
+
+                Object.entries(dataMap).forEach(([key, d]) => {
+                    const color = colorMap[key] || defaultColors[ci++ % defaultColors.length];
+                    const wrapper = containerSel.append("div")
+                        .style("flex", `1 1 ${flexBasis}`)
+                        .style("min-width", "250px");
+                    wrapper.append("div")
+                        .attr("class", "chart-title")
+                        .style("font-size", "13px")
+                        .text(labelFn(key, d));
+
+                    const W = panelWidth, H = panelHeight;
+                    const margin = { top: 8, right: 12, bottom: 32, left: 42 };
+                    const w = W - margin.left - margin.right;
+                    const h = H - margin.top - margin.bottom;
+
+                    const svg = wrapper.append("svg")
+                        .attr("width", W).attr("height", H)
+                        .attr("viewBox", `0 0 ${W} ${H}`)
+                        .style("max-width", "100%");
+                    const g = svg.append("g")
+                        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                    const bins = d.histogram.bins;
+                    const x = d3.scaleLinear()
+                        .domain([bins[0].x0, bins[bins.length - 1].x1])
+                        .range([0, w]);
+                    const y = d3.scaleLinear()
+                        .domain([0, globalMaxDensity])
+                        .range([h, 0]);
+
+                    g.selectAll("rect").data(bins).enter().append("rect")
+                        .attr("x", (b) => x(b.x0))
+                        .attr("width", (b) => Math.max(0, x(b.x1) - x(b.x0) - 1))
+                        .attr("y", (b) => y(b.density))
+                        .attr("height", (b) => h - y(b.density))
+                        .attr("fill", color)
+                        .attr("opacity", 0.6);
+
+                    const line = d3.line().x((pt) => x(pt.z)).y((pt) => y(pt.density));
+
+                    if (drawCurves) {
+                        drawCurves(g, d, x, y, line, color);
+                    } else {
+                        // Default: Normal overlay
+                        const normalPts = d3.range(-6, 6.05, 0.1).map((z) => ({
+                            z, density: Math.exp(-0.5 * z * z) / Math.sqrt(2 * Math.PI),
+                        }));
+                        g.append("path").datum(normalPts).attr("d", line)
+                            .attr("fill", "none").attr("stroke", "#999")
+                            .attr("stroke-width", 1).attr("stroke-dasharray", "4,3");
+                    }
+
+                    g.append("g").attr("class", "axis")
+                        .attr("transform", `translate(0,${h})`)
+                        .call(d3.axisBottom(x).ticks(6).tickSize(3));
+                    g.append("g").attr("class", "axis")
+                        .call(d3.axisLeft(y).ticks(4).tickSize(3));
+
+                    g.append("text")
+                        .attr("x", w - 4).attr("y", 12)
+                        .attr("text-anchor", "end")
+                        .attr("class", "bar-label")
+                        .attr("font-size", "10px")
+                        .text(annotFn(d));
+                });
+            }
+
+            function drawGmmCurves(g, d, x, y, line, color) {
+                const gmm = d.gmm;
+                if (!gmm) return;
+                const w = gmm.weight_narrow, s1 = gmm.sigma_narrow, s2 = gmm.sigma_wide;
+                const gauss = (z, s) => Math.exp(-0.5 * z * z / (s * s)) / (s * Math.sqrt(2 * Math.PI));
+
+                const pts = d3.range(-6, 6.05, 0.05);
+
+                // Narrow component (dashed, lighter)
+                const narrowPts = pts.map(z => ({ z, density: w * gauss(z, s1) }));
+                g.append("path").datum(narrowPts).attr("d", line)
+                    .attr("fill", "none").attr("stroke", "#666")
+                    .attr("stroke-width", 1).attr("stroke-dasharray", "3,3");
+
+                // Wide component (dashed, lighter)
+                const widePts = pts.map(z => ({ z, density: (1 - w) * gauss(z, s2) }));
+                g.append("path").datum(widePts).attr("d", line)
+                    .attr("fill", "none").attr("stroke", "#666")
+                    .attr("stroke-width", 1).attr("stroke-dasharray", "3,3");
+
+                // Combined mixture (solid)
+                const mixPts = pts.map(z => ({
+                    z, density: w * gauss(z, s1) + (1 - w) * gauss(z, s2),
+                }));
+                g.append("path").datum(mixPts).attr("d", line)
+                    .attr("fill", "none").attr("stroke", "var(--text)")
+                    .attr("stroke-width", 2);
+            }
+
+            function renderDivisionHistograms(rd) {
+                const container = d3.select("#division-residual-histograms");
+                const divNames = { solo: "Solo", duo: "Duo (pairs)", group: "Group (3+)" };
+                renderSmallMultipleHistograms(container, rd.by_division, {
+                    colorMap: { solo: "var(--blue)", duo: "var(--orange)", group: "var(--green)" },
+                    labelFn: (key, d) => `${divNames[key] || key}  (${fmtNum(d.n_obs)} obs)`,
+                    annotFn: (d) => {
+                        const g = d.gmm;
+                        if (!g) return `std=${d.std.toFixed(0)} mB`;
+                        return `${(g.weight_narrow * 100).toFixed(0)}% σ=${g.sigma_narrow_mB.toFixed(0)} + ${((1-g.weight_narrow) * 100).toFixed(0)}% σ=${g.sigma_wide_mB.toFixed(0)} mB`;
+                    },
+                    drawCurves: drawGmmCurves,
+                    panelWidth: 360,
+                    panelHeight: 220,
+                    flexBasis: "300px",
+                });
+            }
+
+            function renderPuzzlerNHistograms(rd) {
+                const container = d3.select("#puzzler-n-residual-histograms");
+                renderSmallMultipleHistograms(container, rd.by_puzzler_n, {
+                    colorMap: {
+                        "n=1": "var(--red)", "n=2-5": "var(--orange)",
+                        "n=6-20": "var(--purple)", "n=21-100": "var(--blue)", "n>100": "var(--green)",
+                    },
+                    labelFn: (key, d) => `${key}  (${fmtNum(d.n_obs)} obs, ${fmtNum(d.n_puzzlers)} puzzlers)`,
+                });
+            }
+
+            function renderQQPlot(rd) {
+                const container = d3.select("#qq-plot");
+                const W =
+                    container.node().getBoundingClientRect().width - 40;
+                const H = 320;
+                const margin = {
+                    top: 10,
+                    right: 20,
+                    bottom: 40,
+                    left: 50,
+                };
+                const w = W - margin.left - margin.right;
+                const h = H - margin.top - margin.bottom;
+
+                const svg = container
+                    .append("svg")
+                    .attr("width", W)
+                    .attr("height", H);
+                const g = svg
+                    .append("g")
+                    .attr(
+                        "transform",
+                        `translate(${margin.left},${margin.top})`,
+                    );
+
+                const emp = rd.empirical_quantiles;
+                const norm = rd.normal_quantiles;
+                const studt = rd.student_t_quantiles;
+
+                const allVals = [...emp, ...norm, ...studt];
+                const extent = [
+                    Math.min(...allVals) * 1.1,
+                    Math.max(...allVals) * 1.1,
+                ];
+
+                const x = d3.scaleLinear().domain(extent).range([0, w]);
+                const y = d3.scaleLinear().domain(extent).range([h, 0]);
+
+                // Reference line y=x
+                g.append("line")
+                    .attr("x1", x(extent[0]))
+                    .attr("y1", y(extent[0]))
+                    .attr("x2", x(extent[1]))
+                    .attr("y2", y(extent[1]))
+                    .attr("stroke", "var(--border)")
+                    .attr("stroke-width", 1)
+                    .attr("stroke-dasharray", "4,4");
+
+                // Normal QQ points
+                emp.forEach((e, i) => {
+                    g.append("circle")
+                        .attr("cx", x(norm[i]))
+                        .attr("cy", y(e))
+                        .attr("r", 5)
+                        .attr("fill", "var(--red)")
+                        .attr("opacity", 0.6)
+                        .on("mouseover", (ev) =>
+                            showTooltip(
+                                ev,
+                                `q=${rd.quantiles[i]}<br>Normal: ${norm[i].toFixed(2)}<br>Empirical: ${e.toFixed(2)}`,
+                            ),
+                        )
+                        .on("mouseout", hideTooltip);
+                });
+
+                // Student-t QQ points
+                emp.forEach((e, i) => {
+                    g.append("circle")
+                        .attr("cx", x(studt[i]))
+                        .attr("cy", y(e))
+                        .attr("r", 5)
+                        .attr("fill", "var(--blue)")
+                        .attr("opacity", 0.6)
+                        .on("mouseover", (ev) =>
+                            showTooltip(
+                                ev,
+                                `q=${rd.quantiles[i]}<br>Student-t: ${studt[i].toFixed(2)}<br>Empirical: ${e.toFixed(2)}`,
+                            ),
+                        )
+                        .on("mouseout", hideTooltip);
+                });
+
+                g.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", `translate(0,${h})`)
+                    .call(d3.axisBottom(x).ticks(8));
+                g.append("g")
+                    .attr("class", "axis")
+                    .call(d3.axisLeft(y).ticks(8));
+
+                // Axis labels
+                svg.append("text")
+                    .attr("x", margin.left + w / 2)
+                    .attr("y", H - 4)
+                    .attr("text-anchor", "middle")
+                    .attr("class", "bar-label")
+                    .text("Theoretical quantiles");
+                svg.append("text")
+                    .attr(
+                        "transform",
+                        `translate(14, ${margin.top + h / 2}) rotate(-90)`,
+                    )
+                    .attr("text-anchor", "middle")
+                    .attr("class", "bar-label")
+                    .text("Empirical quantiles");
+
+                // Legend
+                const leg = g
+                    .append("g")
+                    .attr("transform", `translate(${w - 150}, 10)`);
+                [
+                    { color: "var(--red)", label: "vs Normal" },
+                    {
+                        color: "var(--blue)",
+                        label: `vs Student-t (${rd.fitted_nu.toFixed(1)})`,
+                    },
+                ].forEach((item, i) => {
+                    const row = leg
+                        .append("g")
+                        .attr("transform", `translate(0, ${i * 20})`);
+                    row.append("circle")
+                        .attr("cx", 6)
+                        .attr("cy", 6)
+                        .attr("r", 5)
+                        .attr("fill", item.color)
+                        .attr("opacity", 0.6);
+                    row.append("text")
+                        .attr("x", 18)
+                        .attr("y", 10)
+                        .attr("class", "bar-label")
+                        .text(item.label);
+                });
+            }
+
+            function renderWithinEvent(we) {
+                const sources = Object.entries(we.by_source).filter(
+                    ([k]) =>
+                        !k.startsWith("sp_"),
+                );
+
+                const container = d3.select("#correlation-chart");
+                const W =
+                    container.node().getBoundingClientRect().width - 40;
+                const H = 180;
+                const margin = {
+                    top: 10,
+                    right: 20,
+                    bottom: 40,
+                    left: 160,
+                };
+                const w = W - margin.left - margin.right;
+                const h = H - margin.top - margin.bottom;
+
+                const svg = container
+                    .append("svg")
+                    .attr("width", W)
+                    .attr("height", H);
+                const g = svg
+                    .append("g")
+                    .attr(
+                        "transform",
+                        `translate(${margin.left},${margin.top})`,
+                    );
+
+                const sourceNames = {
+                    speedpuzzling: "SpeedPuzzling.com",
+                    myspeedpuzzling: "MySpeedPuzzling.com",
+                    usajigsaw: "USA Jigsaw",
+                };
+
+                const y = d3
+                    .scaleBand()
+                    .domain(sources.map(([k]) => k))
+                    .range([0, h])
+                    .padding(0.3);
+
+                const maxCorr = Math.max(
+                    0.2,
+                    d3.max(sources, ([, v]) =>
+                        Math.abs(v.pairwise_correlation),
+                    ) * 1.3,
+                );
+                const x = d3
+                    .scaleLinear()
+                    .domain([0, maxCorr])
+                    .range([0, w]);
+
+                // Zero line
+                g.append("line")
+                    .attr("x1", 0)
+                    .attr("y1", 0)
+                    .attr("x2", 0)
+                    .attr("y2", h)
+                    .attr("stroke", "var(--text-light)")
+                    .attr("stroke-dasharray", "2,2");
+
+                sources.forEach(([key, val]) => {
+                    const corr = val.pairwise_correlation;
+                    const barW = x(Math.abs(corr));
+                    const barX = corr >= 0 ? 0 : -barW;
+                    const color = corr >= 0 ? "var(--blue)" : "var(--red)";
+
+                    g.append("rect")
+                        .attr("x", barX)
+                        .attr("y", y(key))
+                        .attr("width", barW)
+                        .attr("height", y.bandwidth())
+                        .attr("fill", color)
+                        .attr("opacity", 0.7)
+                        .attr("rx", 2)
+                        .on("mouseover", (e) =>
+                            showTooltip(
+                                e,
+                                `<strong>${sourceNames[key] || key}</strong><br>Correlation: ${corr.toFixed(3)}<br>Events: ${val.n_groups}<br>Observations: ${val.n_deviations}`,
+                            ),
+                        )
+                        .on("mouseout", hideTooltip);
+
+                    g.append("text")
+                        .attr("x", barW + 6)
+                        .attr("y", y(key) + y.bandwidth() / 2)
+                        .attr("dy", "0.35em")
+                        .attr("class", "bar-label")
+                        .attr("font-weight", "600")
+                        .text(corr.toFixed(3));
+                });
+
+                g.append("g")
+                    .attr("class", "axis")
+                    .selectAll("text")
+                    .data(sources)
+                    .enter()
+                    .append("text")
+                    .attr("x", -8)
+                    .attr("y", ([k]) => y(k) + y.bandwidth() / 2)
+                    .attr("dy", "0.35em")
+                    .attr("text-anchor", "end")
+                    .attr("class", "bar-label")
+                    .text(([k]) => sourceNames[k] || k);
+
+                g.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", `translate(0,${h})`)
+                    .call(d3.axisBottom(x).ticks(5));
+
+                // Table
+                const tbody = d3.select("#correlation-table tbody");
+                sources.forEach(([key, val]) => {
+                    const tr = tbody.append("tr");
+                    tr.append("td").text(sourceNames[key] || key);
+                    tr.append("td")
+                        .attr("class", "num")
+                        .text(val.pairwise_correlation.toFixed(4));
+                    tr.append("td")
+                        .attr("class", "num")
+                        .text(val.n_groups || "-");
+                    tr.append("td")
+                        .attr("class", "num")
+                        .text(fmtNum(val.n_deviations));
+                });
+
+                // SP split table
+                const spSplits = Object.entries(we.by_source).filter(
+                    ([k]) => k.startsWith("sp_"),
+                );
+                const stbody = d3.select("#sp-split-table tbody");
+                spSplits.forEach(([key, val]) => {
+                    const label = key.replace("sp_", "");
+                    const tr = stbody.append("tr");
+                    tr.append("td").text(label);
+                    tr.append("td")
+                        .attr("class", "num")
+                        .text(val.pairwise_correlation.toFixed(4));
+                    tr.append("td")
+                        .attr("class", "num")
+                        .text(fmtNum(val.n_deviations));
+                });
+
+                d3.select("#correlation-note").html(we.interpretation);
+            }
+
+            function renderRepeatConsistency(rc) {
+                const statsGrid = d3.select("#icc-stats");
+                [
+                    {
+                        value: `${(rc.icc * 100).toFixed(0)}%`,
+                        label: "ICC (person-specific)",
+                    },
+                    {
+                        value: `${rc.mean_within_std.toFixed(0)}`,
+                        label: "Mean within-person std (mB)",
+                    },
+                    {
+                        value: `${rc.between_person_std.toFixed(0)}`,
+                        label: "Between-person std (mB)",
+                    },
+                    {
+                        value: fmtNum(rc.n_competitors),
+                        label: "Competitors (5+ obs)",
+                    },
+                ].forEach((s) => {
+                    const card = statsGrid
+                        .append("div")
+                        .attr("class", "stat-card");
+                    card.append("span")
+                        .attr("class", "value")
+                        .text(s.value);
+                    card.append("span")
+                        .attr("class", "label")
+                        .text(s.label);
+                });
+
+                // Histogram of within-person stds
+                const hist = rc.within_std_histogram;
+                const container = d3.select("#within-std-histogram");
+                const W =
+                    container.node().getBoundingClientRect().width - 40;
+                const H = 260;
+                const margin = {
+                    top: 10,
+                    right: 20,
+                    bottom: 40,
+                    left: 50,
+                };
+                const w = W - margin.left - margin.right;
+                const h = H - margin.top - margin.bottom;
+
+                const svg = container
+                    .append("svg")
+                    .attr("width", W)
+                    .attr("height", H);
+                const g = svg
+                    .append("g")
+                    .attr(
+                        "transform",
+                        `translate(${margin.left},${margin.top})`,
+                    );
+
+                const bins = hist.bins;
+                const x = d3
+                    .scaleLinear()
+                    .domain([bins[0].x0, bins[bins.length - 1].x1])
+                    .range([0, w]);
+                const maxCount = d3.max(bins, (b) => b.count);
+                const y = d3
+                    .scaleLinear()
+                    .domain([0, maxCount * 1.1])
+                    .range([h, 0]);
+
+                g.selectAll("rect")
+                    .data(bins)
+                    .enter()
+                    .append("rect")
+                    .attr("x", (d) => x(d.x0))
+                    .attr("width", (d) =>
+                        Math.max(0, x(d.x1) - x(d.x0) - 1),
+                    )
+                    .attr("y", (d) => y(d.count))
+                    .attr("height", (d) => h - y(d.count))
+                    .attr("fill", "var(--purple)")
+                    .attr("opacity", 0.6);
+
+                // Mark the mean
+                g.append("line")
+                    .attr("x1", x(rc.mean_within_std))
+                    .attr("x2", x(rc.mean_within_std))
+                    .attr("y1", 0)
+                    .attr("y2", h)
+                    .attr("stroke", "var(--red)")
+                    .attr("stroke-width", 2)
+                    .attr("stroke-dasharray", "6,3");
+                g.append("text")
+                    .attr("x", x(rc.mean_within_std) + 6)
+                    .attr("y", 14)
+                    .attr("class", "bar-label")
+                    .attr("fill", "var(--red)")
+                    .text(`mean = ${rc.mean_within_std.toFixed(0)} mB`);
+
+                g.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", `translate(0,${h})`)
+                    .call(d3.axisBottom(x).ticks(8));
+                g.append("g")
+                    .attr("class", "axis")
+                    .call(d3.axisLeft(y).ticks(5));
+
+                // X-axis label
+                svg.append("text")
+                    .attr("x", margin.left + w / 2)
+                    .attr("y", H - 4)
+                    .attr("text-anchor", "middle")
+                    .attr("class", "bar-label")
+                    .text("Within-person residual std (mB)");
+
+                d3.select("#icc-note").html(rc.interpretation);
+            }
+
+            function renderSourceResiduals(bySource) {
+                const entries = Object.entries(bySource).sort(
+                    (a, b) => b[1].residual_std - a[1].residual_std,
+                );
+                const sourceNames = {
+                    speedpuzzling: "SpeedPuzzling.com",
+                    myspeedpuzzling: "MySpeedPuzzling.com",
+                    mallory: "Mallory (personal)",
+                };
+
+                const container = d3.select("#source-residual-chart");
+                const W =
+                    container.node().getBoundingClientRect().width - 40;
+                const H = 140;
+                const margin = {
+                    top: 10,
+                    right: 60,
+                    bottom: 30,
+                    left: 160,
+                };
+                const w = W - margin.left - margin.right;
+                const h = H - margin.top - margin.bottom;
+
+                const svg = container
+                    .append("svg")
+                    .attr("width", W)
+                    .attr("height", H);
+                const g = svg
+                    .append("g")
+                    .attr(
+                        "transform",
+                        `translate(${margin.left},${margin.top})`,
+                    );
+
+                const y = d3
+                    .scaleBand()
+                    .domain(entries.map(([k]) => k))
+                    .range([0, h])
+                    .padding(0.3);
+                const x = d3
+                    .scaleLinear()
+                    .domain([
+                        0,
+                        d3.max(entries, ([, v]) => v.residual_std) * 1.2,
+                    ])
+                    .range([0, w]);
+
+                const barColors = {
+                    speedpuzzling: "var(--blue)",
+                    myspeedpuzzling: "var(--green)",
+                    mallory: "var(--orange)",
+                };
+
+                entries.forEach(([key, val]) => {
+                    g.append("rect")
+                        .attr("x", 0)
+                        .attr("y", y(key))
+                        .attr("width", x(val.residual_std))
+                        .attr("height", y.bandwidth())
+                        .attr("fill", barColors[key] || "var(--purple)")
+                        .attr("opacity", 0.7)
+                        .attr("rx", 2);
+
+                    g.append("text")
+                        .attr("x", x(val.residual_std) + 6)
+                        .attr("y", y(key) + y.bandwidth() / 2)
+                        .attr("dy", "0.35em")
+                        .attr("class", "bar-label")
+                        .text(
+                            `${val.residual_std.toFixed(0)} mB (n=${fmtNum(val.n)})`,
+                        );
+                });
+
+                g.append("g")
+                    .attr("class", "axis")
+                    .selectAll("text")
+                    .data(entries)
+                    .enter()
+                    .append("text")
+                    .attr("x", -8)
+                    .attr("y", ([k]) => y(k) + y.bandwidth() / 2)
+                    .attr("dy", "0.35em")
+                    .attr("text-anchor", "end")
+                    .attr("class", "bar-label")
+                    .text(([k]) => sourceNames[k] || k);
+            }
+
+            function renderImplications(data) {
+                const we = data.within_event;
+                const rc = data.repeat_consistency;
+                const rd = data.residual_distribution;
+                const spCorr =
+                    we.by_source.speedpuzzling?.pairwise_correlation || 0;
+                const mspCorr =
+                    we.by_source.myspeedpuzzling?.pairwise_correlation ||
+                    0;
+
+                const items = [
+                    {
+                        text: `<strong>Independent noise is approximately correct.</strong> Within-event pairwise correlation is only ${(spCorr * 100).toFixed(0)}% for SP and ${(mspCorr * 100).toFixed(0)}% for MSP. Drawing independent noise per competitor is a reasonable approximation &mdash; the shared environmental component is small.`,
+                    },
+                    {
+                        text: `<strong>Heavy-tailed noise is essential.</strong> Empirical tails are ${(rd.tail_fractions["3"].empirical / rd.tail_fractions["3"].normal).toFixed(0)}x heavier than Normal at |z|>3. A pure Student-t (df=${rd.fitted_nu.toFixed(1)}) captures tail weight but not the sharp peak. A Normal + wide Student-t mixture (orange curve) fits best: tight Normal core (${(rd.nst.w_normal * 100).toFixed(0)}%, σ=${rd.nst.sigma_normal.toFixed(2)}) plus broad Student-t tails (ν=${rd.nst.nu.toFixed(1)}, σ=${rd.nst.sigma_t.toFixed(2)}). However, the predictive improvement over pure Student-t is marginal (< 0.01 LPD), so Student-t remains the production likelihood.`,
+                    },
+                    {
+                        text: `<strong>Alpha should be shared across rounds.</strong> ${(rc.icc * 100).toFixed(0)}% of residual variance is person-specific (ICC=${rc.icc.toFixed(2)}). If a puzzler is systematically faster or slower than the model expects, that bias persists across prelims and finals &mdash; so we draw alpha once per tournament, not per round.`,
+                    },
+                    {
+                        text: `<strong>Alpha should be shared across divisions.</strong> A person's latent ability doesn't change between solo, pairs, and teams events at the same tournament. Drawing independent alphas per division would allow incoherent outcomes (fastest solo puzzler but slowest pairs partner).`,
+                    },
+                    {
+                        text: `<strong>Beta (puzzle difficulty) should be independent.</strong> Different rounds use different puzzles, so each round gets a fresh &beta; draw from Normal(0, &sigma;<sub>&beta;</sub>=${data.model_params.sigma_beta.toFixed(0)}).`,
+                    },
+                    {
+                        text: `<strong>Noise (&epsilon;) should be independent per round.</strong> Day-of performance variation (fatigue, focus, luck of the draw) is genuinely random between events. The ${(100 - rc.icc * 100).toFixed(0)}% of residual variance that is <em>not</em> person-specific represents this noise.`,
+                    },
+                ];
+
+                const list = d3.select("#implications-list");
+                items.forEach((item) => {
+                    const div = list
+                        .append("div")
+                        .attr("class", "implication");
+                    div.append("div").attr("class", "text").html(item.text);
+                });
+            }
+
+            // Log-gamma function (Lanczos approximation)
+            function lgamma(x) {
+                const g = 7;
+                const c = [
+                    0.99999999999980993, 676.5203681218851,
+                    -1259.1392167224028, 771.32342877765313,
+                    -176.61502916214059, 12.507343278686905,
+                    -0.13857109526572012, 9.9843695780195716e-6,
+                    1.5056327351493116e-7,
+                ];
+                if (x < 0.5)
+                    return (
+                        Math.log(Math.PI / Math.sin(Math.PI * x)) -
+                        lgamma(1 - x)
+                    );
+                x -= 1;
+                let a = c[0];
+                const t = x + g + 0.5;
+                for (let i = 1; i < g + 2; i++) a += c[i] / (x + i);
+                return (
+                    0.5 * Math.log(2 * Math.PI) +
+                    (x + 0.5) * Math.log(t) -
+                    t +
+                    Math.log(a)
+                );
+            }
+        </script>
+    </body>
+</html>

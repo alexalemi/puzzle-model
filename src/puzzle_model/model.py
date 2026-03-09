@@ -7,9 +7,12 @@ mu is fixed (passed as mu_fixed kwarg) to eliminate the additive identifiability
 mu, alpha, and beta. Default is MU_ONE_HOUR = 1000*log10(3600) ≈ 3556.3 mB, so alpha=0
 means "solves like a 1-hour reference" and hierarchical shrinkage works correctly.
 
-Model hierarchy (all use Student-t likelihood):
-  Model 1t: mu_fixed + alpha_i + beta_j + c*log(N)       (robust baseline)
-  Model 2c: + physical piece-count correction + velocity  (production model)
+Model hierarchy:
+  Model 1t: mu_fixed + alpha_i + beta_j + c*log(N)  (Student-t, robust baseline)
+  Model 2c: + physical piece-count correction + velocity  (Student-t)
+  Model team: + logsumexp team alpha + Amdahl's law  (Student-t)
+  Model team_gmm: same as team but contaminated Normal likelihood
+  Model team_nst: same as team but Normal + Student-t mixture likelihood
 
 Piece-count correction uses physically-motivated basis functions that sum additively
 in time space: time(N) = w0*sqrt(N) + w1*N + w2*N*log(N) + w3*N^2, then converts
@@ -279,6 +282,259 @@ def model_team(
         numpyro.sample("log_time", dist.StudentT(nu, mean, sigma_eff), obs=log_time)
 
 
+def model_team_gmm(
+    puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles,
+    mu_fixed=None, year=None, log_time=None,
+    solve_number=None,
+    team_member_idx=None,
+    team_mask=None,
+    team_size=None,
+    **kwargs,
+):
+    """Joint solo+team model with contaminated Normal (Gaussian mixture) likelihood.
+
+    Identical to model_team but replaces StudentT(nu, mean, sigma) with:
+        w * Normal(mean, sigma) + (1-w) * Normal(mean, k*sigma)
+
+    where w is the fraction of "clean" observations and k is the scale
+    multiplier for the outlier component.  This captures the empirical
+    finding that residuals are a sharp core + broad tails, which a
+    single Student-t cannot match (Student-t couples peak shape to tail weight).
+    """
+    mu = numpyro.deterministic("mu", jnp.float32(mu_fixed))
+    # LogNormal priors on sigma prevent mixture-induced collapse to near-zero.
+    # HalfNormal(500) is flat near zero, which is fine for Student-t (where nu
+    # controls tails) but causes a GMM narrow component to degenerate to a delta.
+    # LogNormal centered at empirical residual width prevents this.
+    sigma = numpyro.sample("sigma", dist.LogNormal(jnp.log(60.0), 0.5))
+    sigma_alpha = numpyro.sample("sigma_alpha", dist.HalfNormal(300.0))
+    sigma_beta = numpyro.sample("sigma_beta", dist.HalfNormal(300.0))
+
+    # Contaminated Normal parameters (replace nu)
+    # Constrain w_clean > 0.5 and k_sigma > 1 to break label-switching symmetry:
+    # without these constraints, SVI can swap the narrow/wide components.
+    w_raw = numpyro.sample("w_raw", dist.Beta(5, 1))  # concentrates near 1
+    w_clean = numpyro.deterministic("w_clean", 0.5 + 0.5 * w_raw)  # ∈ [0.5, 1.0]
+    k_raw = numpyro.sample("k_raw", dist.LogNormal(1.0, 0.5))  # median ≈ 2.7
+    k_sigma = numpyro.deterministic("k_sigma", 1.0 + k_raw)  # > 1 always
+
+    # Physical basis weights
+    log_w = numpyro.sample("log_w", dist.Normal(0, 5.0).expand([4]))
+
+    # Velocity
+    delta_0 = numpyro.sample("delta_0", dist.Normal(0, 100.0))
+    sigma_delta = numpyro.sample("sigma_delta", dist.HalfNormal(100.0))
+
+    # Practice effect (global)
+    gamma = numpyro.sample("gamma", dist.Normal(0, 200.0))
+
+    # Team parameters
+    logit_s = numpyro.sample("logit_s", dist.Normal(0, 2.0))
+    eta_team = numpyro.sample("eta_team", dist.Normal(0, 50.0).expand([3]))
+    sigma_team = numpyro.sample("sigma_team", dist.LogNormal(jnp.log(80.0), 0.5))
+
+    with numpyro.plate("puzzlers", n_puzzlers):
+        alpha = numpyro.sample("alpha", dist.Normal(0, sigma_alpha))
+        delta = numpyro.sample("delta", dist.Normal(0, sigma_delta))
+
+    with numpyro.plate("puzzles", n_puzzles):
+        beta = numpyro.sample("beta", dist.Normal(0, sigma_beta))
+
+    # Physical basis correction
+    N = jnp.asarray(pieces, dtype=jnp.float32)
+    g = jnp.column_stack([jnp.sqrt(N), N, N * jnp.log(N), N ** 2])
+    g_ref = jnp.array([jnp.sqrt(N_REF), N_REF, N_REF * jnp.log(N_REF), N_REF ** 2])
+    w = jnp.exp(log_w)
+    time_contrib = jnp.dot(g, w)
+    time_ref = jnp.dot(g_ref, w)
+    mB_scale = 1000.0 / jnp.log(10.0)
+    piece_correction = mB_scale * (jnp.log(time_contrib) - jnp.log(time_ref))
+
+    # Practice
+    sn = jnp.asarray(solve_number, dtype=jnp.float32) if solve_number is not None else jnp.ones(len(puzzler_idx))
+    repeat_effect = gamma * jnp.log(sn)
+
+    # --- Team alpha (identical to model_team) ---
+    team_member_idx = jnp.asarray(team_member_idx, dtype=jnp.int32)
+    team_mask_arr = jnp.asarray(team_mask, dtype=jnp.float32)
+    team_size_arr = jnp.asarray(team_size, dtype=jnp.float32)
+
+    alpha_gathered = alpha[team_member_idx]
+    delta_gathered = delta[team_member_idx]
+    t = jnp.asarray(year, dtype=jnp.float32) - YEAR_CENTER if year is not None else 0.0
+    alpha_adjusted = alpha_gathered + (delta_0 + delta_gathered) * t[:, None]
+
+    rates = jnp.where(team_mask_arr, jnp.exp(-alpha_adjusted / mB_scale), 0.0)
+    total_rate = jnp.sum(rates, axis=1)
+    alpha_parallel = -mB_scale * jnp.log(total_rate)
+
+    s = jax.nn.sigmoid(logit_s)
+    numpyro.deterministic("s", s)
+    amdahl_correction = mB_scale * jnp.log(1 + s * (team_size_arr - 1))
+
+    is_team = team_size_arr > 1
+    team_bucket = jnp.clip(team_size_arr.astype(jnp.int32) - 2, 0, 2)
+    eta_correction = jnp.where(is_team, eta_team[team_bucket], 0.0)
+
+    alpha_eff = alpha_parallel + amdahl_correction + eta_correction
+    sigma_eff = jnp.where(team_size_arr > 1, sigma_team, sigma)
+
+    mean = mu + alpha_eff + beta[puzzle_idx] + piece_correction + repeat_effect
+
+    # --- Contaminated Normal likelihood ---
+    # p(y) = w_clean * N(mean, sigma_eff) + (1 - w_clean) * N(mean, k_sigma * sigma_eff)
+    mixing = dist.Categorical(probs=jnp.stack([w_clean, 1 - w_clean]))
+    component_locs = jnp.stack([mean, mean], axis=-1)
+    component_scales = jnp.stack([sigma_eff, k_sigma * sigma_eff], axis=-1)
+    obs_dist = dist.MixtureSameFamily(mixing, dist.Normal(component_locs, component_scales))
+
+    with numpyro.plate("obs", len(puzzler_idx)):
+        numpyro.sample("log_time", obs_dist, obs=log_time)
+
+
+class NormalStudentTMixture(dist.Distribution):
+    """Mixture of Normal and Student-t with shared location.
+
+    p(y) = w * Normal(loc, scale) + (1-w) * StudentT(df, loc, scale_t)
+
+    This decouples peak sharpness (Normal controls the core) from tail weight
+    (Student-t controls extreme values), unlike pure Student-t where a single
+    nu parameter governs both.
+    """
+    support = dist.constraints.real
+    arg_constraints = {
+        "w": dist.constraints.unit_interval,
+        "loc": dist.constraints.real,
+        "scale": dist.constraints.positive,
+        "df": dist.constraints.positive,
+        "scale_t": dist.constraints.positive,
+    }
+
+    def __init__(self, w, loc, scale, df, scale_t, *, validate_args=None):
+        self.w, self.loc, self.scale, self.df, self.scale_t = (
+            jnp.asarray(w), jnp.asarray(loc), jnp.asarray(scale),
+            jnp.asarray(df), jnp.asarray(scale_t),
+        )
+        batch_shape = jnp.broadcast_shapes(
+            jnp.shape(loc), jnp.shape(scale), jnp.shape(scale_t),
+        )
+        super().__init__(batch_shape=batch_shape, validate_args=validate_args)
+
+    def log_prob(self, value):
+        ll_n = jnp.log(self.w) + dist.Normal(self.loc, self.scale).log_prob(value)
+        ll_t = jnp.log(1 - self.w) + dist.StudentT(self.df, self.loc, self.scale_t).log_prob(value)
+        return jnp.logaddexp(ll_n, ll_t)
+
+    def sample(self, key, sample_shape=()):
+        k1, k2, k3 = jax.random.split(key, 3)
+        mask = jax.random.bernoulli(k1, self.w, shape=sample_shape + self.batch_shape)
+        n_samples = dist.Normal(self.loc, self.scale).sample(k2, sample_shape)
+        t_samples = dist.StudentT(self.df, self.loc, self.scale_t).sample(k3, sample_shape)
+        return jnp.where(mask, n_samples, t_samples)
+
+
+def model_team_nst(
+    puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles,
+    mu_fixed=None, year=None, log_time=None,
+    solve_number=None,
+    team_member_idx=None,
+    team_mask=None,
+    team_size=None,
+    **kwargs,
+):
+    """Joint solo+team model with Normal + wide Student-t mixture likelihood.
+
+    p(y) = w * Normal(mean, sigma) + (1-w) * StudentT(nu, mean, k*sigma)
+
+    The Normal captures the sharp residual core (~95%), while the Student-t
+    at wider scale k*sigma handles both the broad shoulder and heavy tails.
+    This gives three degrees of freedom for the noise shape:
+      sigma — core width, w — mixture fraction, nu — tail decay, k — outlier scale.
+    """
+    mu = numpyro.deterministic("mu", jnp.float32(mu_fixed))
+    # LogNormal prior prevents mixture-induced sigma collapse (same as GMM).
+    sigma = numpyro.sample("sigma", dist.LogNormal(jnp.log(60.0), 0.5))
+    nu = numpyro.sample("nu", dist.Gamma(2.0, 0.1))
+    sigma_alpha = numpyro.sample("sigma_alpha", dist.HalfNormal(300.0))
+    sigma_beta = numpyro.sample("sigma_beta", dist.HalfNormal(300.0))
+
+    # Mixture weight: fraction in Normal component, constrained > 0.5
+    w_raw = numpyro.sample("w_raw", dist.Beta(5, 1))
+    w_clean = numpyro.deterministic("w_clean", 0.5 + 0.5 * w_raw)
+    # Student-t scale multiplier: > 1 so outlier component is wider
+    k_raw = numpyro.sample("k_raw", dist.LogNormal(1.0, 0.5))
+    k_sigma = numpyro.deterministic("k_sigma", 1.0 + k_raw)
+
+    # Physical basis weights
+    log_w = numpyro.sample("log_w", dist.Normal(0, 5.0).expand([4]))
+
+    # Velocity
+    delta_0 = numpyro.sample("delta_0", dist.Normal(0, 100.0))
+    sigma_delta = numpyro.sample("sigma_delta", dist.HalfNormal(100.0))
+
+    # Practice effect (global)
+    gamma = numpyro.sample("gamma", dist.Normal(0, 200.0))
+
+    # Team parameters
+    logit_s = numpyro.sample("logit_s", dist.Normal(0, 2.0))
+    eta_team = numpyro.sample("eta_team", dist.Normal(0, 50.0).expand([3]))
+    sigma_team = numpyro.sample("sigma_team", dist.LogNormal(jnp.log(80.0), 0.5))
+
+    with numpyro.plate("puzzlers", n_puzzlers):
+        alpha = numpyro.sample("alpha", dist.Normal(0, sigma_alpha))
+        delta = numpyro.sample("delta", dist.Normal(0, sigma_delta))
+
+    with numpyro.plate("puzzles", n_puzzles):
+        beta = numpyro.sample("beta", dist.Normal(0, sigma_beta))
+
+    # Physical basis correction
+    N = jnp.asarray(pieces, dtype=jnp.float32)
+    g = jnp.column_stack([jnp.sqrt(N), N, N * jnp.log(N), N ** 2])
+    g_ref = jnp.array([jnp.sqrt(N_REF), N_REF, N_REF * jnp.log(N_REF), N_REF ** 2])
+    w = jnp.exp(log_w)
+    time_contrib = jnp.dot(g, w)
+    time_ref = jnp.dot(g_ref, w)
+    mB_scale = 1000.0 / jnp.log(10.0)
+    piece_correction = mB_scale * (jnp.log(time_contrib) - jnp.log(time_ref))
+
+    # Practice
+    sn = jnp.asarray(solve_number, dtype=jnp.float32) if solve_number is not None else jnp.ones(len(puzzler_idx))
+    repeat_effect = gamma * jnp.log(sn)
+
+    # --- Team alpha (identical to model_team) ---
+    team_member_idx = jnp.asarray(team_member_idx, dtype=jnp.int32)
+    team_mask_arr = jnp.asarray(team_mask, dtype=jnp.float32)
+    team_size_arr = jnp.asarray(team_size, dtype=jnp.float32)
+
+    alpha_gathered = alpha[team_member_idx]
+    delta_gathered = delta[team_member_idx]
+    t = jnp.asarray(year, dtype=jnp.float32) - YEAR_CENTER if year is not None else 0.0
+    alpha_adjusted = alpha_gathered + (delta_0 + delta_gathered) * t[:, None]
+
+    rates = jnp.where(team_mask_arr, jnp.exp(-alpha_adjusted / mB_scale), 0.0)
+    total_rate = jnp.sum(rates, axis=1)
+    alpha_parallel = -mB_scale * jnp.log(total_rate)
+
+    s = jax.nn.sigmoid(logit_s)
+    numpyro.deterministic("s", s)
+    amdahl_correction = mB_scale * jnp.log(1 + s * (team_size_arr - 1))
+
+    is_team = team_size_arr > 1
+    team_bucket = jnp.clip(team_size_arr.astype(jnp.int32) - 2, 0, 2)
+    eta_correction = jnp.where(is_team, eta_team[team_bucket], 0.0)
+
+    alpha_eff = alpha_parallel + amdahl_correction + eta_correction
+    sigma_eff = jnp.where(team_size_arr > 1, sigma_team, sigma)
+
+    mean = mu + alpha_eff + beta[puzzle_idx] + piece_correction + repeat_effect
+
+    # Normal + wide Student-t mixture likelihood
+    # Normal(mean, sigma_eff) for the core; StudentT(nu, mean, k*sigma_eff) for tails
+    obs_dist = NormalStudentTMixture(w_clean, mean, sigma_eff, nu, k_sigma * sigma_eff)
+    with numpyro.plate("obs", len(puzzler_idx)):
+        numpyro.sample("log_time", obs_dist, obs=log_time)
+
+
 # Non-centered versions for SVI/MCMC efficiency
 model_1t_nc = reparam(model_1t, config={"alpha": LocScaleReparam(0), "beta": LocScaleReparam(0)})
 model_2c_nc = reparam(model_2c, config={
@@ -295,9 +551,21 @@ model_team_nc = reparam(model_team, config={
     "delta": LocScaleReparam(0),
 })
 
+model_team_gmm_nc = reparam(model_team_gmm, config={
+    "alpha": LocScaleReparam(0), "beta": LocScaleReparam(0),
+    "delta": LocScaleReparam(0),
+})
+
+model_team_nst_nc = reparam(model_team_nst, config={
+    "alpha": LocScaleReparam(0), "beta": LocScaleReparam(0),
+    "delta": LocScaleReparam(0),
+})
+
 MODELS = {
     "model_1t": model_1t_nc,
     "model_2c": model_2c_nc,
     "model_2r": model_2r_nc,
     "model_team": model_team_nc,
+    "model_team_gmm": model_team_gmm_nc,
+    "model_team_nst": model_team_nst_nc,
 }

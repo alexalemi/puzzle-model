@@ -4,7 +4,7 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 import numpyro
-from numpyro.infer import MCMC, NUTS, SVI, Trace_ELBO, Predictive, init_to_median
+from numpyro.infer import MCMC, NUTS, SVI, Trace_ELBO, Predictive, init_to_median, init_to_value
 from numpyro.infer.autoguide import AutoNormal
 
 
@@ -30,9 +30,19 @@ def run_svi(
     num_steps: int = 10_000,
     lr: float = 0.005,
     seed: int = 0,
+    init_values: dict | None = None,
 ) -> tuple[AutoNormal, dict]:
-    """Run stochastic variational inference with AutoNormal guide."""
-    guide = AutoNormal(model)
+    """Run stochastic variational inference with AutoNormal guide.
+
+    If init_values is provided, those sites are initialized to the given values
+    (others fall back to init_to_median). Useful for mixture models where bad
+    initialization leads to component collapse.
+    """
+    if init_values:
+        init_fn = init_to_value(values=init_values)
+    else:
+        init_fn = init_to_median
+    guide = AutoNormal(model, init_loc_fn=init_fn)
     optimizer = numpyro.optim.Adam(lr)
     svi = SVI(model, guide, optimizer, loss=Trace_ELBO())
     result = svi.run(jax.random.PRNGKey(seed), num_steps, **data)

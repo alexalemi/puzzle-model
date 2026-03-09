@@ -763,7 +763,7 @@
 amdahl = mB &middot; log(1 + s&middot;(K&minus;1))&nbsp;&nbsp;&nbsp;(serial overhead)<br>
 &alpha;<sub>eff</sub> = &alpha;<sub>parallel</sub> + amdahl + &eta;[bucket(K)]<br>
 mean = &mu; + &alpha;<sub>eff</sub> + &beta;[puzzle] + f(N) + &gamma;&middot;log(solve#)<br>
-log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub> for K&gt;1]
+log_time ~ w&middot;Normal(mean, &sigma;) + (1&minus;w)&middot;StudentT(&nu;, mean, k&middot;&sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub> for K&gt;1]
   </div>
   <p>For <strong>solo (K=1)</strong>: logsumexp = &alpha;<sub>i</sub> + velocity, amdahl = 0, &eta; = 0 &mdash; exactly Model 2r. Four new parameters beyond 2r:</p>
   <ul style="margin: 0 0 16px 24px; font-size: 16px;">
@@ -777,9 +777,9 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
       <table>
         <tr><th>Model</th><th>Additions over previous</th><th>Data</th></tr>
         <tr><td>Model 2r</td><td>&mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub> + f(N) + &delta;&middot;t + &gamma;&middot;log(solve#) + Student-t</td><td>Solo only</td></tr>
-        <tr><td>Model Team</td><td>+ logsumexp(&alpha;) + Amdahl(s) + &eta;[K] + &sigma;<sub>team</sub></td><td>Solo + Duo + Group</td></tr>
+        <tr><td>Model Team (NST)</td><td>+ logsumexp(&alpha;) + Amdahl(s) + &eta;[K] + &sigma;<sub>team</sub> + NST mixture</td><td>Solo + Duo + Group</td></tr>
       </table>
-      <p class="footnote">All models use Student-t likelihood. Non-centered parameterization via SVI. Velocity is applied per-member inside the logsumexp. Unregistered team members map to a shared __unknown__ puzzler (shrinks toward &alpha;=0).</p>
+      <p class="footnote">Production model uses NST (Normal + Student-t mixture) likelihood: w&middot;Normal + (1&minus;w)&middot;Student-t at wider scale. Non-centered parameterization via SVI. Velocity is applied per-member inside the logsumexp. Unregistered team members map to a shared __unknown__ puzzler (shrinks toward &alpha;=0).</p>
     </div>
   </details>
   <details>
@@ -869,7 +869,7 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
 <!-- Model Deep Dive -->
 <details class="section-collapse" id="section-model-deep">
   <summary>Model Deep Dive</summary>
-  <p>The joint team model: Student-t likelihood, per-puzzler velocity, physical piece-count basis, practice effect, and team mechanics. Trained on all solo + team data.</p>
+  <p>The joint team model: NST (Normal + Student-t mixture) likelihood, per-puzzler velocity, physical piece-count basis, practice effect, and team mechanics. Trained on all solo + team data.</p>
   <details open>
     <summary>Scalar parameters</summary>
     <div class="details-content">
@@ -877,9 +877,9 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
     </div>
   </details>
   <details open>
-    <summary>Student-t vs Normal: how heavy are the tails?</summary>
+    <summary>NST Mixture vs Normal: how heavy are the tails?</summary>
     <div class="details-content">
-      <p class="footnote">The learned degrees of freedom &nu; controls tail heaviness. Lower &nu; = heavier tails = more robust to outliers.</p>
+      <p class="footnote">The NST mixture: w&middot;Normal(&sigma;) for the sharp core + (1&minus;w)&middot;Student-t(&nu;, k&middot;&sigma;) for heavy tails. Decouples peak sharpness from tail weight.</p>
       <div class="chart-container"><div id="chart-student-t"></div></div>
     </div>
   </details>
@@ -2521,6 +2521,17 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                         return randn() * sigma / Math.sqrt(chi2 / nu);
                     }
 
+                    // Sample from NST mixture: w*Normal(0,sigma) + (1-w)*StudentT(nu,0,k*sigma)
+                    const w_clean = S.w_clean || 0.73;
+                    const k_sigma_nst = S.k_sigma || 1.6;
+                    function sampleNST(nu, sigma) {
+                        if (Math.random() < w_clean) {
+                            return randn() * sigma;
+                        } else {
+                            return sampleStudentT(nu, k_sigma_nst * sigma);
+                        }
+                    }
+
                     // Compute f(N) = 1000/ln(10) * log(sum w_k g_k(N) / sum w_k g_k(N_REF))
                     function computeBasis(pc) {
                         if (!log_w.length) return 0;
@@ -2776,7 +2787,7 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                             if (nPuzzles === 1) {
                                 const pz = puzzles[0];
                                 const b = pz.beta + pz.std * randn();
-                                const noise = sampleStudentT(nu, noiseScale);
+                                const noise = sampleNST(nu, noiseScale);
                                 samples[i] = mu + aEff + b + pz.fN + practiceAdj + noise;
                             } else {
                                 // Multiple puzzles: sum times in seconds
@@ -2784,7 +2795,7 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                                 for (let p = 0; p < nPuzzles; p++) {
                                     const pz = puzzles[p];
                                     const b = pz.beta + pz.std * randn();
-                                    const noise = sampleStudentT(nu, noiseScale);
+                                    const noise = sampleNST(nu, noiseScale);
                                     const mB_p = mu + aEff + b + pz.fN + practiceAdj + noise;
                                     totalSec += mBtoSec(mB_p);
                                 }
@@ -2935,13 +2946,13 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                                 desc: solveNum > 1 ? "Solve #" + solveNum : "First attempt" });
                             decomp.push({ term: "= Point estimate", mB: pointEst, std: null, desc: mBtoTime(pointEst) });
                             decomp.push({ term: "Noise \u03c3", mB: noiseScale, std: null,
-                                desc: (K > 1 ? "\u03c3_team" : "\u03c3") + ", Student-t \u03bd=" + nu.toFixed(1) });
+                                desc: (K > 1 ? "\u03c3_team" : "\u03c3") + ", NST w=" + w_clean.toFixed(2) + " \u03bd=" + nu.toFixed(1) + " k=" + k_sigma_nst.toFixed(1) });
                         } else {
                             // Multi-puzzle: show per-puzzle then sum
                             decomp.push({ term: "Practice (\u03b3)", mB: practiceAdj, std: null,
                                 desc: solveNum > 1 ? "Solve #" + solveNum : "First attempt" });
                             decomp.push({ term: "Noise \u03c3", mB: noiseScale, std: null,
-                                desc: (K > 1 ? "\u03c3_team" : "\u03c3") + " per puzzle, Student-t \u03bd=" + nu.toFixed(1) });
+                                desc: (K > 1 ? "\u03c3_team" : "\u03c3") + " per puzzle, NST w=" + w_clean.toFixed(2) + " \u03bd=" + nu.toFixed(1) + " k=" + k_sigma_nst.toFixed(1) });
                             decomp.push({ term: "", mB: null, std: null, desc: "" }); // spacer
                             puzzles.forEach((pz, idx) => {
                                 const pzMB = perPuzzlePointMB[idx];
@@ -3019,9 +3030,11 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                             "m2r-spec-gamma",
                             `&gamma; = ${gamma.toFixed(1)} mB/log(solve#)`,
                         );
+                        const wc = sp.w_clean ? sp.w_clean.mean : 0.73;
+                        const ks = sp.k_sigma ? sp.k_sigma.mean : 1.6;
                         el(
                             "m2r-spec-eps",
-                            `&nu; = ${nu.toFixed(1)}, &sigma; = ${sigma.toFixed(1)} mB`,
+                            `NST: w=${wc.toFixed(2)}, &sigma;=${sigma.toFixed(1)} mB, &nu;=${nu.toFixed(1)}, k=${ks.toFixed(1)}`,
                         );
                     })();
 
@@ -3038,8 +3051,10 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                         const tbody = t.append("tbody");
                         const interp = {
                             mu: "Global intercept (mB)",
-                            sigma: "Noise scale (Student-t)",
-                            nu: "Degrees of freedom (\u221e = Normal)",
+                            sigma: "Core noise scale (Normal component)",
+                            nu: "Student-t df in tail component",
+                            w_clean: "Normal component weight",
+                            k_sigma: "Student-t scale multiplier (k\u00d7\u03c3)",
                             sigma_alpha: "Puzzler effect spread",
                             sigma_beta: "Puzzle difficulty spread",
                             delta_0: "Population trend (mB/yr)",
@@ -3053,6 +3068,8 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                         const order = [
                             "mu",
                             "sigma",
+                            "w_clean",
+                            "k_sigma",
                             "nu",
                             "sigma_alpha",
                             "sigma_beta",
@@ -3089,10 +3106,10 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                         });
                     })();
 
-                    // Student-t vs Normal
+                    // NST Mixture vs Normal
                     (function () {
-                        if (!M2R.student_t_comparison) return;
-                        const st = M2R.student_t_comparison;
+                        if (!M2R.nst_comparison) return;
+                        const st = M2R.nst_comparison;
                         const W = 600,
                             H = 300,
                             mg = { top: 32, right: 120, bottom: 44, left: 56 };
@@ -3107,14 +3124,14 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                             .attr("y", 16)
                             .attr("text-anchor", "middle")
                             .text(
-                                `Residual Distribution: Student-t(\u03bd=${st.nu}) vs Normal`,
+                                `NST Mixture (w=${st.w_clean}, \u03bd=${st.nu}, k=${st.k_sigma}) vs Normal(\u03c3=${st.sigma})`,
                             );
                         const x = d3
                             .scaleLinear()
                             .domain(d3.extent(st.x))
                             .range([mg.left, W - mg.right]);
                         const yMax = d3.max([
-                            ...st.student_pdf,
+                            ...st.nst_pdf,
                             ...st.normal_pdf,
                         ]);
                         const y = d3
@@ -3143,7 +3160,7 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                             .attr("stroke-width", 2)
                             .attr("stroke-dasharray", "6,3");
                         svg.append("path")
-                            .datum(st.student_pdf)
+                            .datum(st.nst_pdf)
                             .attr("d", line)
                             .attr("fill", "none")
                             .attr("stroke", "#c44e52")
@@ -3151,19 +3168,19 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                         const tailData = st.x
                             .map((xi, i) => ({
                                 x: xi,
-                                st: st.student_pdf[i],
+                                nst: st.nst_pdf[i],
                                 n: st.normal_pdf[i],
                             }))
-                            .filter((d) => d.st > d.n * 1.2);
+                            .filter((d) => d.nst > d.n * 1.2);
                         if (tailData.length > 0) {
                             svg.selectAll(".tail")
                                 .data(tailData)
                                 .enter()
                                 .append("rect")
                                 .attr("x", (d) => x(d.x) - 1)
-                                .attr("y", (d) => y(d.st))
+                                .attr("y", (d) => y(d.nst))
                                 .attr("width", 2)
-                                .attr("height", (d) => y(d.n) - y(d.st))
+                                .attr("height", (d) => y(d.n) - y(d.nst))
                                 .attr("fill", "#c44e52")
                                 .attr("opacity", 0.15);
                         }
@@ -3181,7 +3198,7 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                             .attr("x", 24)
                             .attr("y", 4)
                             .style("font-size", "11px")
-                            .text(`Student-t(\u03bd=${st.nu})`);
+                            .text(`NST mixture`);
                         lg.append("line")
                             .attr("y1", 20)
                             .attr("x2", 20)
@@ -3193,7 +3210,7 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                             .attr("x", 24)
                             .attr("y", 24)
                             .style("font-size", "11px")
-                            .text("Normal");
+                            .text(`Normal(\u03c3=${st.sigma})`);
                         lg.append("text")
                             .attr("y", 48)
                             .style("font-size", "10px")

@@ -1,0 +1,960 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>2026 USA Jigsaw Nationals — Tournament Predictions</title>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&family=Source+Sans+3:wght@300;400;600&family=Source+Code+Pro:wght@400&display=swap");
+
+            :root {
+                --text: #303030;
+                --text-light: #6e6e6e;
+                --accent: #d4a04a;
+                --bg: #fcfcfc;
+                --bg-alt: #f6f4f0;
+                --border: #e0ddd5;
+                --blue: #4a7fb5;
+                --red: #c44e52;
+                --green: #55a868;
+                --purple: #8172b2;
+                --orange: #dd8452;
+                --chart-bg: #fafaf7;
+                --heat-a: #4a7fb5;
+                --heat-b: #c44e52;
+                --heat-c: #55a868;
+                --heat-d: #dd8452;
+            }
+
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body {
+                font-family: "Source Serif 4", Georgia, serif;
+                color: var(--text);
+                background: var(--bg);
+                line-height: 1.7;
+                -webkit-font-smoothing: antialiased;
+            }
+            .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+            header {
+                border-bottom: 1px solid var(--border);
+                padding: 48px 0 32px;
+                margin-bottom: 40px;
+            }
+            header h1 {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600; font-size: 36px;
+                letter-spacing: -0.5px; margin-bottom: 8px;
+            }
+            header .subtitle {
+                font-size: 18px; color: var(--text-light); font-weight: 300;
+            }
+            header .meta {
+                margin-top: 16px;
+                font-family: "Source Sans 3", sans-serif;
+                font-size: 13px; color: var(--text-light);
+                display: flex; gap: 24px; flex-wrap: wrap;
+            }
+
+            section { margin-bottom: 48px; }
+            h2 {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600; font-size: 22px;
+                margin-bottom: 16px; padding-bottom: 8px;
+                border-bottom: 1px solid var(--border);
+            }
+
+            details.collapsible { margin-bottom: 48px; }
+            details.collapsible > summary {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600; font-size: 22px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid var(--border);
+                cursor: pointer;
+                list-style: none;
+                display: flex; align-items: center; gap: 8px;
+                margin-bottom: 16px;
+            }
+            details.collapsible > summary::-webkit-details-marker { display: none; }
+            details.collapsible > summary::before {
+                content: "\25B6"; font-size: 14px; color: var(--text-light);
+                transition: transform 0.2s;
+                display: inline-block; width: 18px; flex-shrink: 0;
+            }
+            details.collapsible[open] > summary::before {
+                transform: rotate(90deg);
+            }
+            h3 {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600; font-size: 16px; margin-bottom: 8px;
+            }
+            p { margin-bottom: 16px; font-size: 16px; }
+
+            .stat-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: 12px; margin-bottom: 24px;
+            }
+            .stat-card {
+                background: var(--bg-alt); border: 1px solid var(--border);
+                border-radius: 4px; padding: 16px; text-align: center;
+            }
+            .stat-card .value {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600; font-size: 28px; color: var(--blue); display: block;
+            }
+            .stat-card .label {
+                font-family: "Source Sans 3", sans-serif;
+                font-size: 12px; color: var(--text-light);
+                text-transform: uppercase; letter-spacing: 0.5px;
+            }
+
+            .chart-container {
+                background: var(--chart-bg); border: 1px solid var(--border);
+                border-radius: 4px; padding: 20px; margin-bottom: 16px; overflow-x: auto;
+            }
+            svg text { font-family: "Source Sans 3", sans-serif; fill: var(--text); }
+            .axis text { font-size: 11px; fill: var(--text-light); }
+            .axis line, .axis path { stroke: var(--border); }
+            .chart-title { font-size: 13px; font-weight: 600; fill: var(--text); }
+
+            table {
+                width: 100%; border-collapse: collapse;
+                font-family: "Source Sans 3", sans-serif;
+                font-size: 13px; margin-bottom: 16px;
+            }
+            th {
+                background: var(--bg-alt); font-weight: 600; text-align: left;
+                padding: 6px 10px; border-bottom: 2px solid var(--border);
+                font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px;
+                color: var(--text-light); cursor: pointer; white-space: nowrap;
+                user-select: none;
+            }
+            th:hover { color: var(--text); }
+            th .sort-arrow { font-size: 10px; margin-left: 2px; }
+            td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+            tr:hover td { background: var(--bg-alt); }
+            .num { font-family: "Source Code Pro", monospace; text-align: right; }
+            .cold-start { color: var(--text-light); font-style: italic; }
+
+            .bar-cell { position: relative; padding-right: 60px; }
+            .bar-bg {
+                position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+                height: 16px; border-radius: 2px; opacity: 0.25;
+            }
+            .bar-val {
+                position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+                font-size: 12px; font-family: "Source Code Pro", monospace;
+            }
+
+            .prob-high { color: var(--green); font-weight: 600; }
+            .prob-med { color: var(--orange); }
+            .prob-low { color: var(--red); }
+
+            .heat-badge {
+                display: inline-block; padding: 1px 6px;
+                border-radius: 3px; font-size: 11px; font-weight: 600;
+                color: white; margin-right: 4px;
+            }
+            .heat-A { background: var(--heat-a); }
+            .heat-B { background: var(--heat-b); }
+            .heat-C { background: var(--heat-c); }
+            .heat-D { background: var(--heat-d); }
+
+            .search-box {
+                font-family: "Source Sans 3", sans-serif;
+                padding: 6px 12px; border: 1px solid var(--border);
+                border-radius: 4px; width: 100%; max-width: 300px;
+                font-size: 14px; margin-bottom: 12px;
+            }
+            .search-box:focus { outline: none; border-color: var(--blue); }
+
+            .tab-bar {
+                display: flex; gap: 0; margin-bottom: 16px;
+                border-bottom: 2px solid var(--border);
+            }
+            .tab-btn {
+                font-family: "Source Sans 3", sans-serif;
+                padding: 8px 16px; border: none; background: none;
+                font-size: 14px; cursor: pointer; color: var(--text-light);
+                border-bottom: 2px solid transparent;
+                margin-bottom: -2px; font-weight: 400;
+            }
+            .tab-btn.active {
+                color: var(--blue); border-bottom-color: var(--blue); font-weight: 600;
+            }
+            .tab-btn:hover { color: var(--text); }
+            .tab-content { display: none; }
+            .tab-content.active { display: block; }
+
+            .note {
+                background: var(--bg-alt); border-left: 3px solid var(--accent);
+                padding: 12px 16px; margin-bottom: 16px;
+                font-size: 14px; color: var(--text-light);
+            }
+            .note strong { color: var(--text); }
+
+            .medal { font-size: 14px; }
+            .member-list {
+                font-size: 12px; color: var(--text-light); line-height: 1.4;
+            }
+
+            footer {
+                border-top: 1px solid var(--border);
+                padding: 24px 0; margin-top: 48px;
+                font-family: "Source Sans 3", sans-serif;
+                font-size: 13px; color: var(--text-light);
+            }
+            footer a { color: var(--blue); text-decoration: none; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>2026 USA Jigsaw Nationals Predictions</h1>
+                <p class="subtitle">Stochastic tournament simulation based on a Bayesian latent factor model</p>
+                <div class="meta" id="header-meta"></div>
+            </header>
+
+            <section id="overview">
+                <h2>Overview</h2>
+                <div class="stat-grid" id="overview-stats"></div>
+                <div class="note">
+                    <strong>How to read these predictions:</strong> We simulate the entire tournament 20,000 times,
+                    drawing puzzle difficulties, competitor performances, and noise from the fitted model.
+                    Probabilities reflect how often each outcome occurs across simulations. Competitors not in our
+                    model database are labeled <em class="cold-start">cold-start</em> and assigned the population prior
+                    (average ability, high uncertainty). They collectively account for a large share of win probability
+                    because any of them <em>could</em> be an elite puzzler we haven't observed before.
+                </div>
+            </section>
+
+            <!-- SOLO SECTION -->
+            <details class="collapsible" id="solo" open>
+                <summary>Solo Individual</summary>
+                <p>Four preliminary heats on Friday (500 pc, 1.5 hr limit), top 100 from each advance to Sunday's final.</p>
+
+                <h3>Finals Win Probability — Top 30</h3>
+                <div class="chart-container" id="solo-win-chart"></div>
+
+                <h3>Finals Leaderboard</h3>
+                <div class="tab-bar" id="solo-final-tabs">
+                    <button class="tab-btn active" data-tab="solo-all">All</button>
+                    <button class="tab-btn" data-tab="solo-known">Known Only</button>
+                </div>
+                <input type="text" class="search-box" id="solo-final-search" placeholder="Search competitor...">
+                <div id="solo-final-tables"></div>
+
+                <h3>Winning Time Distribution</h3>
+                <div class="chart-container" id="solo-winning-time"></div>
+
+                <h3>Preliminary Heats</h3>
+                <div class="tab-bar" id="solo-heat-tabs">
+                    <button class="tab-btn active" data-tab="heat-A">Heat A</button>
+                    <button class="tab-btn" data-tab="heat-B">Heat B</button>
+                    <button class="tab-btn" data-tab="heat-C">Heat C</button>
+                    <button class="tab-btn" data-tab="heat-D">Heat D</button>
+                </div>
+                <input type="text" class="search-box" id="solo-heat-search" placeholder="Search competitor...">
+                <div id="solo-heat-tables"></div>
+            </details>
+
+            <!-- PAIRS SECTION -->
+            <details class="collapsible" id="pairs">
+                <summary>Pairs</summary>
+                <p>Two preliminary heats on Saturday (500 pc, 1.25 hr limit), top 100 from each advance to Sunday's final.</p>
+
+                <h3>Finals Win Probability — Top 30</h3>
+                <div class="chart-container" id="pairs-win-chart"></div>
+
+                <h3>Finals Leaderboard</h3>
+                <div class="tab-bar" id="pairs-final-tabs">
+                    <button class="tab-btn active" data-tab="pairs-all">All</button>
+                    <button class="tab-btn" data-tab="pairs-known">Known Only</button>
+                </div>
+                <input type="text" class="search-box" id="pairs-final-search" placeholder="Search pair...">
+                <div id="pairs-final-tables"></div>
+
+                <h3>Preliminary Heats</h3>
+                <div class="tab-bar" id="pairs-heat-tabs">
+                    <button class="tab-btn active" data-tab="pairs-heat-A">Heat A</button>
+                    <button class="tab-btn" data-tab="pairs-heat-B">Heat B</button>
+                </div>
+                <input type="text" class="search-box" id="pairs-heat-search" placeholder="Search pair...">
+                <div id="pairs-heat-tables"></div>
+            </details>
+
+            <!-- TEAMS SECTION -->
+            <details class="collapsible" id="teams">
+                <summary>Teams of 4</summary>
+                <p>Two preliminary heats on Saturday (500 pc + 1000 pc consecutive, 2.25 hr limit), top 50 from each advance.
+                   Finals: two 1000 pc puzzles consecutive, 3 hr limit.</p>
+
+                <h3>Finals Win Probability — Top 30</h3>
+                <div class="chart-container" id="teams-win-chart"></div>
+
+                <h3>Finals Leaderboard</h3>
+                <div class="tab-bar" id="teams-final-tabs">
+                    <button class="tab-btn active" data-tab="teams-all">All</button>
+                    <button class="tab-btn" data-tab="teams-known">Known Only</button>
+                </div>
+                <input type="text" class="search-box" id="teams-final-search" placeholder="Search team...">
+                <div id="teams-final-tables"></div>
+
+                <h3>Preliminary Heats</h3>
+                <div class="tab-bar" id="teams-heat-tabs">
+                    <button class="tab-btn active" data-tab="teams-heat-A">Heat A</button>
+                    <button class="tab-btn" data-tab="teams-heat-B">Heat B</button>
+                </div>
+                <input type="text" class="search-box" id="teams-heat-search" placeholder="Search team...">
+                <div id="teams-heat-tables"></div>
+            </details>
+
+            <!-- METHODOLOGY -->
+            <section id="methodology">
+                <h2>Methodology</h2>
+                <p>Predictions are generated by a Bayesian latent factor model fitted to ~245,000 historical
+                   speed-puzzling observations from <a href="https://speedpuzzling.com">speedpuzzling.com</a>,
+                   <a href="https://myspeedpuzzling.com">myspeedpuzzling.com</a>, and USA Jigsaw Association results.
+                   The model estimates ability parameters for ~11,000 puzzlers.</p>
+                <h3>Model</h3>
+                <p>Each solve time is modeled in milliBels (mB = 1000 &times; log<sub>10</sub>(seconds)) as:</p>
+                <p style="text-align:center; font-family: 'Source Code Pro', monospace; font-size:14px;">
+                    log_time = &mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub> + f(N) + &epsilon;
+                </p>
+                <p>where &alpha;<sub>i</sub> is puzzler ability, &beta;<sub>j</sub> is puzzle difficulty,
+                   f(N) corrects for piece count, and &epsilon; ~ w&middot;Normal(0, &sigma;) + (1&minus;w)&middot;StudentT(&nu;, 0, k&middot;&sigma;) captures noise (NST mixture).</p>
+                <p>For pairs/teams, individual alphas combine via logsumexp (rates add in parallel) with an
+                   Amdahl's law correction for serial work fraction and per-team-size residual terms.</p>
+                <h3>Simulation</h3>
+                <p>Each Monte Carlo trial draws: a shared puzzle &beta; for the heat, individual &alpha; values
+                   from each competitor's posterior (or population prior for cold-start), and NST mixture noise (Normal core + Student-t tails).
+                   Times exceeding the limit are DNF. Top finishers advance; finals use fresh draws.</p>
+                <h3>Cold-Start Competitors</h3>
+                <p>About 25% of registered competitors have no historical data in our model. They receive the
+                   population prior: &alpha; ~ Normal(0, &sigma;<sub>&alpha;</sub>) with &sigma;<sub>&alpha;</sub> &asymp; 219 mB.
+                   This means each unknown competitor could range from elite to novice. With ~200 unknowns, the
+                   extreme draws collectively dominate tail probabilities (wins, podiums). This reflects genuine
+                   uncertainty — not a flaw. The "Known Only" tab filters to competitors with model estimates.</p>
+                <p><a href="index.html">Full model explorer &rarr;</a></p>
+            </section>
+
+            <footer>
+                <p>Generated <span id="gen-date"></span> &middot;
+                   <span id="n-mc"></span> Monte Carlo trials &middot;
+                   Model: joint solo+team Bayesian latent factor &middot;
+                   <a href="index.html">Model Explorer</a></p>
+            </footer>
+        </div>
+
+        <script>
+        (async function() {
+            const DATA = await d3.json("prediction_data.json");
+            const P = DATA.params;
+
+            // --- Helpers ---
+            function mBtoTime(mB) {
+                const sec = Math.pow(10, mB / 1000);
+                if (sec >= 3600) {
+                    const h = Math.floor(sec / 3600);
+                    const m = Math.floor((sec % 3600) / 60);
+                    const s = Math.round(sec % 60);
+                    return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+                }
+                const m = Math.floor(sec / 60);
+                const s = Math.round(sec % 60);
+                return m + ":" + String(s).padStart(2, "0");
+            }
+
+            function secToTime(sec) {
+                if (sec >= 3600) {
+                    const h = Math.floor(sec / 3600);
+                    const m = Math.floor((sec % 3600) / 60);
+                    const s = Math.round(sec % 60);
+                    return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+                }
+                const m = Math.floor(sec / 60);
+                const s = Math.round(sec % 60);
+                return m + ":" + String(s).padStart(2, "0");
+            }
+
+            function pct(v) { return (v * 100).toFixed(1) + "%"; }
+            function pctClass(v) {
+                if (v >= 0.9) return "prob-high";
+                if (v >= 0.5) return "prob-med";
+                return "prob-low";
+            }
+
+            function heatBadge(heat) {
+                if (!heat) return "";
+                return `<span class="heat-badge heat-${heat}">${heat}</span>`;
+            }
+
+            // --- Header & Overview ---
+            const meta = document.getElementById("header-meta");
+            meta.innerHTML = `
+                <span>Tournament: March 27–29, 2026, Atlanta</span>
+                <span>${DATA.meta.n_mc.toLocaleString()} simulations</span>
+                <span>Generated: ${DATA.meta.date}</span>
+            `;
+
+            document.getElementById("gen-date").textContent = DATA.meta.date;
+            document.getElementById("n-mc").textContent = DATA.meta.n_mc.toLocaleString();
+
+            const nm = DATA.name_matching;
+            const overview = document.getElementById("overview-stats");
+            overview.innerHTML = `
+                <div class="stat-card"><span class="value">${nm.total}</span><span class="label">Total Competitors</span></div>
+                <div class="stat-card"><span class="value">${nm.matched}</span><span class="label">In Model</span></div>
+                <div class="stat-card"><span class="value">${nm.cold_start}</span><span class="label">Cold-Start</span></div>
+                <div class="stat-card"><span class="value">${Object.values(DATA.solo.heats).reduce((s,h) => s + h.length, 0)}</span><span class="label">Solo Entries</span></div>
+                <div class="stat-card"><span class="value">${Object.values(DATA.pairs.heats).reduce((s,h) => s + h.length, 0)}</span><span class="label">Pairs</span></div>
+                <div class="stat-card"><span class="value">${Object.values(DATA.teams.heats).reduce((s,h) => s + h.length, 0)}</span><span class="label">Teams</span></div>
+            `;
+
+            // --- Tab system ---
+            function setupTabs(barId, contentContainer) {
+                const bar = document.getElementById(barId);
+                if (!bar) return;
+                bar.querySelectorAll(".tab-btn").forEach(btn => {
+                    btn.addEventListener("click", () => {
+                        bar.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+                        btn.classList.add("active");
+                        const tabId = btn.dataset.tab;
+                        contentContainer.querySelectorAll(".tab-content").forEach(tc => {
+                            tc.classList.toggle("active", tc.id === tabId);
+                        });
+                    });
+                });
+            }
+
+            // --- Sortable table ---
+            function makeSortable(table) {
+                const headers = table.querySelectorAll("th[data-sort]");
+                let currentSort = null;
+                let currentDir = -1;
+                headers.forEach(th => {
+                    th.addEventListener("click", () => {
+                        const key = th.dataset.sort;
+                        const type = th.dataset.type || "num";
+                        if (currentSort === key) {
+                            currentDir *= -1;
+                        } else {
+                            currentSort = key;
+                            currentDir = type === "str" ? 1 : -1;
+                        }
+                        headers.forEach(h => {
+                            const arrow = h.querySelector(".sort-arrow");
+                            if (arrow) arrow.textContent = h === th ? (currentDir > 0 ? "\u25B2" : "\u25BC") : "";
+                        });
+                        const tbody = table.querySelector("tbody");
+                        const rows = Array.from(tbody.querySelectorAll("tr"));
+                        rows.sort((a, b) => {
+                            let va = a.dataset[key] || "";
+                            let vb = b.dataset[key] || "";
+                            if (type === "num") {
+                                va = parseFloat(va) || 0;
+                                vb = parseFloat(vb) || 0;
+                                return (va - vb) * currentDir;
+                            }
+                            return va.localeCompare(vb) * currentDir;
+                        });
+                        rows.forEach(r => tbody.appendChild(r));
+                    });
+                });
+            }
+
+            // --- Win probability bar chart ---
+            function drawWinChart(containerId, entries, nameGetter, n) {
+                const top = entries.slice(0, n);
+                const el = d3.select("#" + containerId);
+                el.html("");
+                const W = 880, barH = 22, mg = {top: 10, right: 80, bottom: 30, left: 200};
+                const H = mg.top + top.length * barH + mg.bottom;
+
+                const maxWin = d3.max(top, d => d.win_prob) || 0.01;
+                const x = d3.scaleLinear().domain([0, maxWin * 1.1]).range([mg.left, W - mg.right]);
+                const y = d3.scaleBand().domain(top.map((d,i) => i)).range([mg.top, H - mg.bottom]).padding(0.15);
+
+                const svg = el.append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("width", "100%");
+
+                // Bars
+                svg.selectAll("rect.bar").data(top).join("rect")
+                    .attr("class", "bar")
+                    .attr("x", mg.left)
+                    .attr("y", (d,i) => y(i))
+                    .attr("width", d => Math.max(1, x(d.win_prob) - mg.left))
+                    .attr("height", y.bandwidth())
+                    .attr("fill", d => {
+                        if (d.heat === "A") return "var(--heat-a)";
+                        if (d.heat === "B") return "var(--heat-b)";
+                        if (d.heat === "C") return "var(--heat-c)";
+                        if (d.heat === "D") return "var(--heat-d)";
+                        return "var(--blue)";
+                    })
+                    .attr("opacity", d => {
+                        const cs = d.is_cold_start === true || (Array.isArray(d.is_cold_start) && d.is_cold_start.some(v=>v));
+                        return cs ? 0.35 : 0.7;
+                    });
+
+                // Labels
+                svg.selectAll("text.name").data(top).join("text")
+                    .attr("class", "name")
+                    .attr("x", mg.left - 6)
+                    .attr("y", (d,i) => y(i) + y.bandwidth() / 2)
+                    .attr("dy", "0.35em")
+                    .attr("text-anchor", "end")
+                    .attr("font-size", "11px")
+                    .attr("fill", d => {
+                        const cs = d.is_cold_start === true || (Array.isArray(d.is_cold_start) && d.is_cold_start.some(v=>v));
+                        return cs ? "var(--text-light)" : "var(--text)";
+                    })
+                    .text(d => nameGetter(d));
+
+                // Values
+                svg.selectAll("text.val").data(top).join("text")
+                    .attr("class", "val")
+                    .attr("x", d => x(d.win_prob) + 4)
+                    .attr("y", (d,i) => y(i) + y.bandwidth() / 2)
+                    .attr("dy", "0.35em")
+                    .attr("font-size", "11px")
+                    .attr("fill", "var(--text-light)")
+                    .text(d => pct(d.win_prob));
+
+                // X axis
+                svg.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", `translate(0,${H - mg.bottom})`)
+                    .call(d3.axisBottom(x).ticks(5).tickFormat(d => pct(d)));
+            }
+
+            // --- Winning time density ---
+            function drawWinningTimeDensity(containerId, quantiles) {
+                const el = d3.select("#" + containerId);
+                el.html("");
+                const W = 500, H = 120, mg = {top: 10, right: 20, bottom: 35, left: 20};
+
+                const svg = el.append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("width", "100%");
+
+                const q = quantiles;
+                const min = q.q05, max = q.q95;
+                const x = d3.scaleLinear().domain([min * 0.9, max * 1.1]).range([mg.left, W - mg.right]);
+
+                // Draw line for range
+                const cy = 35;
+                svg.append("line")
+                    .attr("x1", x(q.q05)).attr("x2", x(q.q95))
+                    .attr("y1", cy).attr("y2", cy)
+                    .attr("stroke", "var(--blue)").attr("stroke-width", 2);
+
+                // Thick bar for IQR
+                if (q.q25 !== undefined) {
+                    svg.append("rect")
+                        .attr("x", x(q.q25)).attr("width", x(q.q75) - x(q.q25))
+                        .attr("y", cy - 10).attr("height", 20)
+                        .attr("fill", "var(--blue)").attr("opacity", 0.3).attr("rx", 3);
+                }
+
+                // Median dot
+                svg.append("circle")
+                    .attr("cx", x(q.q50)).attr("cy", cy).attr("r", 6)
+                    .attr("fill", "var(--blue)");
+
+                // Labels
+                const labels = [
+                    {v: q.q05, label: "5%"},
+                    {v: q.q50, label: "Median"},
+                    {v: q.q95, label: "95%"},
+                ];
+                labels.forEach(d => {
+                    svg.append("text")
+                        .attr("x", x(d.v)).attr("y", cy + 28)
+                        .attr("text-anchor", "middle").attr("font-size", "11px")
+                        .attr("fill", "var(--text-light)")
+                        .text(secToTime(d.v));
+                    svg.append("text")
+                        .attr("x", x(d.v)).attr("y", cy + 40)
+                        .attr("text-anchor", "middle").attr("font-size", "10px")
+                        .attr("fill", "var(--text-light)")
+                        .text(d.label);
+                });
+
+                // X axis
+                svg.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", `translate(0,${H - mg.bottom})`)
+                    .call(d3.axisBottom(x).ticks(6).tickFormat(d => secToTime(d)));
+            }
+
+            // ========== SOLO ==========
+            // Win chart
+            drawWinChart("solo-win-chart", DATA.solo.finals, d => d.name, 30);
+
+            // Winning time
+            drawWinningTimeDensity("solo-winning-time", DATA.solo.winning_time_quantiles);
+
+            // Finals table
+            const soloFinalDiv = document.getElementById("solo-final-tables");
+            function buildSoloFinalTable(data, id) {
+                const div = document.createElement("div");
+                div.className = "tab-content" + (id.endsWith("-all") ? " active" : "");
+                div.id = id;
+                const table = document.createElement("table");
+                table.innerHTML = `<thead><tr>
+                    <th data-sort="rank" data-type="num"># <span class="sort-arrow"></span></th>
+                    <th data-sort="name" data-type="str">Name <span class="sort-arrow"></span></th>
+                    <th>Heat</th>
+                    <th data-sort="nobs" data-type="num" title="Solo observations in model">N <span class="sort-arrow"></span></th>
+                    <th data-sort="adv" data-type="num">Advance <span class="sort-arrow"></span></th>
+                    <th data-sort="win" data-type="num">Win <span class="sort-arrow"></span></th>
+                    <th data-sort="top3" data-type="num">Top 3 <span class="sort-arrow"></span></th>
+                    <th data-sort="top10" data-type="num">Top 10 <span class="sort-arrow"></span></th>
+                    <th data-sort="medrank" data-type="num">Med. Rank <span class="sort-arrow"></span></th>
+                </tr></thead><tbody></tbody>`;
+                const tbody = table.querySelector("tbody");
+                data.forEach((d, i) => {
+                    const tr = document.createElement("tr");
+                    tr.dataset.rank = i + 1;
+                    tr.dataset.name = d.name;
+                    tr.dataset.nobs = d.n_obs || 0;
+                    tr.dataset.adv = d.advance_prob;
+                    tr.dataset.win = d.win_prob;
+                    tr.dataset.top3 = d.top3_prob;
+                    tr.dataset.top10 = d.top10_prob;
+                    tr.dataset.medrank = d.median_final_rank;
+                    const cs = d.is_cold_start ? ' class="cold-start"' : '';
+                    const nobs = d.n_obs || 0;
+                    const nobsHtml = nobs === 0 ? '<span style="color:var(--text-light)">-</span>' : nobs;
+                    tr.innerHTML = `
+                        <td class="num">${i + 1}</td>
+                        <td${cs}>${d.name}</td>
+                        <td>${heatBadge(d.heat)}</td>
+                        <td class="num">${nobsHtml}</td>
+                        <td class="num ${pctClass(d.advance_prob)}">${pct(d.advance_prob)}</td>
+                        <td class="num">${pct(d.win_prob)}</td>
+                        <td class="num">${pct(d.top3_prob)}</td>
+                        <td class="num">${pct(d.top10_prob)}</td>
+                        <td class="num">${d.median_final_rank}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                div.appendChild(table);
+                soloFinalDiv.appendChild(div);
+                makeSortable(table);
+                return table;
+            }
+            buildSoloFinalTable(DATA.solo.finals, "solo-all");
+            const knownFinals = DATA.solo.finals.filter(d => !d.is_cold_start);
+            // Re-rank known finals by win_prob
+            knownFinals.sort((a, b) => b.win_prob - a.win_prob);
+            buildSoloFinalTable(knownFinals, "solo-known");
+            setupTabs("solo-final-tabs", soloFinalDiv);
+
+            // Search
+            document.getElementById("solo-final-search").addEventListener("input", function() {
+                const q = this.value.toLowerCase();
+                soloFinalDiv.querySelectorAll("tbody tr").forEach(tr => {
+                    tr.style.display = (tr.dataset.name || "").toLowerCase().includes(q) ? "" : "none";
+                });
+            });
+
+            // Heat tables
+            const soloHeatDiv = document.getElementById("solo-heat-tables");
+            function buildSoloHeatTable(data, heatId) {
+                const div = document.createElement("div");
+                div.className = "tab-content" + (heatId === "A" ? " active" : "");
+                div.id = "heat-" + heatId;
+                const table = document.createElement("table");
+                table.innerHTML = `<thead><tr>
+                    <th data-sort="rank" data-type="num"># <span class="sort-arrow"></span></th>
+                    <th data-sort="name" data-type="str">Name <span class="sort-arrow"></span></th>
+                    <th data-sort="nobs" data-type="num" title="Solo observations in model">N <span class="sort-arrow"></span></th>
+                    <th data-sort="adv" data-type="num">Advance <span class="sort-arrow"></span></th>
+                    <th data-sort="dnf" data-type="num">DNF <span class="sort-arrow"></span></th>
+                    <th data-sort="medrank" data-type="num">Med. Rank <span class="sort-arrow"></span></th>
+                </tr></thead><tbody></tbody>`;
+                const tbody = table.querySelector("tbody");
+                data.forEach((d, i) => {
+                    const tr = document.createElement("tr");
+                    tr.dataset.rank = i + 1;
+                    tr.dataset.name = d.name;
+                    tr.dataset.nobs = d.n_obs || 0;
+                    tr.dataset.adv = d.advance_prob;
+                    tr.dataset.dnf = d.dnf_prob;
+                    tr.dataset.medrank = d.median_prelim_rank;
+                    const cs = d.is_cold_start ? ' class="cold-start"' : '';
+                    const nobs = d.n_obs || 0;
+                    const nobsHtml = nobs === 0 ? '<span style="color:var(--text-light)">-</span>' : nobs;
+                    tr.innerHTML = `
+                        <td class="num">${i + 1}</td>
+                        <td${cs}>${d.name}</td>
+                        <td class="num">${nobsHtml}</td>
+                        <td class="num ${pctClass(d.advance_prob)}">${pct(d.advance_prob)}</td>
+                        <td class="num">${pct(d.dnf_prob)}</td>
+                        <td class="num">${d.median_prelim_rank}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                div.appendChild(table);
+                soloHeatDiv.appendChild(div);
+                makeSortable(table);
+            }
+            for (const [heatId, data] of Object.entries(DATA.solo.heats)) {
+                buildSoloHeatTable(data, heatId);
+            }
+            setupTabs("solo-heat-tabs", soloHeatDiv);
+
+            document.getElementById("solo-heat-search").addEventListener("input", function() {
+                const q = this.value.toLowerCase();
+                soloHeatDiv.querySelectorAll("tbody tr").forEach(tr => {
+                    tr.style.display = (tr.dataset.name || "").toLowerCase().includes(q) ? "" : "none";
+                });
+            });
+
+            // ========== PAIRS ==========
+            function pairName(d) {
+                const m = d.members || [];
+                return m.join(" & ");
+            }
+
+            drawWinChart("pairs-win-chart", DATA.pairs.finals, pairName, 30);
+
+            const pairsFinalDiv = document.getElementById("pairs-final-tables");
+            function buildPairsFinalTable(data, id) {
+                const div = document.createElement("div");
+                div.className = "tab-content" + (id.endsWith("-all") ? " active" : "");
+                div.id = id;
+                const table = document.createElement("table");
+                table.innerHTML = `<thead><tr>
+                    <th data-sort="rank" data-type="num"># <span class="sort-arrow"></span></th>
+                    <th data-sort="name" data-type="str">Pair <span class="sort-arrow"></span></th>
+                    <th>Heat</th>
+                    <th data-sort="adv" data-type="num">Advance <span class="sort-arrow"></span></th>
+                    <th data-sort="win" data-type="num">Win <span class="sort-arrow"></span></th>
+                    <th data-sort="top3" data-type="num">Top 3 <span class="sort-arrow"></span></th>
+                    <th data-sort="top10" data-type="num">Top 10 <span class="sort-arrow"></span></th>
+                </tr></thead><tbody></tbody>`;
+                const tbody = table.querySelector("tbody");
+                data.forEach((d, i) => {
+                    const tr = document.createElement("tr");
+                    const name = pairName(d);
+                    const anyCS = (d.is_cold_start || []).some(v => v);
+                    tr.dataset.rank = i + 1;
+                    tr.dataset.name = name;
+                    tr.dataset.adv = d.advance_prob;
+                    tr.dataset.win = d.win_prob;
+                    tr.dataset.top3 = d.top3_prob;
+                    tr.dataset.top10 = d.top10_prob;
+                    const cs = anyCS ? ' class="cold-start"' : '';
+                    tr.innerHTML = `
+                        <td class="num">${i + 1}</td>
+                        <td${cs}>${name}</td>
+                        <td>${heatBadge(d.heat)}</td>
+                        <td class="num ${pctClass(d.advance_prob)}">${pct(d.advance_prob)}</td>
+                        <td class="num">${pct(d.win_prob)}</td>
+                        <td class="num">${pct(d.top3_prob)}</td>
+                        <td class="num">${pct(d.top10_prob)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                div.appendChild(table);
+                pairsFinalDiv.appendChild(div);
+                makeSortable(table);
+            }
+            buildPairsFinalTable(DATA.pairs.finals, "pairs-all");
+            const knownPairs = DATA.pairs.finals.filter(d => !(d.is_cold_start || []).some(v => v));
+            knownPairs.sort((a, b) => b.win_prob - a.win_prob);
+            buildPairsFinalTable(knownPairs, "pairs-known");
+            setupTabs("pairs-final-tabs", pairsFinalDiv);
+
+            document.getElementById("pairs-final-search").addEventListener("input", function() {
+                const q = this.value.toLowerCase();
+                pairsFinalDiv.querySelectorAll("tbody tr").forEach(tr => {
+                    tr.style.display = (tr.dataset.name || "").toLowerCase().includes(q) ? "" : "none";
+                });
+            });
+
+            // Pairs heats
+            const pairsHeatDiv = document.getElementById("pairs-heat-tables");
+            function buildPairsHeatTable(data, heatId) {
+                const div = document.createElement("div");
+                div.className = "tab-content" + (heatId === "A" ? " active" : "");
+                div.id = "pairs-heat-" + heatId;
+                const table = document.createElement("table");
+                table.innerHTML = `<thead><tr>
+                    <th data-sort="rank" data-type="num"># <span class="sort-arrow"></span></th>
+                    <th data-sort="name" data-type="str">Pair <span class="sort-arrow"></span></th>
+                    <th data-sort="adv" data-type="num">Advance <span class="sort-arrow"></span></th>
+                    <th data-sort="dnf" data-type="num">DNF <span class="sort-arrow"></span></th>
+                    <th data-sort="medrank" data-type="num">Med. Rank <span class="sort-arrow"></span></th>
+                </tr></thead><tbody></tbody>`;
+                const tbody = table.querySelector("tbody");
+                data.forEach((d, i) => {
+                    const tr = document.createElement("tr");
+                    const name = d.members.join(" & ");
+                    const anyCS = (d.is_cold_start || []).some(v => v);
+                    tr.dataset.rank = i + 1;
+                    tr.dataset.name = name;
+                    tr.dataset.adv = d.advance_prob;
+                    tr.dataset.dnf = d.dnf_prob;
+                    tr.dataset.medrank = d.median_prelim_rank;
+                    const cs = anyCS ? ' class="cold-start"' : '';
+                    tr.innerHTML = `
+                        <td class="num">${i + 1}</td>
+                        <td${cs}>${name}</td>
+                        <td class="num ${pctClass(d.advance_prob)}">${pct(d.advance_prob)}</td>
+                        <td class="num">${pct(d.dnf_prob)}</td>
+                        <td class="num">${d.median_prelim_rank}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                div.appendChild(table);
+                pairsHeatDiv.appendChild(div);
+                makeSortable(table);
+            }
+            for (const [heatId, data] of Object.entries(DATA.pairs.heats)) {
+                buildPairsHeatTable(data, heatId);
+            }
+            setupTabs("pairs-heat-tabs", pairsHeatDiv);
+
+            document.getElementById("pairs-heat-search").addEventListener("input", function() {
+                const q = this.value.toLowerCase();
+                pairsHeatDiv.querySelectorAll("tbody tr").forEach(tr => {
+                    tr.style.display = (tr.dataset.name || "").toLowerCase().includes(q) ? "" : "none";
+                });
+            });
+
+            // ========== TEAMS ==========
+            function teamName(d) {
+                return d.team_name || "Team";
+            }
+            function teamMembers(d) {
+                return (d.members || []).map(m => m.name || m).join(", ");
+            }
+
+            drawWinChart("teams-win-chart", DATA.teams.finals, teamName, 30);
+
+            const teamsFinalDiv = document.getElementById("teams-final-tables");
+            function buildTeamsFinalTable(data, id) {
+                const div = document.createElement("div");
+                div.className = "tab-content" + (id.endsWith("-all") ? " active" : "");
+                div.id = id;
+                const table = document.createElement("table");
+                table.innerHTML = `<thead><tr>
+                    <th data-sort="rank" data-type="num"># <span class="sort-arrow"></span></th>
+                    <th data-sort="name" data-type="str">Team <span class="sort-arrow"></span></th>
+                    <th>Members</th>
+                    <th>Heat</th>
+                    <th data-sort="adv" data-type="num">Advance <span class="sort-arrow"></span></th>
+                    <th data-sort="win" data-type="num">Win <span class="sort-arrow"></span></th>
+                    <th data-sort="top3" data-type="num">Top 3 <span class="sort-arrow"></span></th>
+                    <th data-sort="top10" data-type="num">Top 10 <span class="sort-arrow"></span></th>
+                </tr></thead><tbody></tbody>`;
+                const tbody = table.querySelector("tbody");
+                data.forEach((d, i) => {
+                    const tr = document.createElement("tr");
+                    const name = teamName(d);
+                    const members = d.members || [];
+                    const anyCS = members.some(m => (m.is_cold_start === true));
+                    tr.dataset.rank = i + 1;
+                    tr.dataset.name = name + " " + teamMembers(d);
+                    tr.dataset.adv = d.advance_prob;
+                    tr.dataset.win = d.win_prob;
+                    tr.dataset.top3 = d.top3_prob;
+                    tr.dataset.top10 = d.top10_prob;
+                    const cs = anyCS ? ' class="cold-start"' : '';
+                    const memberHtml = members.map(m => {
+                        const mcs = m.is_cold_start ? '<span style="color:var(--text-light)">*</span>' : '';
+                        return (m.name || m) + mcs;
+                    }).join(", ");
+                    tr.innerHTML = `
+                        <td class="num">${i + 1}</td>
+                        <td${cs}>${name}</td>
+                        <td class="member-list">${memberHtml}</td>
+                        <td>${heatBadge(d.heat)}</td>
+                        <td class="num ${pctClass(d.advance_prob)}">${pct(d.advance_prob)}</td>
+                        <td class="num">${pct(d.win_prob)}</td>
+                        <td class="num">${pct(d.top3_prob)}</td>
+                        <td class="num">${pct(d.top10_prob)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                div.appendChild(table);
+                teamsFinalDiv.appendChild(div);
+                makeSortable(table);
+            }
+            buildTeamsFinalTable(DATA.teams.finals, "teams-all");
+            const knownTeams = DATA.teams.finals.filter(d => !(d.members || []).some(m => m.is_cold_start));
+            knownTeams.sort((a, b) => b.win_prob - a.win_prob);
+            buildTeamsFinalTable(knownTeams, "teams-known");
+            setupTabs("teams-final-tabs", teamsFinalDiv);
+
+            document.getElementById("teams-final-search").addEventListener("input", function() {
+                const q = this.value.toLowerCase();
+                teamsFinalDiv.querySelectorAll("tbody tr").forEach(tr => {
+                    tr.style.display = (tr.dataset.name || "").toLowerCase().includes(q) ? "" : "none";
+                });
+            });
+
+            // Teams heats
+            const teamsHeatDiv = document.getElementById("teams-heat-tables");
+            function buildTeamsHeatTable(data, heatId) {
+                const div = document.createElement("div");
+                div.className = "tab-content" + (heatId === "A" ? " active" : "");
+                div.id = "teams-heat-" + heatId;
+                const table = document.createElement("table");
+                table.innerHTML = `<thead><tr>
+                    <th data-sort="rank" data-type="num"># <span class="sort-arrow"></span></th>
+                    <th data-sort="name" data-type="str">Team <span class="sort-arrow"></span></th>
+                    <th>Members</th>
+                    <th data-sort="adv" data-type="num">Advance <span class="sort-arrow"></span></th>
+                    <th data-sort="dnf" data-type="num">DNF <span class="sort-arrow"></span></th>
+                    <th data-sort="medrank" data-type="num">Med. Rank <span class="sort-arrow"></span></th>
+                </tr></thead><tbody></tbody>`;
+                const tbody = table.querySelector("tbody");
+                data.forEach((d, i) => {
+                    const tr = document.createElement("tr");
+                    const name = d.team_name;
+                    const members = d.members || [];
+                    const anyCS = members.some(m => m.is_cold_start);
+                    tr.dataset.rank = i + 1;
+                    tr.dataset.name = name + " " + members.map(m => m.name).join(" ");
+                    tr.dataset.adv = d.advance_prob;
+                    tr.dataset.dnf = d.dnf_prob;
+                    tr.dataset.medrank = d.median_prelim_rank;
+                    const cs = anyCS ? ' class="cold-start"' : '';
+                    const memberHtml = members.map(m => {
+                        const mcs = m.is_cold_start ? '<span style="color:var(--text-light)">*</span>' : '';
+                        return m.name + mcs;
+                    }).join(", ");
+                    tr.innerHTML = `
+                        <td class="num">${i + 1}</td>
+                        <td${cs}>${name}</td>
+                        <td class="member-list">${memberHtml}</td>
+                        <td class="num ${pctClass(d.advance_prob)}">${pct(d.advance_prob)}</td>
+                        <td class="num">${pct(d.dnf_prob)}</td>
+                        <td class="num">${d.median_prelim_rank}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                div.appendChild(table);
+                teamsHeatDiv.appendChild(div);
+                makeSortable(table);
+            }
+            for (const [heatId, data] of Object.entries(DATA.teams.heats)) {
+                buildTeamsHeatTable(data, heatId);
+            }
+            setupTabs("teams-heat-tabs", teamsHeatDiv);
+
+            document.getElementById("teams-heat-search").addEventListener("input", function() {
+                const q = this.value.toLowerCase();
+                teamsHeatDiv.querySelectorAll("tbody tr").forEach(tr => {
+                    tr.style.display = (tr.dataset.name || "").toLowerCase().includes(q) ? "" : "none";
+                });
+            });
+
+        })();
+        </script>
+    </body>
+</html>

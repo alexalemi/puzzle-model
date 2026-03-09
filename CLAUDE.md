@@ -20,11 +20,13 @@ scraper/              # Data collection
   combine.py          # Merges all 4 sources into combined_results.csv
 
 scripts/              # Analysis & utility scripts
-  refit_all.py        # Refit all models, regenerate explorer_data.json
+  refit_all.py        # Refit solo models (1t, 2c, 2r), regenerate explorer_data.json
+  refit_team.py       # Refit joint solo+team model, regenerate explorer_team_data.json
   slim_data.py        # Compress explorer_data.json (round floats, subsample)
   suggest_player_links.py  # Find candidate MSP→SP player matches for review
   compute_waic.py     # WAIC computation for model comparison
   diagnostic_sources.py    # Check residuals by data source
+  analyze_noise.py    # Residual analysis, outputs noise_data.json for noise.html
 
 notebooks/            # Marimo notebooks
   01_eda.py           # Exploratory data analysis
