@@ -28,6 +28,14 @@ PLAYER_LINKS_PATH = PROJECT_ROOT / "data" / "mappings" / "player_links.csv"
 OUTPUT_PATH = PROJECT_ROOT / "data" / "processed" / "combined_results.csv"
 
 
+# Manual time corrections for known PDF typos.
+# Maps (event_id, competitor_name) -> corrected time_seconds.
+SP_TIME_CORRECTIONS: dict[tuple[str, str], float] = {
+    # PDF has 0:00:43 but P6 score (4.12) implies 1:00:43 (hour digit dropped)
+    ("ny2025", "Green, Jodi"): 3643.0,
+}
+
+
 # Manual overrides for SP puzzle names -> canonical MSP names.
 # Used when the naming difference can't be resolved by automatic normalization
 # (case, unicode apostrophes, "(exclusive)" suffix stripping).
@@ -334,6 +342,18 @@ def load_myspeedpuzzling(player_links: dict[str, str] | None = None) -> pd.DataF
     puzzles = pd.read_csv(MSP_PUZZLES_PATH)
     times = pd.read_csv(MSP_TIMES_PATH)
 
+    # Deduplicate raw files (scraper re-runs can append duplicates)
+    n_puz_before = len(puzzles)
+    puzzles = puzzles.drop_duplicates(subset=["puzzle_id"])
+    n_puz_dupes = n_puz_before - len(puzzles)
+
+    n_times_before = len(times)
+    times = times.drop_duplicates()
+    n_times_dupes = n_times_before - len(times)
+
+    if n_puz_dupes or n_times_dupes:
+        print(f"  MSP dedup: dropped {n_puz_dupes} duplicate puzzles, {n_times_dupes} duplicate times")
+
     # Join to get puzzle metadata
     df = times.merge(
         puzzles[["puzzle_id", "name", "manufacturer", "pieces_count"]],
@@ -395,6 +415,20 @@ def combine() -> pd.DataFrame:
     # speedpuzzling.com
     if SP_PATH.exists():
         sp = pd.read_csv(SP_PATH)
+        # Deduplicate (pyramid tournament PDFs can produce identical rows)
+        n_before = len(sp)
+        sp = sp.drop_duplicates()
+        n_dupes = n_before - len(sp)
+        if n_dupes:
+            print(f"  SP dedup: dropped {n_dupes} duplicate rows")
+        # Apply manual time corrections for known PDF typos
+        for (eid, name), corrected_time in SP_TIME_CORRECTIONS.items():
+            mask = (sp["event_id"] == eid) & (sp["competitor_name"] == name)
+            n_fixed = mask.sum()
+            if n_fixed:
+                old_time = sp.loc[mask, "time_seconds"].iloc[0]
+                sp.loc[mask, "time_seconds"] = corrected_time
+                print(f"  SP time fix: {name} @ {eid}: {old_time}s -> {corrected_time}s")
         sp["first_attempt"] = True  # competitions are always first-attempt
         # Normalize SP divisions to match MSP naming
         sp["division"] = sp["division"].replace({"pair": "duo", "team": "group"})
