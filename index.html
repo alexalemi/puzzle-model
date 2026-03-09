@@ -222,18 +222,6 @@
                 border-radius: 2px;
                 opacity: 0.15;
             }
-            .belt-dot {
-                display: inline-block;
-                width: 10px;
-                height: 10px;
-                border-radius: 50%;
-                margin-right: 5px;
-                vertical-align: middle;
-                border: 1px solid rgba(0,0,0,0.12);
-            }
-            #belt-boundary-table td { padding: 4px 10px; }
-            #belt-boundary-table th { padding: 4px 10px; }
-
             details.section-collapse {
                 border: none;
                 border-radius: 0;
@@ -663,13 +651,6 @@
       <p class="footnote">Rating projected to <span class="ranking-year-label">2026</span>. Wilson bound uses projected &alpha; + 3&sigma;.</p>
     </div>
   </details>
-  <details>
-    <summary>Belt system</summary>
-    <div class="details-content">
-      <p>Puzzlers with at least 10 observations are awarded a belt based on their Wilson score. Boundaries are the deciles among all qualified puzzlers.</p>
-      <table id="belt-boundary-table"></table>
-    </div>
-  </details>
   <details open>
     <summary>Hardest puzzles</summary>
     <div class="details-content">
@@ -952,56 +933,13 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                 const fmtPct = d3.format(".1%");
                 const fmtInt = d3.format(",");
 
-                // Belt system: 10 belts based on Wilson score deciles among n>=10 puzzlers
-                const BELT_DEFS = [
-                    { name: "Red",    color: "#c44e52" },
-                    { name: "Orange", color: "#dd8452" },
-                    { name: "Yellow", color: "#e8c838" },
-                    { name: "Green",  color: "#55a868" },
-                    { name: "Teal",   color: "#2aa198" },
-                    { name: "Blue",   color: "#4a7fb5" },
-                    { name: "Purple", color: "#8172b2" },
-                    { name: "Black",  color: "#333" },
-                    { name: "Silver", color: "#b0b0b0" },
-                    { name: "Gold",   color: "#d4a04a" },
-                ];
                 function wilsonScore(d) {
                     return d.elo_wilson != null ? d.elo_wilson
                         : Math.round((DATA.stats.elo_center || 1500) - (d.alpha + 3 * d.std));
                 }
-                const qualifiedWilson = DATA.puzzlers
-                    .filter(d => d.n >= 10)
-                    .map(wilsonScore);
-                qualifiedWilson.sort((a, b) => a - b);
-                const beltThresholds = [];
-                for (let i = 1; i <= 9; i++) {
-                    beltThresholds.push(qualifiedWilson[Math.floor(qualifiedWilson.length * i / 10)]);
-                }
-                const beltCounts = new Array(10).fill(0);
-                qualifiedWilson.forEach(w => {
-                    let b = 9;
-                    for (let i = 0; i < 9; i++) {
-                        if (w < beltThresholds[i]) { b = i; break; }
-                    }
-                    beltCounts[b]++;
-                });
-                function getBelt(d) {
-                    if (d.n < 10) return null;
-                    const w = wilsonScore(d);
-                    for (let i = 0; i < 9; i++) {
-                        if (w < beltThresholds[i]) return BELT_DEFS[i];
-                    }
-                    return BELT_DEFS[9];
-                }
 
-                function appendNameCell(tr, d, belt) {
+                function appendNameCell(tr, d) {
                     const td = tr.append("td");
-                    if (belt) {
-                        td.append("span")
-                            .attr("class", "belt-dot")
-                            .style("background", belt.color)
-                            .attr("title", belt.name + " belt");
-                    }
                     if (d.msp_url) {
                         td.append("a")
                             .attr("href", d.msp_url)
@@ -1864,7 +1802,7 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                         tr.append("td")
                             .attr("class", "num")
                             .text(DATA.puzzlers.indexOf(d) + 1);
-                        appendNameCell(tr, d, getBelt(d));
+                        appendNameCell(tr, d);
                         const td = tr
                             .append("td")
                             .attr("class", "num bar-cell");
@@ -2427,7 +2365,7 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                         tr.append("td")
                             .attr("class", "num")
                             .text(i + 1);
-                        appendNameCell(tr, d, getBelt(d));
+                        appendNameCell(tr, d);
                         tr.append("td").attr("class", "num").text(fmtInt(elo));
                         tr.append("td")
                             .attr("class", "num")
@@ -3948,36 +3886,6 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                 })();
 
                 renderPuzzlerTable();
-                // Render belt boundary table
-                (function renderBeltTable() {
-                    const bt = d3.select("#belt-boundary-table");
-                    const thead = bt.append("thead").append("tr");
-                    ["", "Belt", "Wilson range", "Count"].forEach(h =>
-                        thead.append("th").text(h).attr("class", h ? "num" : null));
-                    thead.select("th:nth-child(2)").attr("class", null);
-                    const tbody = bt.append("tbody");
-                    [...BELT_DEFS].reverse().forEach((belt, ri) => {
-                        const i = 9 - ri;
-                        const lo = i === 0 ? null : beltThresholds[i - 1];
-                        const hi = i === 9 ? null : beltThresholds[i];
-                        const count = beltCounts[i];
-                        const range = i === 9 ? "≥ " + fmtInt(lo)
-                            : i === 0 ? "≤ " + fmtInt(hi)
-                            : fmtInt(lo) + " – " + fmtInt(hi);
-                        const tr = tbody.append("tr");
-                        tr.append("td").append("span")
-                            .attr("class", "belt-dot")
-                            .style("background", belt.color);
-                        tr.append("td").text(belt.name).style("font-weight", "600");
-                        tr.append("td").attr("class", "num").text(range);
-                        tr.append("td").attr("class", "num").text(count);
-                    });
-                    bt.append("tfoot").append("tr").append("td")
-                        .attr("colspan", 4)
-                        .style("color", "var(--text-light)")
-                        .style("font-size", "12px")
-                        .text(qualifiedWilson.length + " puzzlers with ≥ 10 observations qualify.");
-                })();
                 renderPuzzleTable();
                 renderEasyPuzzleTable();
             }
