@@ -592,8 +592,8 @@ def main():
             "n": int(obs_counts_all.get(i, 0)),
             "n_solo": int(obs_counts_solo_all.get(i, 0)),
             "n_team": int(obs_counts_team_all.get(i, 0)),
-            "yr_min": int(year_range.loc[i, "min"]) if i in year_range.index else 0,
-            "yr_max": int(year_range.loc[i, "max"]) if i in year_range.index else 0,
+            "yr_min": int(year_range.loc[i, "min"]) if i in year_range.index and pd.notna(year_range.loc[i, "min"]) else 0,
+            "yr_max": int(year_range.loc[i, "max"]) if i in year_range.index and pd.notna(year_range.loc[i, "max"]) else 0,
         }
         if name in msp_player_url:
             entry["msp_url"] = msp_player_url[name]
@@ -627,9 +627,9 @@ def main():
     for i in np.argsort(-beta_lower):
         raw_name = str(inv_puzzle[i])
         display_name = raw_name.rsplit("_", 1)[0] if "_" in raw_name else raw_name
-        p_elo = ELO_CENTER + ELO_SCALE * (mu_fixed + float(beta_mean[i]))
-        p_elo_hard = ELO_CENTER + ELO_SCALE * (mu_fixed + float(beta_lower[i]))
-        p_elo_easy = ELO_CENTER + ELO_SCALE * (mu_fixed + float(beta_upper[i]))
+        p_elo = ELO_CENTER + ELO_SCALE * float(beta_mean[i])
+        p_elo_hard = ELO_CENTER + ELO_SCALE * float(beta_lower[i])
+        p_elo_easy = ELO_CENTER + ELO_SCALE * float(beta_upper[i])
         entry = {
             "name": display_name,
             "puzzle_id": inv_puzzle[i],
@@ -687,7 +687,7 @@ def main():
     }
 
     # Puzzle difficulty distribution
-    puzzle_mB = ELO_CENTER + beta_mean + mu_fixed
+    puzzle_mB = ELO_CENTER + beta_mean
     beta_hist_counts, beta_hist_edges = np.histogram(puzzle_mB, bins=50)
     puzzle_beta_dist = {
         "counts": beta_hist_counts.tolist(),

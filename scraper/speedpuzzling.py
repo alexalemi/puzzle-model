@@ -90,6 +90,8 @@ def parse_pdf_filename(filename: str) -> dict:
                 info["round"] = round_map.get(suffix)
             else:
                 info["division"] = suffix_map.get(suffix)
+        if "relay" in name:
+            info["division"] = "relay"
         return info
 
     # Pattern 2: state championship (ca2024, tx2023, etc.)
@@ -104,6 +106,8 @@ def parse_pdf_filename(filename: str) -> dict:
             info["division"] = "pair"
         elif "team" in name:
             info["division"] = "team"
+        if "relay" in name:
+            info["division"] = "relay"
         return info
 
     # Pattern 3: older format (speed-puzzling-NNN-category)
@@ -116,6 +120,8 @@ def parse_pdf_filename(filename: str) -> dict:
             info["division"] = "pair"
         elif "team" in name or "quad" in name:
             info["division"] = "team"
+        if "relay" in name:
+            info["division"] = "relay"
         return info
 
     # Pattern 4: special events (cruise, ssmt, etc.)
@@ -128,10 +134,14 @@ def parse_pdf_filename(filename: str) -> dict:
                 info["division"] = "pair"
             elif "team" in name:
                 info["division"] = "team"
+            if "relay" in name:
+                info["division"] = "relay"
             return info
 
     # Fallback: use filename as event_id
     info["event_id"] = name.split("_")[0].split("-")[0]
+    if "relay" in name:
+        info["division"] = "relay"
     return info
 
 
@@ -335,7 +345,113 @@ def _extract_puzzle_title(next_line: str) -> Optional[str]:
     return next_line
 
 
-def extract_table_from_text(pdf_path: Path) -> Optional[PDFExtractResult]:
+def _extract_team_results(lines: list[str]) -> list[dict]:
+    """Extract team/pair results using rank-boundary grouping.
+
+    For team/pair PDFs, individual members' stats lines are interspersed
+    with rank lines.  This groups members to their team by finding midpoints
+    between consecutive rank lines and assigning each member line to the
+    nearest rank line.
+
+    Returns list of dicts: {rank, name, time_str, location, team_members}
+    """
+    belt_colors = r"(?:Black|Blue|Green|Red|White|Yellow|Orange|Purple|Pink|Gray|Silver|Gold|Brown|future)"
+    name_pattern = rf"(?:{belt_colors}\s+)?([{_L}][{_L}'\-\s]+,\s*[{_L}][{_L}'\-\s\.]*)"
+    fallback_name_pattern = rf"([{_L}][{_L}'\-]+,\s*[{_L}][{_L}'\-\.]+)"
+
+    rank_lines = []   # (line_idx, rank, time_str, location)
+    member_lines = []  # (line_idx, name)
+
+    for i, line in enumerate(lines):
+        line = line.strip()
+        if not line:
+            continue
+
+        # Skip header / metadata lines
+        if re.match(r"^(Rank\s|%ile\s|This Contest|Sponsored|https?://|\*P6)", line, re.IGNORECASE):
+            continue
+        if "Last, First" in line:
+            continue
+
+        # RANK line: starts with rank number + space, contains time or DNF/placed
+        if re.match(r"^\d+\s", line):
+            time_match = re.search(r"(\d+:\d{2}:\d{2})", line)
+            is_dnf = bool(re.search(r"\bDNF\b", line, re.IGNORECASE))
+            is_placed = bool(re.search(r"\bplaced\b", line, re.IGNORECASE))
+            if time_match or is_dnf or is_placed:
+                rank_match = re.match(r"^(\d+)", line)
+                rank = int(rank_match.group(1))
+                if time_match:
+                    time_str = time_match.group(1)
+                elif is_dnf:
+                    time_str = "DNF"
+                else:
+                    time_str = "placed"
+                # Extract location
+                location = None
+                if time_match:
+                    post_time = line[time_match.end():].strip()
+                    loc_match = re.search(r"[\d\.]+\s+([A-Za-z][A-Za-z\s]+?)(?:\s+\d+)?$", post_time)
+                    location = loc_match.group(1).strip() if loc_match else None
+                else:
+                    post_match = re.search(r"(?:DNF|placed)\s+", line, re.IGNORECASE)
+                    if post_match:
+                        post_time = line[post_match.end():].strip()
+                        loc_match = re.search(r"[\d\.]+\s+([A-Za-z][A-Za-z\s]+?)(?:\s+\d+)?$", post_time)
+                        location = loc_match.group(1).strip() if loc_match else None
+                rank_lines.append((i, rank, time_str, location))
+                continue
+
+        # MEMBER line: contains a "Last, First" name pattern
+        name_match = re.search(name_pattern, line)
+        if name_match:
+            member_lines.append((i, name_match.group(1).strip()))
+            continue
+
+        # Fallback: simpler name pattern
+        fallback_match = re.search(fallback_name_pattern, line)
+        if fallback_match:
+            member_lines.append((i, fallback_match.group(1).strip()))
+
+    if not rank_lines:
+        return []
+
+    # Compute midpoints between consecutive rank lines
+    midpoints = []
+    for j in range(len(rank_lines) - 1):
+        mid = (rank_lines[j][0] + rank_lines[j + 1][0]) / 2.0
+        midpoints.append(mid)
+
+    # Assign each member to the nearest rank line using midpoint boundaries
+    groups: dict[int, list[str]] = {j: [] for j in range(len(rank_lines))}
+    for line_idx, name in member_lines:
+        group_idx = len(rank_lines) - 1  # default: last group
+        for j, mid in enumerate(midpoints):
+            if line_idx < mid:
+                group_idx = j
+                break
+        groups[group_idx].append(name)
+
+    # Build result rows
+    results = []
+    for j, (_, rank, time_str, location) in enumerate(rank_lines):
+        members = groups[j]
+        if not members:
+            continue
+        # Semicolon-delimited "Last, First:" (empty player_id for SP data)
+        team_members = ";".join(f"{m}:" for m in members)
+        results.append({
+            "rank": rank,
+            "name": members[0],
+            "time_str": time_str,
+            "location": location,
+            "team_members": team_members,
+        })
+
+    return results
+
+
+def extract_table_from_text(pdf_path: Path, division_hint: str | None = None) -> Optional[PDFExtractResult]:
     """
     Extract data from PDF using raw text parsing.
 
@@ -456,63 +572,69 @@ def extract_table_from_text(pdf_path: Path) -> Optional[PDFExtractResult]:
                         if puzzle_name:
                             break
 
-            # Parse data lines
-            # Pattern matches: rank numbers... [belt color] Name, First time...
-            # Example: "1 100 1000 159,134 5 Black Kautz, Lauren 0:41:11 12.14 Minnesota 1"
-            results = []
-            belt_colors = r"(?:Black|Blue|Green|Red|White|Yellow|Orange|Purple|Pink|Gray|Silver|Gold|Brown|future)"
+            # Compute effective division (header text takes priority, then filename hint)
+            effective_division = division or division_hint
 
-            for line in lines:
-                line = line.strip()
-                if not line:
-                    continue
+            if effective_division in ("pair", "duo", "team", "group"):
+                results = _extract_team_results(lines)
+            else:
+                # Parse solo data lines
+                # Pattern: rank numbers... [belt color] Name, First time...
+                # Example: "1 100 1000 159,134 5 Black Kautz, Lauren 0:41:11 12.14 Minnesota 1"
+                results = []
+                belt_colors = r"(?:Black|Blue|Green|Red|White|Yellow|Orange|Purple|Pink|Gray|Silver|Gold|Brown|future)"
 
-                # Line must start with rank number and contain time
-                if not re.match(r"^\d+\s", line):
-                    continue
+                for line in lines:
+                    line = line.strip()
+                    if not line:
+                        continue
 
-                time_match = re.search(r"(\d+:\d{2}:\d{2})", line)
-                if not time_match:
-                    continue
+                    # Line must start with rank number and contain time
+                    if not re.match(r"^\d+\s", line):
+                        continue
 
-                # Extract rank (first number)
-                rank_match = re.match(r"^(\d+)", line)
-                if not rank_match:
-                    continue
-                rank = int(rank_match.group(1))
+                    time_match = re.search(r"(\d+:\d{2}:\d{2})", line)
+                    if not time_match:
+                        continue
 
-                time_str = time_match.group(1)
+                    # Extract rank (first number)
+                    rank_match = re.match(r"^(\d+)", line)
+                    if not rank_match:
+                        continue
+                    rank = int(rank_match.group(1))
 
-                # Get the text between rank stuff and time for name extraction
-                # This part has: numbers, belt color, name
-                pre_time = line[:time_match.start()].strip()
+                    time_str = time_match.group(1)
 
-                # Find name (Last, First pattern) - may have belt color prefix
-                name_pattern = rf"(?:{belt_colors}\s+)?([{_L}][{_L}'\-\s]+,\s*[{_L}][{_L}'\-\s\.]*)"
-                name_match = re.search(name_pattern, pre_time)
+                    # Get the text between rank stuff and time for name extraction
+                    # This part has: numbers, belt color, name
+                    pre_time = line[:time_match.start()].strip()
 
-                if name_match:
-                    name = name_match.group(1).strip()
-                else:
-                    # Fallback: look for comma-separated name anywhere
-                    fallback_match = re.search(rf"([{_L}][{_L}'\-]+,\s*[{_L}][{_L}'\-\.]+)", pre_time)
-                    if fallback_match:
-                        name = fallback_match.group(1).strip()
+                    # Find name (Last, First pattern) - may have belt color prefix
+                    name_pattern = rf"(?:{belt_colors}\s+)?([{_L}][{_L}'\-\s]+,\s*[{_L}][{_L}'\-\s\.]*)"
+                    name_match = re.search(name_pattern, pre_time)
+
+                    if name_match:
+                        name = name_match.group(1).strip()
                     else:
-                        continue  # Can't find a valid name
+                        # Fallback: look for comma-separated name anywhere
+                        fallback_match = re.search(rf"([{_L}][{_L}'\-]+,\s*[{_L}][{_L}'\-\.]+)", pre_time)
+                        if fallback_match:
+                            name = fallback_match.group(1).strip()
+                        else:
+                            continue  # Can't find a valid name
 
-                # Try to extract location from after time
-                post_time = line[time_match.end():].strip()
-                # Location is typically after the speed score: "12.14 Minnesota 1"
-                loc_match = re.search(r"[\d\.]+\s+([A-Za-z][A-Za-z\s]+?)(?:\s+\d+)?$", post_time)
-                location = loc_match.group(1).strip() if loc_match else None
+                    # Try to extract location from after time
+                    post_time = line[time_match.end():].strip()
+                    # Location is typically after the speed score: "12.14 Minnesota 1"
+                    loc_match = re.search(r"[\d\.]+\s+([A-Za-z][A-Za-z\s]+?)(?:\s+\d+)?$", post_time)
+                    location = loc_match.group(1).strip() if loc_match else None
 
-                results.append({
-                    "rank": rank,
-                    "name": name,
-                    "time_str": time_str,
-                    "location": location,
-                })
+                    results.append({
+                        "rank": rank,
+                        "name": name,
+                        "time_str": time_str,
+                        "location": location,
+                    })
 
             if not results:
                 return None
@@ -532,7 +654,7 @@ def extract_table_from_text(pdf_path: Path) -> Optional[PDFExtractResult]:
         return None
 
 
-def extract_table_from_pdf(pdf_path: Path) -> Optional[PDFExtractResult]:
+def extract_table_from_pdf(pdf_path: Path, division_hint: str | None = None) -> Optional[PDFExtractResult]:
     """
     Extract tabular data from a PDF using hybrid approach.
 
@@ -545,7 +667,7 @@ def extract_table_from_pdf(pdf_path: Path) -> Optional[PDFExtractResult]:
     - pdfplumber's table detection sometimes misses data on multi-page PDFs
     """
     # Try text extraction first (more reliable)
-    text_result = extract_table_from_text(pdf_path)
+    text_result = extract_table_from_text(pdf_path, division_hint=division_hint)
     if text_result is not None and text_result.df is not None and len(text_result.df) > 0:
         return text_result
 
@@ -706,6 +828,11 @@ def normalize_results(extract_result: PDFExtractResult, pdf_info: PDFInfo) -> pd
     if extract_result.event_number:
         event_id = f"sp_{extract_result.event_number}"
 
+    # Derive year from PDF creation date if not available from filename
+    year = pdf_info.year
+    if year is None and extract_result.event_date:
+        year = int(extract_result.event_date[:4])
+
     # Use extracted division, fall back to pdf_info, normalize values
     division = extract_result.division or pdf_info.division
     if division:
@@ -731,7 +858,7 @@ def normalize_results(extract_result: PDFExtractResult, pdf_info: PDFInfo) -> pd
             results.append({
                 "source": "speedpuzzling",
                 "event_id": event_id,
-                "year": pdf_info.year,
+                "year": year,
                 "division": division,
                 "round": pdf_info.round,
                 "rank": rank,
@@ -744,6 +871,7 @@ def normalize_results(extract_result: PDFExtractResult, pdf_info: PDFInfo) -> pd
                 "puzzle_brand": puzzle_brand,
                 "puzzle_name": puzzle_name,
                 "finished_date": extract_result.event_date,
+                "team_members": row.get("team_members"),
             })
         except Exception:
             continue
@@ -802,7 +930,7 @@ if __name__ == "__main__":
 
     for i, pdf in enumerate(pdfs):
         if pdf.local_path and pdf.local_path.exists():
-            extract_result = extract_table_from_pdf(pdf.local_path)
+            extract_result = extract_table_from_pdf(pdf.local_path, division_hint=pdf.division)
             if extract_result is not None and extract_result.df is not None and not extract_result.df.empty:
                 normalized = normalize_results(extract_result, pdf)
                 if not normalized.empty:

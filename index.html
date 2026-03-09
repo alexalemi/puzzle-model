@@ -1358,9 +1358,9 @@ log_time ~ StudentT(&nu;, mean, &sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub
                         .attr("x", -H / 2).attr("y", 14).attr("text-anchor", "middle")
                         .attr("font-size", "12px").attr("fill", "var(--text-light)")
                         .text("Alpha (Joint Model, mB)");
-                    // Alpha shift table
+                    // Alpha shift table (only puzzlers with solo data)
                     const tbody = d3.select("#alpha-body");
-                    DATA.alpha_shift.slice(0, 30).forEach(d => {
+                    DATA.alpha_shift.filter(d => d.n_solo > 0).slice(0, 30).forEach(d => {
                         const tr = tbody.append("tr");
                         tr.append("td").text(d.name);
                         tr.append("td").attr("class", "num").text(fmt1(d.alpha_solo));

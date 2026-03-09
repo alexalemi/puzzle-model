@@ -8,6 +8,11 @@ import pandas as pd
 
 MAX_TEAM_SIZE = 8
 
+# COVID-era virtual events where participants had days/weeks to finish and
+# reported total elapsed time, not focused solving time.  These are not
+# comparable to timed speed-puzzling results and heavily distort the model.
+EXCLUDED_EVENTS = {"sp_1", "sp_3", "sp_5"}
+
 # Fixed mu: 1 hour in milliBels. Using a physical constant rather than the
 # empirical mean makes parameters stable across refits and interpretable as
 # "offset from a 1-hour solve".
@@ -42,6 +47,7 @@ def load_solo_completed(
     )
     if source is not None:
         mask = mask & (df["source"] == source)
+    mask = mask & ~df["event_id"].isin(EXCLUDED_EVENTS)
     df = df[mask].copy()
     df["log_time"] = 1000.0 * np.log10(df["time_seconds"])
     df["puzzle_pieces"] = df["puzzle_pieces"].astype(int)
@@ -86,6 +92,7 @@ def load_completed(
     )
     if source is not None:
         mask = mask & (df["source"] == source)
+    mask = mask & ~df["event_id"].isin(EXCLUDED_EVENTS)
     df = df[mask].copy()
     df["log_time"] = 1000.0 * np.log10(df["time_seconds"])
     df["puzzle_pieces"] = df["puzzle_pieces"].astype(int)
@@ -107,7 +114,7 @@ def load_completed(
     # Drop teams larger than MAX_TEAM_SIZE
     if "team_members" in df.columns:
         too_large = df["team_members"].fillna("").apply(
-            lambda tm: len([m for m in tm.split(",") if m.strip()]) > MAX_TEAM_SIZE if tm else False
+            lambda tm: len([m for m in tm.split(";") if m.strip()]) > MAX_TEAM_SIZE if tm else False
         )
         n_dropped = too_large.sum()
         if n_dropped:
@@ -119,13 +126,13 @@ def load_completed(
 def parse_team_members(tm_string: str) -> list[tuple[str, str]]:
     """Parse team_members string into list of (name, player_id) tuples.
 
-    Format: "Name1:uuid1,Name2:,Name3:uuid3"
+    Format: "Name1:uuid1;Name2:;Name3:uuid3"
     Returns: [("Name1", "uuid1"), ("Name2", ""), ("Name3", "uuid3")]
     """
     if not tm_string or pd.isna(tm_string):
         return []
     members = []
-    for part in tm_string.split(","):
+    for part in tm_string.split(";"):
         part = part.strip()
         if not part:
             continue
@@ -150,6 +157,9 @@ def _msp_competitor_name(display_name: str, player_id: str, player_links: dict[s
         return player_links[player_id]
     if player_id:
         return f"{display_name} (msp:{player_id[:8]})"
+    # SP "Last, First" names have no player_id — return as-is for puzzler matching
+    if "," in display_name:
+        return display_name.strip()
     return ""
 
 

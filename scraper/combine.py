@@ -382,7 +382,9 @@ def load_myspeedpuzzling(player_links: dict[str, str] | None = None) -> pd.DataF
         "time_limit_seconds": None,
         "first_attempt": df["first_attempt"],
         "finished_date": df["finished_date_parsed"],
-        "team_members": df["team_members"],
+        # MSP uses commas in team_members (no conflict since MSP names lack commas).
+        # Convert to semicolons for consistency with SP "Last, First" names.
+        "team_members": df["team_members"].str.replace(",", ";"),
     })
 
 
@@ -394,6 +396,8 @@ def combine() -> pd.DataFrame:
     if SP_PATH.exists():
         sp = pd.read_csv(SP_PATH)
         sp["first_attempt"] = True  # competitions are always first-attempt
+        # Normalize SP divisions to match MSP naming
+        sp["division"] = sp["division"].replace({"pair": "duo", "team": "group"})
         frames.append(sp)
         print(f"speedpuzzling: {len(sp)} rows")
     else:
