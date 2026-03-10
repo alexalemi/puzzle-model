@@ -95,7 +95,7 @@ def main():
                 msp_puzzle_url[row["puzzle_id"]] = f"{MSP_BASE}/puzzle/{prefix_to_puzzle_uuid[m.group(1)]}"
     print(f"MSP links: {len(msp_player_url)} puzzlers, {len(msp_puzzle_url)} puzzles")
 
-    # Full data (all observations, for model_2r)
+    # Full data (all observations, for model_2r/3het)
     train_data_all = prepare_model_data(train_df)
     mu_fixed = train_data_all["mu_fixed"]
     test_data_all = prepare_model_data(test_df, mu_fixed=mu_fixed)
@@ -129,7 +129,7 @@ def main():
     )
 
     # ── Fit all models ──
-    model_names = ["model_1t", "model_2c", "model_2r"]
+    model_names = ["model_1t", "model_2c", "model_2r", "model_3het"]
     model_results = {}
 
     for name in model_names:
@@ -137,8 +137,8 @@ def main():
         print(f"Fitting {name}...")
         model_fn = MODELS[name]
 
-        # model_2p/2r use all data (with repeat features); 1t/2c use first-attempt only
-        if name == "model_2r":
+        # model_2r/3het use all data (with repeat features); 1t/2c use first-attempt only
+        if name in ("model_2r", "model_3het"):
             tr = dict(train_data_all)
             te = dict(test_data_all)
         else:
@@ -189,7 +189,7 @@ def main():
         true_log = np.array(te["log_time"])
         pieces_arr = np.array(te["pieces"])
         # Use the appropriate test dataframe for names
-        te_df = test_df if name in ("model_2p", "model_2r") else test_fa
+        te_df = test_df if name in ("model_2p", "model_2r", "model_3het") else test_fa
         puzzler_names = te_df["competitor_name"].values
         puzzle_names = te_df["puzzle_id"].values
         rng_np = np.random.default_rng(42)
@@ -223,25 +223,41 @@ def main():
             "test_mean_lpd": round(mean_lpd, 4),
             "n_train": n_tr,
             "n_test": n_te,
-            "data_subset": "all" if name == "model_2r" else "first-attempt",
+            "data_subset": "all" if name in ("model_2r", "model_3het") else "first-attempt",
         }
-        # Save model_2r posterior for rankings and deep dive
-        if name == "model_2r":
+        # Save model_3het posterior for rankings and deep dive (fall back to model_2r)
+        if name == "model_3het":
             ranking_samples = posterior_samples
-            guide_2r = guide
-            params_2r = svi_result.params
+            ranking_guide = guide
+            ranking_params = svi_result.params
+            gamma_vals = np.array(posterior_samples["gamma"])
+            eta_noise_vals = np.array(posterior_samples["eta_noise"])
+            model_results[name]["repeat_params"] = {
+                "gamma": {"mean": round(float(np.mean(gamma_vals)), 3),
+                          "std": round(float(np.std(gamma_vals)), 3)},
+                "eta_noise": {"mean": round(float(np.mean(eta_noise_vals)), 3),
+                              "std": round(float(np.std(eta_noise_vals)), 3)},
+            }
+        elif name == "model_2r":
+            # Keep model_2r repeat_params for model comparison display
             gamma_vals = np.array(posterior_samples["gamma"])
             model_results[name]["repeat_params"] = {
                 "gamma": {"mean": round(float(np.mean(gamma_vals)), 3),
                           "std": round(float(np.std(gamma_vals)), 3)},
             }
+            # Only use as ranking fallback if model_3het not yet fitted
+            if "model_3het" not in model_results:
+                ranking_samples = posterior_samples
+                ranking_guide = guide
+                ranking_params = svi_result.params
 
-    # ── Per-observation posterior predictive percentiles (model_2r, all data) ──
+    # ── Per-observation posterior predictive percentiles (ranking model, all data) ──
     print(f"\n{'='*60}")
     print("Computing posterior predictive percentiles...")
     full_data = prepare_model_data(df, mu_fixed=mu_fixed)
     full_no_obs = {k: v for k, v in full_data.items() if k != "log_time"}
-    pp_predictive = Predictive(MODELS["model_2r"], guide=guide_2r, params=params_2r, num_samples=500)
+    ranking_model_name = "model_3het" if "model_3het" in model_results else "model_2r"
+    pp_predictive = Predictive(MODELS[ranking_model_name], guide=ranking_guide, params=ranking_params, num_samples=500)
     pp_samples = np.array(pp_predictive(jax.random.PRNGKey(42), **full_no_obs)["log_time"])
     # Shape: (500, n_obs) — 500 full stochastic draws per observation
     actual = np.array(full_data["log_time"])  # (n_obs,)
@@ -334,7 +350,7 @@ def main():
         "edges": [round(float(e), 1) for e in freq_edges],
     }
 
-    # Puzzler rankings (from model_2r posterior, projected to RANKING_YEAR)
+    # Puzzler rankings (from ranking model posterior, projected to RANKING_YEAR)
     ELO_SCALE = 1
     alpha_samples = np.array(params_1["alpha"])  # (500, n_puzzlers)
     delta_samples = np.array(params_1["delta"])  # (500, n_puzzlers)
@@ -453,17 +469,19 @@ def main():
             entry["msp_url"] = msp_puzzle_url[inv_puzzle[i]]
         puzzles_list.append(entry)
 
-    # ── Model 2r Deep Dive data ──
+    # ── Model Deep Dive data (ranking model: 3het or 2r fallback) ──
     from scipy import stats as sp_stats
 
     # Scalar params with mean/std
-    scalar_names = ["mu", "sigma", "nu", "sigma_alpha", "sigma_beta", "delta_0", "sigma_delta", "gamma"]
+    scalar_names = ["mu", "sigma", "nu", "sigma_alpha", "sigma_beta", "delta_0", "sigma_delta", "gamma", "eta_noise"]
     scalar_params = {}
     for name in scalar_names:
-        vals = np.array(params_1[name])
         if name == "mu":
             scalar_params[name] = {"mean": round(mu_fixed, 4), "std": 0.0}
             continue
+        if name not in params_1:
+            continue
+        vals = np.array(params_1[name])
         scalar_params[name] = {"mean": round(float(np.mean(vals)), 4), "std": round(float(np.std(vals)), 4)}
     # Add individual log_w coefficients
     for k in range(4):
@@ -577,7 +595,7 @@ def main():
         "median_solve_number_repeats": round(float(df[df["solve_number"] > 1]["solve_number"].median()), 1) if "solve_number" in df.columns and (df["solve_number"] > 1).any() else None,
     }
 
-    model2r_detail = {
+    model_detail = {
         "scalar_params": scalar_params,
         "student_t_comparison": student_t_comparison,
         "basis_correction": basis_correction,
@@ -613,7 +631,7 @@ def main():
         "puzzler_freq": puzzler_freq,
         "puzzlers": puzzlers_list,
         "puzzles": puzzles_list,
-        "model2r_detail": model2r_detail,
+        "model_detail": model_detail,
         "puzzle_beta_dist": puzzle_beta_dist,
     }
 

@@ -930,6 +930,7 @@
                     model_2c: "#0e6a2e",
                     model_2r: "#e377c2",
                     model_3: "#dd8452",
+                    model_3het: "#9467bd",
                 };
                 const MODEL_NAMES = {
                     model_0: "Model 0: IRT",
@@ -939,6 +940,7 @@
                     model_2c: "Model 2c: + velocity",
                     model_2r: "Model 2r: + practice",
                     model_3: "Model 3: + interaction",
+                    model_3het: "Model 3het: + heteroscedastic",
                 };
                 const availableModels = Object.keys(MODEL_NAMES).filter(
                     (k) => DATA.models[k],
@@ -993,7 +995,7 @@
                 document.getElementById("meta-puzzles").textContent =
                     `${fmtInt(S.n_puzzles)} puzzles`;
 
-                const repeatStats = DATA.model2r_detail ? DATA.model2r_detail.repeat_stats : null;
+                const repeatStats = DATA.model_detail ? DATA.model_detail.repeat_stats : null;
                 document.getElementById("stat-grid").innerHTML = [
                     { value: fmtInt(S.n_records), label: "Total Records" },
                     { value: fmtInt(S.n_puzzlers), label: "Unique Puzzlers" },
@@ -1389,9 +1391,9 @@
 
                 // --- Model comparison ---
                 let activeModels = new Set(availableModels);
-                let activeResModel = availableModels.includes("model_2r")
-                    ? "model_2r"
-                    : availableModels[availableModels.length - 1];
+                const preferred = ["model_3het", "model_2r", "model_2c", "model_1t"];
+                let activeResModel = preferred.find(m => availableModels.includes(m))
+                    || availableModels[availableModels.length - 1];
 
                 function renderSelector(
                     containerId,
@@ -2500,7 +2502,7 @@
 
                 // --- Physical basis component contributions ---
                 (function () {
-                    const M2R = DATA.model2r_detail;
+                    const M2R = DATA.model_detail;
                     if (!M2R || !M2R.basis_components) return;
                     const bc = M2R.basis_components;
                     const W = 600,
@@ -2671,8 +2673,8 @@
                     });
 
                     // Gamma from model_2r for practice effect
-                    const gamma_2r = DATA.model2r_detail && DATA.model2r_detail.scalar_params.gamma
-                        ? DATA.model2r_detail.scalar_params.gamma.mean : 0;
+                    const gamma_2r = DATA.model_detail && DATA.model_detail.scalar_params.gamma
+                        ? DATA.model_detail.scalar_params.gamma.mean : 0;
 
                     function renderPrediction() {
                         const puzzlerInput = document.getElementById("pred-puzzler").value.trim();
@@ -2892,8 +2894,8 @@
                 })();
 
                 // --- Model 2r Deep Dive ---
-                if (DATA.model2r_detail) {
-                    const M2R = DATA.model2r_detail;
+                if (DATA.model_detail) {
+                    const M2R = DATA.model_detail;
 
                     // Model specification table (mB scale)
                     (function () {
@@ -2906,6 +2908,7 @@
                         const d0 = sp.delta_0.mean,
                             sd = sp.sigma_delta.mean;
                         const gamma = sp.gamma ? sp.gamma.mean : 0;
+                        const eta = sp.eta_noise ? sp.eta_noise.mean : null;
                         const el = (id, html) => {
                             const e = document.getElementById(id);
                             if (e) e.innerHTML = html;
@@ -2928,7 +2931,8 @@
                         );
                         el(
                             "m2r-spec-eps",
-                            `&nu; = ${nu.toFixed(1)}, &sigma; = ${sigma.toFixed(1)} mB`,
+                            `&nu; = ${nu.toFixed(1)}, &sigma; = ${sigma.toFixed(1)} mB` +
+                            (eta !== null ? `, &eta; = ${eta.toFixed(3)}` : ``),
                         );
                     })();
 
@@ -2952,6 +2956,7 @@
                             delta_0: "Population trend (mB/yr)",
                             sigma_delta: "Individual velocity spread",
                             gamma: "Practice effect (mB per log-solve)",
+                            eta_noise: "Noise heterogeneity (log-scale per 1\u03c3 skill)",
                             log_w_0: "Log-weight: \u221aN (edge scanning)",
                             log_w_1: "Log-weight: N (per-piece work)",
                             log_w_2: "Log-weight: N\u00b7log(N) (search)",
@@ -2966,6 +2971,7 @@
                             "delta_0",
                             "sigma_delta",
                             "gamma",
+                            "eta_noise",
                             "log_w_0",
                             "log_w_1",
                             "log_w_2",

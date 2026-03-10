@@ -389,6 +389,32 @@
                 <div class="chart-container" id="puzzler-n-residual-histograms" style="min-height: 300px; display: flex; flex-wrap: wrap; gap: 16px;">
                 </div>
 
+                <h3>Residuals by skill × difficulty quadrant</h3>
+                <p>
+                    Does the additive model break down for certain
+                    combinations of puzzler skill and puzzle difficulty?
+                    Splitting at the median &alpha; (puzzler) and &beta;
+                    (puzzle) creates four groups. If the model is truly
+                    additive, all four should have similar residual
+                    distributions — systematic differences indicate an
+                    interaction effect the model misses.
+                </p>
+                <div class="chart-container" id="quadrant-residual-histograms" style="min-height: 280px; display: flex; flex-wrap: wrap; gap: 20px;">
+                </div>
+
+                <h3>Mean residual heatmap (skill × difficulty)</h3>
+                <p>
+                    A finer-grained view: mean residual in each cell of a
+                    5×5 grid (quintile bins of &alpha; and &beta;). The color
+                    scale is centered at the overall mean residual — red cells
+                    are below average (model relatively over-predicts), blue
+                    cells above (model relatively under-predicts). A uniform
+                    color grid would mean no interaction.
+                </p>
+                <div class="chart-container" id="quadrant-heatmap" style="min-height: 360px;">
+                    <div class="chart-title">Mean residual (mB) by puzzler skill × puzzle difficulty</div>
+                </div>
+
                 <h3>QQ Plot: Empirical vs Theoretical</h3>
                 <div
                     class="chart-container"
@@ -903,6 +929,8 @@
                 if (rd.by_puzzle_n) renderPuzzleNHistograms(rd);
                 if (rd.by_division) renderDivisionHistograms(rd);
                 if (rd.by_puzzler_n) renderPuzzlerNHistograms(rd);
+                if (rd.by_quadrant) renderQuadrantHistograms(rd);
+                if (rd.quadrant_heatmap) renderQuadrantHeatmap(rd);
 
                 // QQ plot
                 renderQQPlot(rd);
@@ -1296,6 +1324,139 @@
                 });
             }
 
+            function renderQuadrantHistograms(rd) {
+                const container = d3.select("#quadrant-residual-histograms");
+                const quadrantNames = {
+                    easy_good: "Easy puzzle + Good puzzler",
+                    easy_worse: "Easy puzzle + Worse puzzler",
+                    hard_good: "Hard puzzle + Good puzzler",
+                    hard_worse: "Hard puzzle + Worse puzzler",
+                };
+                renderSmallMultipleHistograms(container, rd.by_quadrant, {
+                    colorMap: {
+                        easy_good: "var(--green)", easy_worse: "var(--blue)",
+                        hard_good: "var(--orange)", hard_worse: "var(--red)",
+                    },
+                    labelFn: (key, d) => `${quadrantNames[key] || key}  (${fmtNum(d.n_obs)} obs)`,
+                    annotFn: (d) => `mean=${d.mean > 0 ? "+" : ""}${d.mean.toFixed(0)}, std=${d.std.toFixed(0)} mB, skew=${d.skewness.toFixed(2)}`,
+                    panelWidth: 360,
+                    panelHeight: 220,
+                    flexBasis: "380px",
+                });
+            }
+
+            function renderQuadrantHeatmap(rd) {
+                const container = d3.select("#quadrant-heatmap");
+                const cells = rd.quadrant_heatmap;
+                if (!cells || cells.length === 0) return;
+
+                const W = Math.min(container.node().getBoundingClientRect().width - 40, 520);
+                const H = W;  // square
+                const margin = { top: 40, right: 80, bottom: 60, left: 80 };
+                const w = W - margin.left - margin.right;
+                const h = H - margin.top - margin.bottom;
+                const cellW = w / 5;
+                const cellH = h / 5;
+
+                const svg = container.append("svg")
+                    .attr("width", W).attr("height", H)
+                    .attr("viewBox", `0 0 ${W} ${H}`)
+                    .style("max-width", "100%");
+                const g = svg.append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                // Color scale: diverging, centered at the overall mean residual
+                // (to highlight relative deviations, not the overall bias)
+                const meanResid = rd.mean;
+                const maxDev = d3.max(cells, d => Math.abs(d.mean_residual - meanResid)) || 30;
+                const colorScale = d3.scaleDiverging()
+                    .domain([meanResid - maxDev, meanResid, meanResid + maxDev])
+                    .interpolator(d3.interpolateRdBu)
+                    .clamp(true);
+
+                // Draw cells (alpha_bin=row from top, beta_bin=col from left)
+                // x-axis: beta (puzzle difficulty) — left=easy, right=hard
+                // y-axis: alpha (puzzler) — top=good (low alpha), bottom=worse (high alpha)
+                g.selectAll("rect.cell").data(cells).enter().append("rect")
+                    .attr("class", "cell")
+                    .attr("x", d => d.beta_bin * cellW)
+                    .attr("y", d => d.alpha_bin * cellH)
+                    .attr("width", cellW - 2)
+                    .attr("height", cellH - 2)
+                    .attr("rx", 3)
+                    .attr("fill", d => colorScale(d.mean_residual))
+                    .attr("stroke", "var(--border)")
+                    .attr("stroke-width", 0.5)
+                    .on("mouseover", (event, d) => {
+                        showTooltip(event,
+                            `<b>α≈${d.alpha_center} mB, β≈${d.beta_center} mB</b><br>` +
+                            `Mean residual: ${d.mean_residual > 0 ? "+" : ""}${d.mean_residual} mB<br>` +
+                            `Std: ${d.std_residual} mB<br>` +
+                            `${fmtNum(d.n_obs)} observations`);
+                    })
+                    .on("mouseout", hideTooltip);
+
+                // Cell text labels
+                g.selectAll("text.cell-label").data(cells).enter().append("text")
+                    .attr("class", "cell-label")
+                    .attr("x", d => d.beta_bin * cellW + cellW / 2)
+                    .attr("y", d => d.alpha_bin * cellH + cellH / 2 + 4)
+                    .attr("text-anchor", "middle")
+                    .attr("font-family", "Source Sans 3, sans-serif")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", 600)
+                    .attr("fill", d => Math.abs(d.mean_residual - meanResid) > maxDev * 0.6 ? "#fff" : "var(--text)")
+                    .text(d => (d.mean_residual > 0 ? "+" : "") + d.mean_residual.toFixed(0));
+
+                // Axes
+                g.append("text")
+                    .attr("x", w / 2).attr("y", h + 40)
+                    .attr("text-anchor", "middle")
+                    .attr("font-family", "Source Sans 3, sans-serif")
+                    .attr("font-size", "13px")
+                    .text("← Easier puzzles          Puzzle difficulty (β)          Harder puzzles →");
+                g.append("text")
+                    .attr("transform", `rotate(-90)`)
+                    .attr("x", -h / 2).attr("y", -55)
+                    .attr("text-anchor", "middle")
+                    .attr("font-family", "Source Sans 3, sans-serif")
+                    .attr("font-size", "13px")
+                    .text("← Better puzzlers          Puzzler skill (α)          Worse puzzlers →");
+
+                // Color legend
+                const legendW = 20, legendH = h;
+                const lg = svg.append("g")
+                    .attr("transform", `translate(${margin.left + w + 20},${margin.top})`);
+                const legendScale = d3.scaleLinear()
+                    .domain([meanResid - maxDev, meanResid + maxDev])
+                    .range([0, legendH]);
+                const nSteps = 50;
+                for (let i = 0; i < nSteps; i++) {
+                    const v = (meanResid - maxDev) + (2 * maxDev * i) / nSteps;
+                    lg.append("rect")
+                        .attr("x", 0).attr("y", legendScale(v))
+                        .attr("width", legendW)
+                        .attr("height", legendH / nSteps + 1)
+                        .attr("fill", colorScale(v));
+                }
+                const fmt = v => (v > 0 ? "+" : "") + v.toFixed(0);
+                lg.append("text").attr("x", legendW + 4).attr("y", 10)
+                    .attr("font-size", "10px").attr("font-family", "Source Sans 3, sans-serif")
+                    .text(fmt(meanResid - maxDev));
+                lg.append("text").attr("x", legendW + 4).attr("y", legendH / 2 + 4)
+                    .attr("font-size", "10px").attr("font-family", "Source Sans 3, sans-serif")
+                    .text(fmt(meanResid));
+                lg.append("text").attr("x", legendW + 4).attr("y", legendH)
+                    .attr("font-size", "10px").attr("font-family", "Source Sans 3, sans-serif")
+                    .text(fmt(meanResid + maxDev));
+                lg.append("text")
+                    .attr("transform", `rotate(-90)`)
+                    .attr("x", -legendH / 2).attr("y", legendW + 40)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px").attr("font-family", "Source Sans 3, sans-serif")
+                    .text("Mean residual (mB)");
+            }
+
             function renderQQPlot(rd) {
                 const container = d3.select("#qq-plot");
                 const W =
@@ -1324,8 +1485,9 @@
                 const emp = rd.empirical_quantiles;
                 const norm = rd.normal_quantiles;
                 const studt = rd.student_t_quantiles;
+                const nstq = rd.nst_quantiles || [];
 
-                const allVals = [...emp, ...norm, ...studt];
+                const allVals = [...emp, ...norm, ...studt, ...nstq];
                 const extent = [
                     Math.min(...allVals) * 1.1,
                     Math.max(...allVals) * 1.1,
@@ -1378,6 +1540,26 @@
                         .on("mouseout", hideTooltip);
                 });
 
+                // Normal + Student-t mixture QQ points
+                if (nstq.length) {
+                    emp.forEach((e, i) => {
+                        if (isNaN(nstq[i])) return;
+                        g.append("circle")
+                            .attr("cx", x(nstq[i]))
+                            .attr("cy", y(e))
+                            .attr("r", 5)
+                            .attr("fill", "var(--green)")
+                            .attr("opacity", 0.6)
+                            .on("mouseover", (ev) =>
+                                showTooltip(
+                                    ev,
+                                    `q=${rd.quantiles[i]}<br>N+T mix: ${nstq[i].toFixed(2)}<br>Empirical: ${e.toFixed(2)}`,
+                                ),
+                            )
+                            .on("mouseout", hideTooltip);
+                    });
+                }
+
                 g.append("g")
                     .attr("class", "axis")
                     .attr("transform", `translate(0,${h})`)
@@ -1405,14 +1587,21 @@
                 // Legend
                 const leg = g
                     .append("g")
-                    .attr("transform", `translate(${w - 150}, 10)`);
-                [
+                    .attr("transform", `translate(${w - 200}, 10)`);
+                const legendItems = [
                     { color: "var(--red)", label: "vs Normal" },
                     {
                         color: "var(--blue)",
                         label: `vs Student-t (${rd.fitted_nu.toFixed(1)})`,
                     },
-                ].forEach((item, i) => {
+                ];
+                if (nstq.length && rd.nst) {
+                    legendItems.push({
+                        color: "var(--green)",
+                        label: `vs N+T mix (w=${rd.nst.w_normal}, \u03bd=${rd.nst.nu})`,
+                    });
+                }
+                legendItems.forEach((item, i) => {
                     const row = leg
                         .append("g")
                         .attr("transform", `translate(0, ${i * 20})`);

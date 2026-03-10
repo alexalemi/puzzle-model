@@ -178,18 +178,18 @@ def main():
     print(f"Team train: {len(team_train):,}, Team test: {len(team_test):,} (duo={len(duo_test):,}, group={len(group_test):,})")
     print(f"Joint train: {len(joint_train_df):,}")
 
-    # ── Fit baseline: model_2r on solo train only ──
+    # ── Fit baseline: model_3het on solo train only ──
     print(f"\n{'='*60}")
-    print("Fitting model_2r (solo-only baseline)...")
-    model_2r = MODELS["model_2r"]
-    guide_solo, result_solo = run_svi(model_2r, solo_train_data, num_steps=5000, lr=0.005, seed=0)
+    print("Fitting model_3het (solo-only baseline)...")
+    solo_model = MODELS["model_3het"]
+    guide_solo, result_solo = run_svi(solo_model, solo_train_data, num_steps=5000, lr=0.005, seed=0)
 
     # Evaluate on solo test
     posterior_solo = guide_solo.sample_posterior(
         jax.random.PRNGKey(1), result_solo.params, sample_shape=(500,)
     )
     te_no_obs = {k: v for k, v in solo_test_data.items() if k != "log_time"}
-    pred_solo = Predictive(model_2r, guide=guide_solo, params=result_solo.params, num_samples=200)
+    pred_solo = Predictive(solo_model, guide=guide_solo, params=result_solo.params, num_samples=200)
     pred_solo_test = pred_solo(jax.random.PRNGKey(1), **te_no_obs)
     metrics_solo = evaluate_predictions(
         np.array(pred_solo_test["log_time"]),
@@ -197,7 +197,7 @@ def main():
     )
 
     # Test log-likelihood
-    ll_solo = log_likelihood(model_2r, posterior_solo, **solo_test_data)
+    ll_solo = log_likelihood(solo_model, posterior_solo, **solo_test_data)
     ll_solo_matrix = np.array(ll_solo["log_time"])
     lppd_solo_i = np.logaddexp.reduce(ll_solo_matrix, axis=0) - np.log(ll_solo_matrix.shape[0])
     mean_lpd_solo = float(np.mean(lppd_solo_i))
@@ -497,10 +497,12 @@ def main():
     alpha_shift.sort(key=lambda x: abs(x["shift"]), reverse=True)
 
     # ── Scalar params comparison ──
-    scalar_names = ["sigma", "nu", "sigma_alpha", "sigma_beta", "delta_0", "sigma_delta", "gamma"]
+    scalar_names = ["sigma", "nu", "sigma_alpha", "sigma_beta", "delta_0", "sigma_delta", "gamma", "eta_noise"]
     scalar_comparison = {"solo_only": {}, "joint": {}}
     for name in scalar_names:
         for label, samples in [("solo_only", posterior_solo), ("joint", posterior_nst)]:
+            if name not in samples:
+                continue
             vals = np.array(samples[name])
             scalar_comparison[label][name] = {
                 "mean": round(float(np.mean(vals)), 4),

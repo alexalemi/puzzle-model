@@ -488,6 +488,8 @@ def analyze_residual_distribution(df, mu, log_w, pmap, puzzle_map, team_ctx):
     puzzle_ids = []
     divisions = []
     puzzler_names = []
+    alphas = []
+    betas = []
     for _, row in df.iterrows():
         predicted, team_size = compute_predicted(row, mu, log_w, pmap, puzzle_map, team_ctx)
         if predicted is None:
@@ -497,6 +499,11 @@ def analyze_residual_distribution(df, mu, log_w, pmap, puzzle_map, team_ctx):
         puzzle_ids.append(row.get("puzzle_id"))
         divisions.append(row.get("division", "unknown"))
         puzzler_names.append(row["competitor_name"])
+        # Track alpha and beta for quadrant analysis
+        name = row["competitor_name"]
+        pid = row.get("puzzle_id")
+        alphas.append(pmap[name]["alpha_proj"] if name in pmap else 0)
+        betas.append(puzzle_map[pid]["beta"] if pid in puzzle_map else 0)
 
     if not residuals:
         return {}
@@ -506,6 +513,8 @@ def analyze_residual_distribution(df, mu, log_w, pmap, puzzle_map, team_ctx):
     puzzle_ids = np.array(puzzle_ids)
     divisions = np.array(divisions)
     puzzler_names = np.array(puzzler_names)
+    alphas = np.array(alphas)
+    betas = np.array(betas)
     std = np.std(residuals)
     mean = np.mean(residuals)
 
@@ -554,6 +563,19 @@ def analyze_residual_distribution(df, mu, log_w, pmap, puzzle_map, team_ctx):
         "sigma_normal_mB": round(nst["sigma_normal"] * std, 1),
         "sigma_t_mB": round(nst["sigma_t"] * std, 1),
     }
+
+    # NST theoretical quantiles (numerically invert the mixture CDF)
+    from scipy.optimize import brentq
+    w_nst, s1_nst, nu_nst, s2_nst = nst["w_normal"], nst["sigma_normal"], nst["nu"], nst["sigma_t"]
+    def nst_cdf(z_val):
+        return w_nst * sp_stats.norm.cdf(z_val, scale=s1_nst) + (1 - w_nst) * sp_stats.t.cdf(z_val, nu_nst, scale=s2_nst)
+    nst_q = []
+    for q in quantiles:
+        try:
+            nst_q.append(float(brentq(lambda z_val: nst_cdf(z_val) - q, -50, 50)))
+        except ValueError:
+            nst_q.append(float("nan"))
+    print(f"    NST quantiles computed: {[round(v, 2) for v in nst_q]}")
 
     # Tail fractions
     tail_fracs = {}
@@ -690,6 +712,74 @@ def analyze_residual_distribution(df, mu, log_w, pmap, puzzle_map, team_ctx):
             "histogram": make_histogram(bin_z.tolist(), 80, range_limit=6),
         }
 
+    # Quadrant analysis: skill × difficulty interaction
+    # Split at median alpha (puzzler skill) and median beta (puzzle difficulty)
+    # Lower alpha = faster = "good"; lower beta = easier
+    alpha_median = float(np.median(alphas))
+    beta_median = float(np.median(betas))
+    print(f"    Quadrant split: alpha_median={alpha_median:.1f} mB, beta_median={beta_median:.1f} mB")
+
+    quadrant_labels = {
+        "easy_good": "Easy puzzle, Good puzzler",
+        "easy_worse": "Easy puzzle, Worse puzzler",
+        "hard_good": "Hard puzzle, Good puzzler",
+        "hard_worse": "Hard puzzle, Worse puzzler",
+    }
+    quadrant_masks = {
+        "easy_good": (betas <= beta_median) & (alphas <= alpha_median),
+        "easy_worse": (betas <= beta_median) & (alphas > alpha_median),
+        "hard_good": (betas > beta_median) & (alphas <= alpha_median),
+        "hard_worse": (betas > beta_median) & (alphas > alpha_median),
+    }
+
+    by_quadrant = {}
+    for qkey, qmask in quadrant_masks.items():
+        if qmask.sum() < 50:
+            continue
+        q_resids = residuals[qmask]
+        q_z = (q_resids - mean) / std
+        q_std = float(np.std(q_resids))
+        q_mean = float(np.mean(q_resids))
+        q_skew = float(sp_stats.skew(q_resids))
+        q_kurtosis = float(sp_stats.kurtosis(q_z))
+        n_puzzlers_q = len(set(puzzler_names[qmask]))
+        n_puzzles_q = len(set(puzzle_ids[qmask]))
+        print(f"    {quadrant_labels[qkey]}: n_obs={qmask.sum()}, "
+              f"mean={q_mean:.1f}, std={q_std:.1f}, skew={q_skew:.2f}")
+        by_quadrant[qkey] = {
+            "label": quadrant_labels[qkey],
+            "n_obs": int(qmask.sum()),
+            "n_puzzlers": n_puzzlers_q,
+            "n_puzzles": n_puzzles_q,
+            "mean": round(q_mean, 1),
+            "std": round(q_std, 1),
+            "skewness": round(q_skew, 3),
+            "excess_kurtosis": round(q_kurtosis, 2),
+            "histogram": make_histogram(q_z.tolist(), 80, range_limit=6),
+        }
+
+    # Also compute a simple 2D scatter summary: mean residual in bins of alpha and beta
+    # Use quintiles for a 5x5 grid
+    alpha_edges = np.quantile(alphas, [0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    beta_edges = np.quantile(betas, [0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    heatmap = []
+    for i in range(5):
+        for j in range(5):
+            mask_ij = (
+                (alphas >= alpha_edges[i]) & (alphas < alpha_edges[i + 1] + (1 if i == 4 else 0))
+                & (betas >= beta_edges[j]) & (betas < beta_edges[j + 1] + (1 if j == 4 else 0))
+            )
+            if mask_ij.sum() > 0:
+                heatmap.append({
+                    "alpha_bin": i,
+                    "beta_bin": j,
+                    "alpha_center": round(float((alpha_edges[i] + alpha_edges[i + 1]) / 2), 0),
+                    "beta_center": round(float((beta_edges[j] + beta_edges[j + 1]) / 2), 0),
+                    "mean_residual": round(float(np.mean(residuals[mask_ij])), 1),
+                    "std_residual": round(float(np.std(residuals[mask_ij])), 1),
+                    "n_obs": int(mask_ij.sum()),
+                })
+
     return {
         "n_obs": len(residuals),
         "mean": round(float(mean), 1),
@@ -702,12 +792,17 @@ def analyze_residual_distribution(df, mu, log_w, pmap, puzzle_map, team_ctx):
         "empirical_quantiles": [round(q, 3) for q in empirical_q],
         "normal_quantiles": [round(q, 3) for q in normal_q],
         "student_t_quantiles": [round(q, 3) for q in t_q],
+        "nst_quantiles": [round(q, 3) for q in nst_q],
         "tail_fractions": tail_fracs,
         "histogram": make_histogram(z.tolist(), 80, range_limit=6),
         "by_source": by_source,
         "by_puzzle_n": by_puzzle_n,
         "by_division": by_division,
         "by_puzzler_n": by_puzzler_n,
+        "by_quadrant": by_quadrant,
+        "quadrant_heatmap": heatmap,
+        "alpha_median": round(alpha_median, 1),
+        "beta_median": round(beta_median, 1),
     }
 
 

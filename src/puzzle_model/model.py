@@ -179,6 +179,107 @@ def model_2r(
         numpyro.sample("log_time", dist.StudentT(nu, mean, sigma), obs=log_time)
 
 
+def _model_3d_core(
+    puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles,
+    mu_fixed=None, year=None, log_time=None,
+    solve_number=None, *,
+    use_disc=True, use_hetero=True,
+    **kwargs,
+):
+    """Model 2r + optional discrimination interaction + optional heteroscedastic noise.
+
+    Extends model_2r with two new parameters motivated by the
+    skill × difficulty residual analysis:
+
+      disc: global discrimination — interaction alpha_i * beta_j.
+        With disc > 0, harder puzzles differentiate skill more:
+        worse puzzlers (alpha > 0) on hard puzzles (beta > 0) are
+        predicted even slower than the additive model.
+
+      eta_noise: heteroscedastic noise scaling.
+        sigma_eff = sigma * exp(eta_noise * alpha_i / ALPHA_NORM).
+        With eta_noise > 0, worse puzzlers have higher noise.
+        ALPHA_NORM = 300 mB ≈ 1 std of alpha, so eta_noise is
+        interpretable as "log noise change per 1-std of skill".
+    """
+    ALPHA_NORM = 300.0  # normalization for heteroscedastic term
+
+    mu = numpyro.deterministic("mu", jnp.float32(mu_fixed))
+    sigma = numpyro.sample("sigma", dist.HalfNormal(500.0))
+    nu = numpyro.sample("nu", dist.Gamma(2.0, 0.1))
+    sigma_alpha = numpyro.sample("sigma_alpha", dist.HalfNormal(300.0))
+    sigma_beta = numpyro.sample("sigma_beta", dist.HalfNormal(300.0))
+
+    # Physical basis weights
+    log_w = numpyro.sample("log_w", dist.Normal(0, 5.0).expand([4]))
+
+    # Velocity
+    delta_0 = numpyro.sample("delta_0", dist.Normal(0, 100.0))
+    sigma_delta = numpyro.sample("sigma_delta", dist.HalfNormal(100.0))
+
+    # Practice effect
+    gamma = numpyro.sample("gamma", dist.Normal(0, 200.0))
+
+    # Optional: discrimination interaction strength (units: 1/mB)
+    disc = numpyro.sample("disc", dist.Normal(0, 0.005)) if use_disc else 0.0
+
+    # Optional: heteroscedastic noise scaling
+    eta_noise = numpyro.sample("eta_noise", dist.Normal(0, 1.0)) if use_hetero else 0.0
+
+    with numpyro.plate("puzzlers", n_puzzlers):
+        alpha = numpyro.sample("alpha", dist.Normal(0, sigma_alpha))
+        delta = numpyro.sample("delta", dist.Normal(0, sigma_delta))
+
+    with numpyro.plate("puzzles", n_puzzles):
+        beta = numpyro.sample("beta", dist.Normal(0, sigma_beta))
+
+    # Physical basis correction (same as 2r)
+    N = jnp.asarray(pieces, dtype=jnp.float32)
+    g = jnp.column_stack([jnp.sqrt(N), N, N * jnp.log(N), N ** 2])
+    g_ref = jnp.array([jnp.sqrt(N_REF), N_REF, N_REF * jnp.log(N_REF), N_REF ** 2])
+    w = jnp.exp(log_w)
+    time_contrib = jnp.dot(g, w)
+    time_ref = jnp.dot(g_ref, w)
+    mB_scale = 1000.0 / jnp.log(10.0)
+    piece_correction = mB_scale * (jnp.log(time_contrib) - jnp.log(time_ref))
+
+    # Velocity
+    t = jnp.asarray(year, dtype=jnp.float32) - YEAR_CENTER if year is not None else 0.0
+    velocity_effect = (delta_0 + delta[puzzler_idx]) * t
+
+    # Practice: log(solve_number), zero for first attempts
+    sn = jnp.asarray(solve_number, dtype=jnp.float32) if solve_number is not None else jnp.ones(len(puzzler_idx))
+    repeat_effect = gamma * jnp.log(sn)
+
+    # Discrimination: alpha-beta interaction
+    interaction = disc * alpha[puzzler_idx] * beta[puzzle_idx] if use_disc else 0.0
+
+    # Heteroscedastic noise: sigma grows with alpha (worse puzzlers → more noise)
+    sigma_obs = sigma * jnp.exp(eta_noise * alpha[puzzler_idx] / ALPHA_NORM) if use_hetero else sigma
+
+    mean = mu + alpha[puzzler_idx] + beta[puzzle_idx] + piece_correction + velocity_effect + repeat_effect + interaction
+    with numpyro.plate("obs", len(puzzler_idx)):
+        numpyro.sample("log_time", dist.StudentT(nu, mean, sigma_obs), obs=log_time)
+
+
+def model_3d(puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles, **kwargs):
+    """Model 2r + discrimination + heteroscedastic noise (both)."""
+    return _model_3d_core(puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles,
+                          use_disc=True, use_hetero=True, **kwargs)
+
+
+def model_3disc(puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles, **kwargs):
+    """Model 2r + discrimination only."""
+    return _model_3d_core(puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles,
+                          use_disc=True, use_hetero=False, **kwargs)
+
+
+def model_3het(puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles, **kwargs):
+    """Model 2r + heteroscedastic noise only."""
+    return _model_3d_core(puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles,
+                          use_disc=False, use_hetero=True, **kwargs)
+
+
 def model_team(
     puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles,
     mu_fixed=None, year=None, log_time=None,
@@ -546,6 +647,19 @@ model_2r_nc = reparam(model_2r, config={
     "delta": LocScaleReparam(0),
 })
 
+model_3d_nc = reparam(model_3d, config={
+    "alpha": LocScaleReparam(0), "beta": LocScaleReparam(0),
+    "delta": LocScaleReparam(0),
+})
+model_3disc_nc = reparam(model_3disc, config={
+    "alpha": LocScaleReparam(0), "beta": LocScaleReparam(0),
+    "delta": LocScaleReparam(0),
+})
+model_3het_nc = reparam(model_3het, config={
+    "alpha": LocScaleReparam(0), "beta": LocScaleReparam(0),
+    "delta": LocScaleReparam(0),
+})
+
 model_team_nc = reparam(model_team, config={
     "alpha": LocScaleReparam(0), "beta": LocScaleReparam(0),
     "delta": LocScaleReparam(0),
@@ -565,6 +679,9 @@ MODELS = {
     "model_1t": model_1t_nc,
     "model_2c": model_2c_nc,
     "model_2r": model_2r_nc,
+    "model_3d": model_3d_nc,
+    "model_3disc": model_3disc_nc,
+    "model_3het": model_3het_nc,
     "model_team": model_team_nc,
     "model_team_gmm": model_team_gmm_nc,
     "model_team_nst": model_team_nst_nc,

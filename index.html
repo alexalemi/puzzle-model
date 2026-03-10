@@ -1171,7 +1171,7 @@ log_time ~ w&middot;Normal(mean, &sigma;) + (1&minus;w)&middot;StudentT(&nu;, me
                     const y = d3.scaleLinear().domain([d3.min(allVals) * 0.99, d3.max(allVals) * 1.01])
                         .range([H - mg.bottom, mg.top]);
                     makeAxis(svg, x, y, W, H, mg, "Step (×10)", "ELBO Loss");
-                    [{data: lc.solo_only, color: "var(--blue)", label: "Solo-only (2r)"},
+                    [{data: lc.solo_only, color: "var(--blue)", label: "Solo-only (3het)"},
                      {data: lc.joint, color: "var(--green)", label: "Joint (team)"}].forEach((s, si) => {
                         const line = d3.line().x((d, i) => x(i)).y(d => y(d));
                         svg.append("path").datum(s.data).attr("d", line)
