@@ -520,14 +520,14 @@
                 <div class="details-content" style="font-size: 15px; line-height: 1.7;">
                     <p>
                         This explorer presents a <strong>joint solo+team Bayesian model</strong> for
-                        jigsaw puzzle solving times. It extends the solo-only Model 2r with team
+                        jigsaw puzzle solving times. It extends the solo-only Model 3het with team
                         mechanics: when multiple puzzlers work together, their individual rates
                         combine via <strong>logsumexp</strong> (parallel rate addition), subject to
                         <strong>Amdahl's law</strong> (serial fraction) and per-bucket residual
                         corrections.
                     </p>
                     <p>
-                        For solo solves (K=1), the team model reduces exactly to Model 2r —
+                        For solo solves (K=1), the team model reduces exactly to Model 3het —
                         logsumexp of a single alpha is just that alpha, and all team corrections
                         vanish. This means solo predictions are unchanged while team predictions
                         benefit from the additional structure.
@@ -756,30 +756,31 @@
 <!-- Model Specification -->
 <details class="section-collapse">
   <summary>Model Specification</summary>
-  <p>Extends Model 2r with <strong>logsumexp team alpha</strong> (rates add in time domain) + <strong>Amdahl&rsquo;s law</strong> (serial fraction) + <strong>per-bucket corrections</strong>:</p>
+  <p>Extends Model 3het with <strong>logsumexp team alpha</strong> (rates add in time domain) + <strong>Amdahl&rsquo;s law</strong> (serial fraction) + <strong>per-bucket corrections</strong>:</p>
   <div class="equation" style="line-height:2.0;">
 &alpha;<sub>i</sub>(t) = &alpha;<sub>i</sub> + (&delta;<sub>0</sub> + &delta;<sub>i</sub>) &middot; t&nbsp;&nbsp;&nbsp;(per-member velocity)<br>
 &alpha;<sub>parallel</sub> = &minus;mB &middot; log(&Sigma; exp(&minus;&alpha;<sub>i</sub>(t) / mB))&nbsp;&nbsp;&nbsp;(rates add)<br>
 amdahl = mB &middot; log(1 + s&middot;(K&minus;1))&nbsp;&nbsp;&nbsp;(serial overhead)<br>
 &alpha;<sub>eff</sub> = &alpha;<sub>parallel</sub> + amdahl + &eta;[bucket(K)]<br>
 mean = &mu; + &alpha;<sub>eff</sub> + &beta;[puzzle] + f(N) + &gamma;&middot;log(solve#)<br>
-log_time ~ w&middot;Normal(mean, &sigma;) + (1&minus;w)&middot;StudentT(&nu;, mean, k&middot;&sigma;)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub> for K&gt;1]
+&sigma;<sub>eff</sub> = &sigma; &middot; exp(&eta;<sub>noise</sub> &middot; &alpha;<sub>i</sub> / 300)&nbsp;&nbsp;&nbsp;(heteroscedastic, solo only)<br>
+log_time ~ w&middot;Normal(mean, &sigma;<sub>eff</sub>) + (1&minus;w)&middot;StudentT(&nu;, mean, k&middot;&sigma;<sub>eff</sub>)&nbsp;&nbsp;&nbsp;[&sigma;<sub>team</sub> for K&gt;1]
   </div>
-  <p>For <strong>solo (K=1)</strong>: logsumexp = &alpha;<sub>i</sub> + velocity, amdahl = 0, &eta; = 0 &mdash; exactly Model 2r. Four new parameters beyond 2r:</p>
+  <p>For <strong>solo (K=1)</strong>: logsumexp = &alpha;<sub>i</sub> + velocity, amdahl = 0, &eta; = 0 &mdash; exactly Model 3het. The solo model adds heteroscedastic noise: &sigma;<sub>eff</sub> = &sigma; &middot; exp(&eta;<sub>noise</sub> &middot; &alpha;<sub>i</sub> / 300), so worse puzzlers have noisier predictions. Four new team parameters beyond 3het:</p>
   <ul style="margin: 0 0 16px 24px; font-size: 16px;">
     <li><strong>s</strong> &mdash; serial fraction (0 = fully parallel, 1 = serial)</li>
     <li><strong>&eta;<sub>2</sub>, &eta;<sub>3</sub>, &eta;<sub>4+</sub></strong> &mdash; per-bucket residual corrections</li>
     <li><strong>&sigma;<sub>team</sub></strong> &mdash; separate noise scale for team observations</li>
   </ul>
   <details>
-    <summary>Model hierarchy: 2r &rarr; Team</summary>
+    <summary>Model hierarchy: 3het &rarr; Team</summary>
     <div class="details-content">
       <table>
         <tr><th>Model</th><th>Additions over previous</th><th>Data</th></tr>
-        <tr><td>Model 2r</td><td>&mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub> + f(N) + &delta;&middot;t + &gamma;&middot;log(solve#) + Student-t</td><td>Solo only</td></tr>
+        <tr><td>Model 3het</td><td>&mu; + &alpha;<sub>i</sub> + &beta;<sub>j</sub> + f(N) + &delta;&middot;t + &gamma;&middot;log(solve#) + heteroscedastic Student-t</td><td>Solo only</td></tr>
         <tr><td>Model Team (NST)</td><td>+ logsumexp(&alpha;) + Amdahl(s) + &eta;[K] + &sigma;<sub>team</sub> + NST mixture</td><td>Solo + Duo + Group</td></tr>
       </table>
-      <p class="footnote">Production model uses NST (Normal + Student-t mixture) likelihood: w&middot;Normal + (1&minus;w)&middot;Student-t at wider scale. Non-centered parameterization via SVI. Velocity is applied per-member inside the logsumexp. Unregistered team members map to a shared __unknown__ puzzler (shrinks toward &alpha;=0).</p>
+      <p class="footnote">Solo production model (3het) uses Student-t likelihood with skill-dependent noise: &sigma;<sub>eff</sub> = &sigma;&middot;exp(&eta;<sub>noise</sub>&middot;&alpha;/300). Team model uses NST (Normal + Student-t mixture) likelihood: w&middot;Normal + (1&minus;w)&middot;Student-t at wider scale. Non-centered parameterization via SVI. Velocity is applied per-member inside the logsumexp. Unregistered team members map to a shared __unknown__ puzzler (shrinks toward &alpha;=0).</p>
     </div>
   </details>
   <details>
@@ -797,7 +798,7 @@ log_time ~ w&middot;Normal(mean, &sigma;) + (1&minus;w)&middot;StudentT(&nu;, me
   <p>Both models evaluated on the <em>same solo test set</em>. Does adding team data improve solo predictions?</p>
   <div id="comparison-callout"></div>
   <table class="comparison-table" id="comparison-table">
-    <thead><tr><th>Metric</th><th>Solo-Only (2r)</th><th>Joint (Team)</th><th>Delta</th></tr></thead>
+    <thead><tr><th>Metric</th><th>Solo-Only (3het)</th><th>Joint (Team)</th><th>Delta</th></tr></thead>
     <tbody id="comparison-body"></tbody>
   </table>
   <details>
