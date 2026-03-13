@@ -12,12 +12,14 @@ Model hierarchy:
   Model 2c: + physical piece-count correction + velocity  (Student-t)
   Model team: + logsumexp team alpha + Amdahl's law  (Student-t)
   Model team_gmm: same as team but contaminated Normal likelihood
-  Model team_nst: same as team but Normal + Student-t mixture likelihood
+  Model team_nst: same as team but Normal + Student-t mixture likelihood (BASELINE)
+  Model (production): autoresearch-improved model_team_nst with latent factors,
+    heteroscedastic noise, source effects, saturating functions, and N^1.5 basis
 
 Piece-count correction uses physically-motivated basis functions that sum additively
-in time space: time(N) = w0*sqrt(N) + w1*N + w2*N*log(N) + w3*N^2, then converts
-to mB centered at N_REF. This gives sensible extrapolation (log-time grows as at
-most 2*log(N), not exponentially).
+in time space, then converts to mB centered at N_REF.
+  Production model: time(N) = w0*sqrt(N) + w1*N + w2*N^1.5 + w3*N*log(N)
+  Baseline/legacy:  time(N) = w0*sqrt(N) + w1*N + w2*N*log(N) + w3*N^2
 """
 
 import jax
@@ -30,8 +32,11 @@ from numpyro.infer.reparam import LocScaleReparam
 # Reference piece count for centering the physical basis correction
 N_REF = 500.0
 
-# Physical basis function names: [sqrt(N), N, N*log(N), N^2]
-PHYS_BASIS_NAMES = ["sqrt_N", "N", "N_log_N", "N_sq"]
+# Physical basis function names for production model: [sqrt(N), N, N^1.5, N*log(N)]
+PHYS_BASIS_NAMES = ["sqrt_N", "N", "N_1.5", "N_log_N"]
+
+# Baseline basis names (model_team_nst and earlier): [sqrt(N), N, N*log(N), N^2]
+BASELINE_PHYS_BASIS_NAMES = ["sqrt_N", "N", "N_log_N", "N_sq"]
 
 
 def model_1t(puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles,
@@ -636,6 +641,168 @@ def model_team_nst(
         numpyro.sample("log_time", obs_dist, obs=log_time)
 
 
+def model(
+    puzzler_idx, puzzle_idx, pieces, n_puzzlers, n_puzzles,
+    mu_fixed=None, year=None, log_time=None,
+    solve_number=None,
+    team_member_idx=None,
+    team_mask=None,
+    team_size=None,
+    source_idx=None, n_sources=4,
+    **kwargs,
+):
+    """Production model: autoresearch-improved joint solo+team model.
+
+    Improvements over model_team_nst (baseline):
+      - Latent factors: f_puzzler * f_puzzle captures puzzler-puzzle affinity
+      - Per-puzzler piece-count slope: pc_slope * (sqrt(N/N_REF) - 1)
+      - Heteroscedastic noise: harder obs → noisier, with asymmetric coefficients
+      - Source effects: per-source bias and noise scaling
+      - Saturating velocity: tanh(t / 1.5) caps effect beyond ~1.5 years
+      - Saturating practice: tanh(log(solve_number))
+      - Updated basis: [sqrt(N), N, N^1.5, N*log(N)] (replaces N^2 with N^1.5)
+      - Piece-dependent Amdahl: s varies with piece count
+      - Relaxed mixture: w_clean = w_raw (unconstrained), k_sigma = k_raw
+    """
+    mu = numpyro.deterministic("mu", jnp.float32(mu_fixed))
+    sigma = numpyro.sample("sigma", dist.LogNormal(jnp.log(60.0), 0.5))
+    nu = numpyro.sample("nu", dist.Gamma(2.0, 0.1))
+    sigma_alpha = numpyro.sample("sigma_alpha", dist.HalfNormal(300.0))
+    sigma_beta = numpyro.sample("sigma_beta", dist.HalfNormal(300.0))
+
+    # Mixture weight: fraction in Normal component (unconstrained via Beta)
+    w_raw = numpyro.sample("w_raw", dist.Beta(4, 1))
+    w_clean = numpyro.deterministic("w_clean", w_raw)
+    # Student-t scale multiplier (LogNormal ensures > 0, prior centered ~4.5)
+    k_raw = numpyro.sample("k_raw", dist.LogNormal(1.5, 0.5))
+    k_sigma = numpyro.deterministic("k_sigma", k_raw)
+
+    # Physical basis weights
+    log_w = numpyro.sample("log_w", dist.Normal(0, 5.0).expand([4]))
+
+    # Velocity
+    delta_0 = numpyro.sample("delta_0", dist.Normal(0, 100.0))
+    sigma_delta = numpyro.sample("sigma_delta", dist.HalfNormal(100.0))
+
+    # Practice effect (global)
+    gamma = numpyro.sample("gamma", dist.Normal(0, 200.0))
+
+    # Discrimination: alpha-beta interaction (rescaled, units: mB)
+    disc = numpyro.sample("disc", dist.Normal(0, 450.0))
+
+    # Latent factor: captures puzzler-puzzle affinity beyond main effects
+    sigma_f_puzzler = numpyro.sample("sigma_f_puzzler", dist.HalfNormal(50.0))
+    sigma_f_puzzle = numpyro.sample("sigma_f_puzzle", dist.HalfNormal(50.0))
+    # Per-puzzler piece-count slope: some puzzlers scale differently with piece count
+    sigma_pc_slope = numpyro.sample("sigma_pc_slope", dist.HalfNormal(50.0))
+
+    # Piece-count-dependent noise: larger puzzles → more variable times
+    eta_pieces = numpyro.sample("eta_pieces", dist.Normal(0, 0.5))
+
+    # Per-source bias (MSP self-reported vs SP competition may differ)
+    source_bias = numpyro.sample("source_bias", dist.Normal(0, 50.0).expand([n_sources]))
+    # Per-source noise scaling (log-multiplicative, centered at 0)
+    source_noise = numpyro.sample("source_noise", dist.Normal(0, 0.5).expand([n_sources]))
+
+    # Team parameters
+    logit_s = numpyro.sample("logit_s", dist.Normal(0, 2.0))
+    s_pieces = numpyro.sample("s_pieces", dist.Normal(0, 1.0))  # piece-dependent Amdahl
+    eta_team = numpyro.sample("eta_team", dist.Normal(0, 50.0).expand([3]))
+    # Team noise as offset from solo sigma (log-multiplicative)
+    team_noise_offset = numpyro.sample("team_noise_offset", dist.Normal(0, 1.0))
+
+    with numpyro.plate("puzzlers", n_puzzlers):
+        alpha = numpyro.sample("alpha", dist.Normal(0, sigma_alpha))
+        delta = numpyro.sample("delta", dist.Normal(0, sigma_delta))
+        f_puzzler = numpyro.sample("f_puzzler", dist.Normal(0, sigma_f_puzzler))
+        pc_slope = numpyro.sample("pc_slope", dist.Normal(0, sigma_pc_slope))
+
+    with numpyro.plate("puzzles", n_puzzles):
+        beta = numpyro.sample("beta", dist.Normal(0, sigma_beta))
+        f_puzzle = numpyro.sample("f_puzzle", dist.Normal(0, sigma_f_puzzle))
+
+    # Physical basis correction: [sqrt(N), N, N^1.5, N*log(N)]
+    N = jnp.asarray(pieces, dtype=jnp.float32)
+    g = jnp.column_stack([jnp.sqrt(N), N, N ** 1.5, N * jnp.log(N)])
+    g_ref = jnp.array([jnp.sqrt(N_REF), N_REF, N_REF ** 1.5, N_REF * jnp.log(N_REF)])
+    w = jnp.exp(log_w)
+    time_contrib = jnp.dot(g, w)
+    time_ref = jnp.dot(g_ref, w)
+    mB_scale = 1000.0 / jnp.log(10.0)
+    piece_correction = mB_scale * (jnp.log(time_contrib) - jnp.log(time_ref))
+
+    # Practice
+    sn = jnp.asarray(solve_number, dtype=jnp.float32) if solve_number is not None else jnp.ones(len(puzzler_idx))
+    repeat_effect = gamma * jnp.tanh(jnp.log(sn))
+
+    # --- Team alpha ---
+    team_member_idx = jnp.asarray(team_member_idx, dtype=jnp.int32)
+    team_mask_arr = jnp.asarray(team_mask, dtype=jnp.float32)
+    team_size_arr = jnp.asarray(team_size, dtype=jnp.float32)
+
+    alpha_gathered = alpha[team_member_idx]
+    delta_gathered = delta[team_member_idx]
+    t = jnp.asarray(year, dtype=jnp.float32) - YEAR_CENTER if year is not None else 0.0
+    # Include per-member factor and pc_slope in alpha before team aggregation
+    f_gathered = f_puzzler[team_member_idx]  # (n_obs, MAX_TEAM_SIZE)
+    pc_gathered = pc_slope[team_member_idx]
+    pc_basis = (jnp.sqrt(N / N_REF) - 1.0)
+    t_sat = jnp.tanh(t / 1.5)  # saturating velocity: caps effect beyond ~1.5 years
+    alpha_with_factor = alpha_gathered + (delta_0 + delta_gathered) * t_sat[:, None] + f_gathered * f_puzzle[puzzle_idx][:, None] + pc_gathered * pc_basis[:, None]
+
+    # Parallel speedup: logsumexp of rates (harmonic mean in time-space)
+    rates = jnp.where(team_mask_arr, jnp.exp(-alpha_with_factor / mB_scale), 0.0)
+    total_rate = jnp.sum(rates, axis=1)
+    alpha_parallel = -mB_scale * jnp.log(total_rate)
+
+    # Amdahl: blend between parallel (fast) and softmax-weighted serial
+    # Softmax weights emphasize weaker (slower, higher alpha) members
+    softmax_weights = jnp.where(team_mask_arr, jax.nn.softmax(alpha_with_factor / mB_scale, axis=1), 0.0)
+    alpha_softmax = jnp.sum(alpha_with_factor * softmax_weights, axis=1)
+    s = jax.nn.sigmoid(logit_s + s_pieces * jnp.log(N / N_REF))
+    numpyro.deterministic("s_mean", jax.nn.sigmoid(jnp.float32(logit_s)))
+    # s=0: fully parallel, s=1: softmax-weighted (bottleneck-leaning)
+    alpha_team = (1 - s) * alpha_parallel + s * alpha_softmax
+    amdahl_correction = alpha_team - alpha_parallel
+
+    is_team = team_size_arr > 1
+    team_bucket = jnp.clip(team_size_arr.astype(jnp.int32) - 2, 0, 2)
+    eta_correction = jnp.where(is_team, eta_team[team_bucket], 0.0)
+
+    alpha_eff = alpha_parallel + amdahl_correction + eta_correction
+
+    # Source indices
+    src_idx = jnp.asarray(source_idx, dtype=jnp.int32) if source_idx is not None else jnp.zeros(len(puzzler_idx), dtype=jnp.int32)
+
+    # Noise scaling: piece count + source, applied to BOTH solo and team
+    pc_noise = jnp.power(N / N_REF, eta_pieces)
+    src_noise = jnp.exp(source_noise[src_idx])
+    noise_scale = pc_noise * src_noise
+    sigma_scaled = sigma * noise_scale
+    # Team sigma = solo sigma * exp(team_noise_offset)
+    sigma_team_scaled = sigma * jnp.exp(team_noise_offset) * noise_scale
+    sigma_eff = jnp.where(team_size_arr > 1, sigma_team_scaled, sigma_scaled)
+    # Heteroscedastic: asymmetric — harder obs (het_x>0) noisier, easier obs (het_x<0) quieter
+    het_x = jnp.clip((alpha_eff + beta[puzzle_idx] + piece_correction) / 400.0, -4.0, 4.0)
+    het_coeff = jnp.where(het_x > 0, 0.4, 0.3)  # stronger effect for hard obs
+    sigma_eff = sigma_eff * jnp.exp(het_coeff * het_x + 0.04 * het_x**2)
+
+    # Discrimination: scaled alpha-beta interaction
+    alpha_avg = jnp.sum(alpha_gathered * team_mask_arr, axis=1) / team_size_arr
+    interaction = disc * (alpha_avg / 300.0) * (beta[puzzle_idx] / 300.0)
+
+    # Source bias
+    source_effect = source_bias[src_idx]
+
+    mean = mu + alpha_eff + beta[puzzle_idx] + piece_correction + repeat_effect + interaction + source_effect
+
+    # Normal + wide Student-t mixture likelihood
+    # Normal(mean, sigma_eff) for the core; StudentT(nu, mean, k*sigma_eff) for tails
+    obs_dist = NormalStudentTMixture(w_clean, mean, sigma_eff, nu, k_sigma * sigma_eff)
+    with numpyro.plate("obs", len(puzzler_idx)):
+        numpyro.sample("log_time", obs_dist, obs=log_time)
+
+
 # Non-centered versions for SVI/MCMC efficiency
 model_1t_nc = reparam(model_1t, config={"alpha": LocScaleReparam(0), "beta": LocScaleReparam(0)})
 model_2c_nc = reparam(model_2c, config={
@@ -675,6 +842,13 @@ model_team_nst_nc = reparam(model_team_nst, config={
     "delta": LocScaleReparam(0),
 })
 
+model_nc = reparam(model, config={
+    "alpha": LocScaleReparam(0), "beta": LocScaleReparam(0),
+    "delta": LocScaleReparam(0),
+    "f_puzzler": LocScaleReparam(0), "f_puzzle": LocScaleReparam(0),
+    "pc_slope": LocScaleReparam(0),
+})
+
 MODELS = {
     "model_1t": model_1t_nc,
     "model_2c": model_2c_nc,
@@ -685,4 +859,5 @@ MODELS = {
     "model_team": model_team_nc,
     "model_team_gmm": model_team_gmm_nc,
     "model_team_nst": model_team_nst_nc,
+    "model": model_nc,
 }

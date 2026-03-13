@@ -1,0 +1,1512 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Autoresearch Explorer</title>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&family=Source+Sans+3:wght@300;400;600&family=Source+Code+Pro:wght@400&display=swap");
+
+            :root {
+                --text: #303030;
+                --text-light: #6e6e6e;
+                --accent: #d4a04a;
+                --bg: #fcfcfc;
+                --bg-alt: #f6f4f0;
+                --border: #e0ddd5;
+                --blue: #4a7fb5;
+                --red: #c44e52;
+                --green: #55a868;
+                --purple: #8172b2;
+                --orange: #dd8452;
+                --chart-bg: #fafaf7;
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                font-family: "Source Serif 4", Georgia, serif;
+                color: var(--text);
+                background: var(--bg);
+                line-height: 1.7;
+                -webkit-font-smoothing: antialiased;
+            }
+
+            .container {
+                max-width: 900px;
+                margin: 0 auto;
+                padding: 0 24px;
+            }
+
+            header {
+                border-bottom: 1px solid var(--border);
+                padding: 48px 0 32px;
+                margin-bottom: 40px;
+            }
+            header h1 {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600;
+                font-size: 36px;
+                letter-spacing: -0.5px;
+                margin-bottom: 8px;
+            }
+            header .subtitle {
+                font-size: 18px;
+                color: var(--text-light);
+                font-weight: 300;
+            }
+            header .meta {
+                margin-top: 16px;
+                font-family: "Source Sans 3", sans-serif;
+                font-size: 13px;
+                color: var(--text-light);
+                display: flex;
+                gap: 24px;
+            }
+            header .meta a {
+                color: var(--text-light);
+                text-decoration: none;
+                border-bottom: 1px solid transparent;
+                transition: border-color 0.15s;
+            }
+            header .meta a:hover {
+                border-bottom-color: var(--blue);
+                color: var(--blue);
+            }
+
+            section {
+                margin-bottom: 48px;
+            }
+            h2 {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600;
+                font-size: 22px;
+                margin-bottom: 16px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid var(--border);
+            }
+            h3 {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600;
+                font-size: 16px;
+                margin-bottom: 8px;
+            }
+            p {
+                margin-bottom: 16px;
+                font-size: 16px;
+            }
+
+            .stat-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+                gap: 12px;
+                margin-bottom: 24px;
+            }
+            .stat-card {
+                background: var(--bg-alt);
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                padding: 16px;
+                text-align: center;
+            }
+            .stat-card .value {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600;
+                font-size: 28px;
+                color: var(--blue);
+                display: block;
+            }
+            .stat-card .label {
+                font-family: "Source Sans 3", sans-serif;
+                font-size: 12px;
+                color: var(--text-light);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .chart-container {
+                background: var(--chart-bg);
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                padding: 20px;
+                margin-bottom: 16px;
+                overflow-x: auto;
+            }
+            .chart-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+                margin-bottom: 16px;
+            }
+            @media (max-width: 700px) {
+                .chart-row {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            svg text {
+                font-family: "Source Sans 3", sans-serif;
+                fill: var(--text);
+            }
+            .axis text {
+                font-size: 11px;
+                fill: var(--text-light);
+            }
+            .axis line,
+            .axis path {
+                stroke: var(--border);
+            }
+            .chart-title {
+                font-size: 13px;
+                font-weight: 600;
+                fill: var(--text);
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-family: "Source Sans 3", sans-serif;
+                font-size: 14px;
+                margin-bottom: 16px;
+            }
+            th {
+                background: var(--bg-alt);
+                font-weight: 600;
+                text-align: left;
+                padding: 8px 12px;
+                border-bottom: 2px solid var(--border);
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
+                color: var(--text-light);
+            }
+            td {
+                padding: 6px 12px;
+                border-bottom: 1px solid var(--border);
+            }
+            tr:hover td {
+                background: var(--bg-alt);
+            }
+            .num {
+                font-family: "Source Code Pro", monospace;
+                text-align: right;
+            }
+
+            details.section-collapse {
+                border: none;
+                border-radius: 0;
+                background: none;
+                margin-bottom: 48px;
+            }
+            details.section-collapse[open] {
+                background: none;
+            }
+            details.section-collapse > summary {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600;
+                font-size: 22px;
+                padding: 0 0 8px 0;
+                border-bottom: 1px solid var(--border);
+                margin-bottom: 16px;
+                gap: 10px;
+            }
+            details.section-collapse > summary::before {
+                border-left: 6px solid var(--text-light);
+                border-top: 5px solid transparent;
+                border-bottom: 5px solid transparent;
+            }
+
+            .about-section a {
+                color: var(--blue);
+                text-decoration: none;
+                border-bottom: 1px solid transparent;
+                transition: border-color 0.15s;
+            }
+            .about-section a:hover {
+                border-bottom-color: var(--blue);
+            }
+
+            details {
+                margin-bottom: 16px;
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                background: var(--bg);
+            }
+            details[open] {
+                background: var(--chart-bg);
+            }
+            summary {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600;
+                font-size: 15px;
+                padding: 12px 16px;
+                cursor: pointer;
+                user-select: none;
+                list-style: none;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            summary::-webkit-details-marker {
+                display: none;
+            }
+            summary::before {
+                content: "";
+                display: inline-block;
+                width: 0;
+                height: 0;
+                border-left: 5px solid var(--text-light);
+                border-top: 4px solid transparent;
+                border-bottom: 4px solid transparent;
+                transition: transform 0.15s;
+                flex-shrink: 0;
+            }
+            details[open] > summary::before {
+                transform: rotate(90deg);
+            }
+            .details-content {
+                padding: 0 16px 16px;
+            }
+
+            .metric-highlight {
+                display: inline-block;
+                background: var(--bg-alt);
+                border: 1px solid var(--border);
+                border-radius: 3px;
+                padding: 2px 8px;
+                font-family: "Source Code Pro", monospace;
+                font-size: 13px;
+            }
+
+            .tooltip {
+                position: absolute;
+                pointer-events: none;
+                background: white;
+                border: 1px solid var(--border);
+                border-radius: 3px;
+                padding: 8px 12px;
+                font-family: "Source Sans 3", sans-serif;
+                font-size: 12px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+                z-index: 100;
+                max-width: 280px;
+            }
+            .tooltip .tt-label {
+                color: var(--text-light);
+            }
+            .tooltip .tt-value {
+                font-weight: 600;
+            }
+
+            .equation {
+                font-family: "Source Code Pro", monospace;
+                font-size: 14px;
+                background: var(--bg-alt);
+                padding: 12px 16px;
+                border-radius: 4px;
+                margin: 12px 0;
+                overflow-x: auto;
+                border-left: 3px solid var(--accent);
+            }
+
+            .footnote {
+                font-size: 13px;
+                color: var(--text-light);
+                font-style: italic;
+                margin-top: 4px;
+            }
+
+            .loading {
+                text-align: center;
+                padding: 60px 0;
+                font-family: "Source Sans 3", sans-serif;
+                color: var(--text-light);
+                font-size: 16px;
+            }
+
+            footer {
+                border-top: 1px solid var(--border);
+                padding: 24px 0;
+                margin-top: 48px;
+                font-family: "Source Sans 3", sans-serif;
+                font-size: 13px;
+                color: var(--text-light);
+            }
+            footer a {
+                color: var(--blue);
+                text-decoration: none;
+            }
+            footer a:hover {
+                text-decoration: underline;
+            }
+
+            .arch-table td.new-feature {
+                background: rgba(85, 168, 104, 0.1);
+            }
+            .arch-table td:first-child {
+                font-weight: 600;
+                white-space: nowrap;
+            }
+
+            .innovation-card {
+                background: var(--bg-alt);
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                padding: 16px 20px;
+                margin-bottom: 12px;
+            }
+            .innovation-card h4 {
+                font-family: "Source Sans 3", sans-serif;
+                font-weight: 600;
+                font-size: 15px;
+                margin-bottom: 6px;
+                color: var(--blue);
+            }
+            .innovation-card p {
+                font-size: 14px;
+                margin-bottom: 0;
+                line-height: 1.6;
+            }
+            .innovation-card .commits {
+                font-family: "Source Code Pro", monospace;
+                font-size: 12px;
+                color: var(--text-light);
+                margin-top: 6px;
+            }
+
+            .param-table td:first-child {
+                font-family: "Source Code Pro", monospace;
+                font-weight: 600;
+                font-size: 13px;
+            }
+            .param-table td:nth-child(2),
+            .param-table td:nth-child(3) {
+                font-family: "Source Code Pro", monospace;
+                text-align: right;
+                font-size: 13px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>Autoresearch Explorer</h1>
+                <p class="subtitle">
+                    How 190 automated experiments improved the puzzle model
+                </p>
+                <div class="meta">
+                    <span><a href="index.html">&larr; Back to Puzzle Explorer</a></span>
+                    <span><a href="explorer_solo.html">Solo Explorer</a></span>
+                </div>
+            </header>
+
+            <details class="about-section" open style="margin-bottom: 32px;">
+                <summary>About this page</summary>
+                <div class="details-content" style="font-size: 15px; line-height: 1.7;">
+                    <p>
+                        An automated experimentation loop ("autoresearch") ran approximately 190
+                        experiments on the <strong>model_team_nst</strong> baseline, systematically
+                        exploring model architecture changes, noise models, basis functions, and
+                        regularization strategies. Each experiment was evaluated on held-out test
+                        log predictive density (LPD), and improvements were kept while regressions
+                        were discarded.
+                    </p>
+                    <p>
+                        The process improved the model from a baseline LPD of
+                        <span class="metric-highlight" id="about-baseline">...</span> to
+                        <span class="metric-highlight" id="about-final">...</span>,
+                        a cumulative gain of
+                        <span class="metric-highlight" id="about-improvement" style="color: var(--green);">...</span>.
+                        This page shows the experiment timeline, the key innovations discovered,
+                        and the resulting production model in detail.
+                    </p>
+                    <p style="margin-bottom: 0;">
+                        <strong>Higher LPD is better</strong> &mdash; it means the model assigns higher
+                        probability to the held-out test data. The scale is log-density per observation,
+                        so even small improvements (0.01) represent meaningful gains in prediction quality
+                        across tens of thousands of test observations.
+                    </p>
+                </div>
+            </details>
+
+            <div id="app">
+                <div class="loading">Loading data...</div>
+            </div>
+        </div>
+
+        <div class="tooltip" id="tooltip" style="display: none"></div>
+
+        <script>
+            fetch("explorer_auto_data.json")
+                .then((r) => {
+                    if (!r.ok) throw new Error(`HTTP ${r.status} — file not found. Run the refit script to generate it.`);
+                    return r.json();
+                })
+                .then((DATA) => {
+                    buildApp(DATA);
+                })
+                .catch((err) => {
+                    document.getElementById("app").innerHTML =
+                        `<p style="color: var(--red);">Failed to load explorer_auto_data.json: ${err.message}</p>
+                         <p>Run <code>uv run python -m scripts.refit_team</code> to generate the data file.</p>`;
+                });
+
+            function buildApp(DATA) {
+                const S = DATA.summary || {};
+                const experiments = DATA.experiments || [];
+                const comparison = DATA.comparison || {};
+                const MD = DATA.model_detail || {};
+                const innovations = DATA.innovations || [];
+                const lossCurves = DATA.loss_curves || {};
+
+                // Fill about section metrics
+                const setEl = (id, val) => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = val;
+                };
+                setEl("about-baseline", S.baseline_lpd != null ? S.baseline_lpd.toFixed(3) : "...");
+                setEl("about-final", S.final_lpd != null ? S.final_lpd.toFixed(3) : "...");
+                setEl("about-improvement", S.improvement != null ? "+" + S.improvement.toFixed(3) : "...");
+
+                const nExp = S.n_experiments || experiments.length || 0;
+                const nKept = S.n_kept || 0;
+                const successRate = nExp > 0 ? ((nKept / nExp) * 100).toFixed(1) : "0.0";
+
+                document.getElementById("app").innerHTML = `
+<!-- Section 1: Summary -->
+<details class="section-collapse" open>
+  <summary>Summary</summary>
+  <div class="stat-grid">
+    <div class="stat-card">
+      <span class="value">${S.baseline_lpd != null ? S.baseline_lpd.toFixed(3) : "&mdash;"}</span>
+      <span class="label">Baseline LPD</span>
+    </div>
+    <div class="stat-card">
+      <span class="value">${S.final_lpd != null ? S.final_lpd.toFixed(3) : "&mdash;"}</span>
+      <span class="label">Final LPD</span>
+    </div>
+    <div class="stat-card">
+      <span class="value" style="color: var(--green);">${S.improvement != null ? "+" + S.improvement.toFixed(3) : "&mdash;"}</span>
+      <span class="label">Improvement</span>
+    </div>
+    <div class="stat-card">
+      <span class="value">${nExp}</span>
+      <span class="label">Experiments</span>
+    </div>
+    <div class="stat-card">
+      <span class="value">${nKept}</span>
+      <span class="label">Kept</span>
+    </div>
+    <div class="stat-card">
+      <span class="value">${successRate}%</span>
+      <span class="label">Success Rate</span>
+    </div>
+  </div>
+</details>
+
+<!-- Section 2: Experiment Timeline -->
+<details class="section-collapse" open>
+  <summary>Experiment Timeline</summary>
+  <p>Each point is one experiment. Green = kept (improved LPD), gray = discarded (no improvement), red = crashed. The orange line tracks the cumulative best LPD.</p>
+  <div class="chart-container" id="timeline-chart"></div>
+</details>
+
+<!-- Section 3: Model Architecture Comparison -->
+<details class="section-collapse" open>
+  <summary>Model Architecture Comparison</summary>
+  <p>Structural differences between the starting baseline and the production model after autoresearch.</p>
+  <div style="overflow-x: auto;">
+    <table class="arch-table">
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Baseline (model_team_nst)</th>
+          <th>Production (model)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Likelihood</td>
+          <td>Normal + Student-t mixture (w &gt; 0.5, k &gt; 1)</td>
+          <td class="new-feature">Normal + Student-t (unconstrained w, k)</td>
+        </tr>
+        <tr>
+          <td>Basis</td>
+          <td>[&radic;N, N, N&middot;log(N), N&sup2;]</td>
+          <td class="new-feature">[&radic;N, N, N<sup>1.5</sup>, N&middot;log(N)]</td>
+        </tr>
+        <tr>
+          <td>Velocity</td>
+          <td>linear: &delta;&middot;t</td>
+          <td class="new-feature">saturating: &delta;&middot;tanh(t/1.5)</td>
+        </tr>
+        <tr>
+          <td>Practice</td>
+          <td>&gamma;&middot;log(sn)</td>
+          <td class="new-feature">&gamma;&middot;tanh(log(sn))</td>
+        </tr>
+        <tr>
+          <td>Interaction</td>
+          <td>&mdash;</td>
+          <td class="new-feature">disc &middot; (&alpha;/300)(&beta;/300)</td>
+        </tr>
+        <tr>
+          <td>Latent factors</td>
+          <td>&mdash;</td>
+          <td class="new-feature">f_puzzler &middot; f_puzzle</td>
+        </tr>
+        <tr>
+          <td>PC slope</td>
+          <td>&mdash;</td>
+          <td class="new-feature">pc_slope &middot; (&radic;(N/500) &minus; 1)</td>
+        </tr>
+        <tr>
+          <td>Noise (het)</td>
+          <td>&mdash;</td>
+          <td class="new-feature">exp(c&middot;x + 0.04&middot;x&sup2;), x = (&alpha;+&beta;+pc)/400</td>
+        </tr>
+        <tr>
+          <td>Source effects</td>
+          <td>&mdash;</td>
+          <td class="new-feature">per-source bias + noise scaling</td>
+        </tr>
+        <tr>
+          <td>Amdahl</td>
+          <td>s = &sigma;(logit_s)</td>
+          <td class="new-feature">s = &sigma;(logit_s + s_pieces&middot;log(N/500))</td>
+        </tr>
+        <tr>
+          <td>Team noise</td>
+          <td>&sigma;<sub>team</sub> (separate)</td>
+          <td class="new-feature">&sigma;&middot;exp(team_noise_offset)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+<!-- Section 4: Performance Comparison -->
+<details class="section-collapse">
+  <summary>Performance Comparison</summary>
+  <div id="performance-section"></div>
+</details>
+
+<!-- Section 5: Key Innovations -->
+<details class="section-collapse">
+  <summary>Key Innovations</summary>
+  <p>The major discoveries from the autoresearch process, grouped by category.</p>
+  <div id="innovations-section"></div>
+</details>
+
+<!-- Section 6: Deep Dive: Production Model -->
+<details class="section-collapse">
+  <summary>Deep Dive: Production Model</summary>
+  <div id="deepdive-section"></div>
+</details>
+
+<footer>
+  <p>Automated model improvement via autoresearch. Data from
+    <a href="https://www.myspeedpuzzling.com">myspeedpuzzling.com</a>,
+    <a href="https://www.speedpuzzling.com">speedpuzzling.com</a>, and
+    <a href="https://www.usajigsaw.org">USA Jigsaw</a>.
+    Models fitted with NumPyro (JAX). Visualization built with D3.js.
+    <a href="index.html">Puzzle Explorer</a> &middot;
+    <a href="explorer_solo.html">Solo Explorer</a>
+  </p>
+</footer>
+`;
+
+                // ---- Tooltip ----
+                const tooltip = d3.select("#tooltip");
+                function showTip(event, html) {
+                    tooltip.html(html).style("display", "block");
+                    const r = tooltip.node().getBoundingClientRect();
+                    let x = event.pageX + 12,
+                        y = event.pageY - 12;
+                    if (x + r.width > window.innerWidth - 20)
+                        x = event.pageX - r.width - 12;
+                    tooltip.style("left", x + "px").style("top", y + "px");
+                }
+                function hideTip() {
+                    tooltip.style("display", "none");
+                }
+
+                // ---- Chart helpers ----
+                function makeAxis(svg, xS, yS, w, h, m, xL, yL) {
+                    svg.append("g")
+                        .attr("class", "axis")
+                        .attr("transform", `translate(0,${h - m.bottom})`)
+                        .call(d3.axisBottom(xS).ticks(6))
+                        .append("text")
+                        .attr("x", w / 2)
+                        .attr("y", 36)
+                        .style("text-anchor", "middle")
+                        .style("font-size", "12px")
+                        .style("fill", "#6e6e6e")
+                        .text(xL);
+                    svg.append("g")
+                        .attr("class", "axis")
+                        .attr("transform", `translate(${m.left},0)`)
+                        .call(d3.axisLeft(yS).ticks(5))
+                        .append("text")
+                        .attr("transform", "rotate(-90)")
+                        .attr("x", -h / 2)
+                        .attr("y", -40)
+                        .style("text-anchor", "middle")
+                        .style("font-size", "12px")
+                        .style("fill", "#6e6e6e")
+                        .text(yL);
+                }
+
+                // ---- Section 2: Experiment Timeline ----
+                if (experiments.length > 0) {
+                    buildTimeline(experiments, S);
+                } else {
+                    document.querySelector("#timeline-chart").closest("details").style.display = "none";
+                }
+
+                function buildTimeline(exps, summary) {
+                    const container = d3.select("#timeline-chart");
+                    const W = 856, H = 380;
+                    const m = { top: 20, right: 30, bottom: 50, left: 65 };
+
+                    const svg = container.append("svg")
+                        .attr("viewBox", `0 0 ${W} ${H}`)
+                        .attr("width", "100%");
+
+                    const xS = d3.scaleLinear()
+                        .domain([0, d3.max(exps, d => d.idx) || exps.length])
+                        .range([m.left, W - m.right]);
+
+                    const lpdValues = exps.filter(d => d.lpd != null).map(d => d.lpd);
+                    const yMin = d3.min(lpdValues) - 0.02;
+                    const yMax = d3.max(lpdValues) + 0.02;
+
+                    const yS = d3.scaleLinear()
+                        .domain([yMin, yMax])
+                        .range([H - m.bottom, m.top]);
+
+                    makeAxis(svg, xS, yS, W, H, m, "Experiment Index", "Heldout LPD");
+
+                    // Baseline dashed line
+                    if (summary.baseline_lpd != null) {
+                        svg.append("line")
+                            .attr("x1", m.left)
+                            .attr("x2", W - m.right)
+                            .attr("y1", yS(summary.baseline_lpd))
+                            .attr("y2", yS(summary.baseline_lpd))
+                            .attr("stroke", "#999")
+                            .attr("stroke-dasharray", "6,4")
+                            .attr("stroke-width", 1);
+                        svg.append("text")
+                            .attr("x", W - m.right - 4)
+                            .attr("y", yS(summary.baseline_lpd) - 6)
+                            .attr("text-anchor", "end")
+                            .style("font-size", "11px")
+                            .style("fill", "#999")
+                            .text("baseline");
+                    }
+
+                    // Cumulative best line
+                    const bestPoints = exps
+                        .filter(d => d.cum_best != null)
+                        .map(d => ({ idx: d.idx, lpd: d.cum_best }));
+
+                    if (bestPoints.length > 0) {
+                        const lineGen = d3.line()
+                            .x(d => xS(d.idx))
+                            .y(d => yS(d.lpd));
+
+                        svg.append("path")
+                            .datum(bestPoints)
+                            .attr("d", lineGen)
+                            .attr("fill", "none")
+                            .attr("stroke", "var(--orange)")
+                            .attr("stroke-width", 2.5);
+                    }
+
+                    // Status color map
+                    const statusColor = d => {
+                        if (d.status === "keep") return "var(--green)";
+                        if (d.status === "crash") return "var(--red)";
+                        return "#bbb";
+                    };
+
+                    // Points
+                    svg.selectAll(".exp-dot")
+                        .data(exps.filter(d => d.lpd != null))
+                        .join("circle")
+                        .attr("class", "exp-dot")
+                        .attr("cx", d => xS(d.idx))
+                        .attr("cy", d => yS(d.lpd))
+                        .attr("r", 3.5)
+                        .attr("fill", statusColor)
+                        .attr("opacity", d => d.status === "keep" ? 0.9 : 0.5)
+                        .attr("stroke", "white")
+                        .attr("stroke-width", 0.5)
+                        .on("mouseover", function (event, d) {
+                            d3.select(this).attr("r", 6);
+                            showTip(event,
+                                `<div><span class="tt-label">Experiment</span> <span class="tt-value">#${d.idx}</span></div>` +
+                                `<div><span class="tt-label">Commit</span> <span class="tt-value">${d.commit || "?"}</span></div>` +
+                                `<div><span class="tt-label">LPD</span> <span class="tt-value">${d.lpd != null ? d.lpd.toFixed(4) : "N/A"}</span></div>` +
+                                `<div><span class="tt-label">Status</span> <span class="tt-value">${d.status}</span></div>` +
+                                (d.description ? `<div style="margin-top:4px;font-size:11px;color:var(--text-light);">${d.description}</div>` : "")
+                            );
+                        })
+                        .on("mousemove", function (event) {
+                            showTip(event, tooltip.html());
+                        })
+                        .on("mouseout", function () {
+                            d3.select(this).attr("r", 3.5);
+                            hideTip();
+                        });
+
+                    // Legend
+                    const legend = svg.append("g")
+                        .attr("transform", `translate(${m.left + 10}, ${m.top + 10})`);
+
+                    const legendItems = [
+                        { label: "Keep", color: "var(--green)" },
+                        { label: "Discard", color: "#bbb" },
+                        { label: "Crash", color: "var(--red)" },
+                        { label: "Cumulative best", color: "var(--orange)", line: true }
+                    ];
+
+                    legendItems.forEach((item, i) => {
+                        const g = legend.append("g")
+                            .attr("transform", `translate(0, ${i * 18})`);
+                        if (item.line) {
+                            g.append("line")
+                                .attr("x1", 0).attr("x2", 14)
+                                .attr("y1", 5).attr("y2", 5)
+                                .attr("stroke", item.color)
+                                .attr("stroke-width", 2.5);
+                        } else {
+                            g.append("circle")
+                                .attr("cx", 7).attr("cy", 5).attr("r", 4)
+                                .attr("fill", item.color);
+                        }
+                        g.append("text")
+                            .attr("x", 20).attr("y", 9)
+                            .style("font-size", "11px")
+                            .style("fill", "var(--text-light)")
+                            .text(item.label);
+                    });
+                }
+
+                // ---- Section 4: Performance Comparison ----
+                buildPerformance(comparison, lossCurves);
+
+                function buildPerformance(comp, curves) {
+                    const el = document.getElementById("performance-section");
+                    if (!comp.baseline && !comp.improved) {
+                        el.innerHTML = "<p>No comparison data available.</p>";
+                        return;
+                    }
+
+                    const B = comp.baseline || {};
+                    const I = comp.improved || {};
+
+                    const metrics = [];
+                    if (B.test_mean_lpd != null || I.test_mean_lpd != null) {
+                        const bv = B.test_mean_lpd;
+                        const iv = I.test_mean_lpd;
+                        const delta = (bv != null && iv != null) ? iv - bv : null;
+                        metrics.push({
+                            name: "Test Mean LPD",
+                            baseline: bv != null ? bv.toFixed(4) : "&mdash;",
+                            production: iv != null ? iv.toFixed(4) : "&mdash;",
+                            delta: delta != null ? (delta >= 0 ? "+" : "") + delta.toFixed(4) : "&mdash;",
+                            deltaColor: delta != null && delta > 0 ? "var(--green)" : (delta != null && delta < 0 ? "var(--red)" : "inherit")
+                        });
+                    }
+
+                    const addMetric = (name, key, fmt, higherBetter) => {
+                        const bv = B[key];
+                        const iv = I[key];
+                        const delta = (bv != null && iv != null) ? iv - bv : null;
+                        const fmtFn = typeof fmt === "function" ? fmt : (v) => v.toFixed(fmt);
+                        const good = higherBetter ? (delta > 0) : (delta < 0);
+                        metrics.push({
+                            name,
+                            baseline: bv != null ? fmtFn(bv) : "&mdash;",
+                            production: iv != null ? fmtFn(iv) : "&mdash;",
+                            delta: delta != null ? (delta >= 0 ? "+" : "") + fmtFn(delta) : "&mdash;",
+                            deltaColor: delta != null ? (good ? "var(--green)" : "var(--red)") : "inherit"
+                        });
+                    };
+
+                    if (I.rmse_log != null) addMetric("RMSE (mB)", "rmse_log", 1, false);
+                    if (I.mae_log != null) addMetric("MAE (mB)", "mae_log", 1, false);
+                    if (I.coverage_90 != null) addMetric("90% Coverage", "coverage_90", v => (v * 100).toFixed(1) + "%", true);
+                    if (I.coverage_50 != null) addMetric("50% Coverage", "coverage_50", v => (v * 100).toFixed(1) + "%", true);
+
+                    let tableHtml = `<table>
+                        <thead><tr><th>Metric</th><th class="num">Baseline</th><th class="num">Production</th><th class="num">&Delta;</th></tr></thead>
+                        <tbody>`;
+                    metrics.forEach(m => {
+                        tableHtml += `<tr>
+                            <td>${m.name}</td>
+                            <td class="num">${m.baseline}</td>
+                            <td class="num">${m.production}</td>
+                            <td class="num" style="color: ${m.deltaColor};">${m.delta}</td>
+                        </tr>`;
+                    });
+                    tableHtml += "</tbody></table>";
+                    el.innerHTML = tableHtml;
+
+                    // Loss curves chart
+                    const bCurve = curves.baseline;
+                    const iCurve = curves.improved;
+                    if (bCurve && bCurve.length > 0 && iCurve && iCurve.length > 0) {
+                        el.innerHTML += '<h3 style="margin-top: 16px;">SVI Loss Curves</h3><div class="chart-container" id="loss-curves-chart"></div>';
+                        buildLossCurves(bCurve, iCurve);
+                    }
+                }
+
+                function buildLossCurves(baseline, improved) {
+                    const container = d3.select("#loss-curves-chart");
+                    const W = 856, H = 300;
+                    const m = { top: 20, right: 100, bottom: 50, left: 65 };
+
+                    const svg = container.append("svg")
+                        .attr("viewBox", `0 0 ${W} ${H}`)
+                        .attr("width", "100%");
+
+                    const maxLen = Math.max(baseline.length, improved.length);
+                    const xS = d3.scaleLinear()
+                        .domain([0, maxLen - 1])
+                        .range([m.left, W - m.right]);
+
+                    const allVals = baseline.concat(improved).filter(v => isFinite(v));
+                    const yS = d3.scaleLinear()
+                        .domain([d3.min(allVals), d3.max(allVals)])
+                        .nice()
+                        .range([H - m.bottom, m.top]);
+
+                    makeAxis(svg, xS, yS, W, H, m, "SVI Step", "ELBO Loss");
+
+                    const lineGen = d3.line()
+                        .defined(d => isFinite(d[1]))
+                        .x(d => xS(d[0]))
+                        .y(d => yS(d[1]));
+
+                    svg.append("path")
+                        .datum(baseline.map((v, i) => [i, v]))
+                        .attr("d", lineGen)
+                        .attr("fill", "none")
+                        .attr("stroke", "#999")
+                        .attr("stroke-width", 1.5)
+                        .attr("stroke-dasharray", "4,3");
+
+                    svg.append("path")
+                        .datum(improved.map((v, i) => [i, v]))
+                        .attr("d", lineGen)
+                        .attr("fill", "none")
+                        .attr("stroke", "var(--blue)")
+                        .attr("stroke-width", 1.5);
+
+                    // Labels
+                    svg.append("text")
+                        .attr("x", W - m.right + 8)
+                        .attr("y", yS(baseline[baseline.length - 1]) + 4)
+                        .style("font-size", "11px")
+                        .style("fill", "#999")
+                        .text("Baseline");
+
+                    svg.append("text")
+                        .attr("x", W - m.right + 8)
+                        .attr("y", yS(improved[improved.length - 1]) + 4)
+                        .style("font-size", "11px")
+                        .style("fill", "var(--blue)")
+                        .text("Production");
+                }
+
+                // ---- Section 5: Key Innovations ----
+                buildInnovations(innovations);
+
+                function buildInnovations(items) {
+                    const el = document.getElementById("innovations-section");
+                    if (!items || items.length === 0) {
+                        el.innerHTML = "<p>No innovation data available.</p>";
+                        return;
+                    }
+                    let html = "";
+                    items.forEach(item => {
+                        html += `<div class="innovation-card">
+                            <h4>${item.category || "Uncategorized"}</h4>
+                            <p>${item.description || ""}</p>
+                            ${item.commits && item.commits.length > 0 ?
+                                `<div class="commits">Commits: ${item.commits.join(", ")}</div>` : ""}
+                        </div>`;
+                    });
+                    el.innerHTML = html;
+                }
+
+                // ---- Section 6: Deep Dive ----
+                buildDeepDive(MD);
+
+                function buildDeepDive(md) {
+                    const el = document.getElementById("deepdive-section");
+                    if (!md || Object.keys(md).length === 0) {
+                        el.innerHTML = "<p>No model detail data available.</p>";
+                        return;
+                    }
+
+                    let html = "";
+
+                    // 6a. Scalar Parameters Table
+                    if (md.scalar_params) {
+                        html += '<h3>Scalar Parameters</h3>';
+                        html += '<table class="param-table"><thead><tr><th>Parameter</th><th class="num">Mean</th><th class="num">Std</th></tr></thead><tbody>';
+                        for (const [name, vals] of Object.entries(md.scalar_params)) {
+                            const mean = vals.mean != null ? vals.mean.toFixed(3) : "&mdash;";
+                            const std = vals.std != null ? vals.std.toFixed(3) : "&mdash;";
+                            html += `<tr><td>${name}</td><td class="num">${mean}</td><td class="num">${std}</td></tr>`;
+                        }
+                        html += '</tbody></table>';
+                    }
+
+                    // 6b. NST Mixture vs Normal
+                    if (md.nst_comparison) {
+                        html += '<h3 style="margin-top: 24px;">NST Mixture vs Normal</h3>';
+                        html += '<div class="chart-container" id="nst-chart"></div>';
+                    }
+
+                    // 6c. Piece-Count Correction Curves
+                    if (md.basis_correction) {
+                        html += '<h3 style="margin-top: 24px;">Piece-Count Correction</h3>';
+                        html += '<p class="footnote">Total piece-count correction in mB as a function of piece count. Shaded bands show posterior uncertainty.</p>';
+                        html += '<div class="chart-container" id="basis-correction-chart"></div>';
+                    }
+
+                    // 6d. Practice Curve
+                    if (md.practice_curve) {
+                        html += '<h3 style="margin-top: 24px;">Practice Curve</h3>';
+                        html += '<p class="footnote">Effect of repeated solves on predicted time. Negative mB means faster.</p>';
+                        html += '<div class="chart-container" id="practice-chart"></div>';
+                    }
+
+                    // 6e. Basis Component Contributions
+                    if (md.basis_components) {
+                        html += '<h3 style="margin-top: 24px;">Basis Component Contributions</h3>';
+                        html += '<p class="footnote">Each physical process contributes differently at different piece counts.</p>';
+                        html += '<div class="chart-container" id="basis-components-chart"></div>';
+                    }
+
+                    // 6f. Process Fractions
+                    if (md.basis_fractions) {
+                        html += '<h3 style="margin-top: 24px;">Process Fractions (Stacked Area)</h3>';
+                        html += '<p class="footnote">Fraction of total solving time attributed to each physical process.</p>';
+                        html += '<div class="chart-container" id="basis-fractions-chart"></div>';
+                    }
+
+                    el.innerHTML = html;
+
+                    // Now render charts into their containers
+                    if (md.nst_comparison) buildNSTChart(md.nst_comparison);
+                    if (md.basis_correction) buildBasisCorrectionChart(md.basis_correction);
+                    if (md.practice_curve) buildPracticeChart(md.practice_curve);
+                    if (md.basis_components) buildBasisComponentsChart(md.basis_components);
+                    if (md.basis_fractions) buildBasisFractionsChart(md.basis_fractions);
+                }
+
+                // ---- 6b: NST Chart ----
+                function buildNSTChart(nst) {
+                    const container = d3.select("#nst-chart");
+                    const W = 856, H = 320;
+                    const m = { top: 20, right: 160, bottom: 50, left: 65 };
+
+                    const svg = container.append("svg")
+                        .attr("viewBox", `0 0 ${W} ${H}`)
+                        .attr("width", "100%");
+
+                    const x = nst.x || [];
+                    const nstPdf = nst.nst_pdf || [];
+                    const normalPdf = nst.normal_pdf || [];
+
+                    if (x.length === 0) return;
+
+                    const xS = d3.scaleLinear()
+                        .domain(d3.extent(x))
+                        .range([m.left, W - m.right]);
+
+                    const allY = nstPdf.concat(normalPdf).filter(v => isFinite(v));
+                    const yS = d3.scaleLinear()
+                        .domain([0, d3.max(allY) * 1.1])
+                        .range([H - m.bottom, m.top]);
+
+                    makeAxis(svg, xS, yS, W, H, m, "Residual (mB)", "Density");
+
+                    const lineGen = d3.line()
+                        .defined(d => isFinite(d[1]))
+                        .x(d => xS(d[0]))
+                        .y(d => yS(d[1]));
+
+                    // Normal (dashed gray)
+                    svg.append("path")
+                        .datum(x.map((v, i) => [v, normalPdf[i]]))
+                        .attr("d", lineGen)
+                        .attr("fill", "none")
+                        .attr("stroke", "#999")
+                        .attr("stroke-width", 1.5)
+                        .attr("stroke-dasharray", "5,3");
+
+                    // NST (solid blue)
+                    svg.append("path")
+                        .datum(x.map((v, i) => [v, nstPdf[i]]))
+                        .attr("d", lineGen)
+                        .attr("fill", "none")
+                        .attr("stroke", "var(--blue)")
+                        .attr("stroke-width", 2);
+
+                    // Annotations
+                    const annotations = [];
+                    if (nst.w_clean != null) annotations.push(`w_clean = ${nst.w_clean.toFixed(3)}`);
+                    if (nst.nu != null) annotations.push(`nu = ${nst.nu.toFixed(1)}`);
+                    if (nst.sigma != null) annotations.push(`sigma = ${nst.sigma.toFixed(1)}`);
+                    if (nst.k_sigma != null) annotations.push(`k_sigma = ${nst.k_sigma.toFixed(1)}`);
+
+                    const annG = svg.append("g")
+                        .attr("transform", `translate(${W - m.right + 12}, ${m.top + 10})`);
+
+                    annG.append("line")
+                        .attr("x1", 0).attr("x2", 16)
+                        .attr("y1", 0).attr("y2", 0)
+                        .attr("stroke", "var(--blue)")
+                        .attr("stroke-width", 2);
+                    annG.append("text")
+                        .attr("x", 22).attr("y", 4)
+                        .style("font-size", "11px").style("fill", "var(--text-light)")
+                        .text("NST Mixture");
+
+                    annG.append("line")
+                        .attr("x1", 0).attr("x2", 16)
+                        .attr("y1", 18).attr("y2", 18)
+                        .attr("stroke", "#999")
+                        .attr("stroke-width", 1.5)
+                        .attr("stroke-dasharray", "5,3");
+                    annG.append("text")
+                        .attr("x", 22).attr("y", 22)
+                        .style("font-size", "11px").style("fill", "var(--text-light)")
+                        .text("Normal");
+
+                    annotations.forEach((t, i) => {
+                        annG.append("text")
+                            .attr("x", 0).attr("y", 50 + i * 16)
+                            .style("font-size", "11px")
+                            .style("fill", "var(--text-light)")
+                            .style("font-family", "'Source Code Pro', monospace")
+                            .text(t);
+                    });
+                }
+
+                // ---- 6c: Basis Correction Chart ----
+                function buildBasisCorrectionChart(bc) {
+                    const container = d3.select("#basis-correction-chart");
+                    const W = 856, H = 320;
+                    const m = { top: 20, right: 30, bottom: 50, left: 65 };
+
+                    const svg = container.append("svg")
+                        .attr("viewBox", `0 0 ${W} ${H}`)
+                        .attr("width", "100%");
+
+                    const pieces = bc.pieces || [];
+                    const meanV = bc.mean || [];
+                    const q = bc.quantiles || {};
+
+                    if (pieces.length === 0) return;
+
+                    const xS = d3.scaleLog()
+                        .domain([d3.min(pieces), d3.max(pieces)])
+                        .range([m.left, W - m.right]);
+
+                    // Gather all values for y domain
+                    let allY = [...meanV];
+                    Object.values(q).forEach(arr => { allY = allY.concat(arr); });
+                    allY = allY.filter(v => isFinite(v));
+
+                    const yS = d3.scaleLinear()
+                        .domain([d3.min(allY) * 1.05, d3.max(allY) * 1.05])
+                        .nice()
+                        .range([H - m.bottom, m.top]);
+
+                    // Custom log axis
+                    svg.append("g")
+                        .attr("class", "axis")
+                        .attr("transform", `translate(0,${H - m.bottom})`)
+                        .call(d3.axisBottom(xS).ticks(6, "~s"))
+                        .append("text")
+                        .attr("x", W / 2).attr("y", 36)
+                        .style("text-anchor", "middle")
+                        .style("font-size", "12px").style("fill", "#6e6e6e")
+                        .text("Piece Count");
+
+                    svg.append("g")
+                        .attr("class", "axis")
+                        .attr("transform", `translate(${m.left},0)`)
+                        .call(d3.axisLeft(yS).ticks(5))
+                        .append("text")
+                        .attr("transform", "rotate(-90)")
+                        .attr("x", -H / 2).attr("y", -40)
+                        .style("text-anchor", "middle")
+                        .style("font-size", "12px").style("fill", "#6e6e6e")
+                        .text("Correction (mB)");
+
+                    // Band helper
+                    const bandOpacities = [
+                        { lo: "p5", hi: "p95", opacity: 0.08 },
+                        { lo: "p10", hi: "p90", opacity: 0.12 },
+                        { lo: "p20", hi: "p80", opacity: 0.18 }
+                    ];
+
+                    const areaGen = (loArr, hiArr) => d3.area()
+                        .x((d, i) => xS(pieces[i]))
+                        .y0((d, i) => yS(loArr[i]))
+                        .y1((d, i) => yS(hiArr[i]));
+
+                    bandOpacities.forEach(band => {
+                        if (q[band.lo] && q[band.hi]) {
+                            svg.append("path")
+                                .datum(pieces)
+                                .attr("d", areaGen(q[band.lo], q[band.hi]))
+                                .attr("fill", "var(--blue)")
+                                .attr("opacity", band.opacity);
+                        }
+                    });
+
+                    // Mean line
+                    const lineGen = d3.line()
+                        .x((d, i) => xS(pieces[i]))
+                        .y(d => yS(d));
+
+                    svg.append("path")
+                        .datum(meanV)
+                        .attr("d", lineGen)
+                        .attr("fill", "none")
+                        .attr("stroke", "var(--blue)")
+                        .attr("stroke-width", 2);
+
+                    // Zero line
+                    svg.append("line")
+                        .attr("x1", m.left).attr("x2", W - m.right)
+                        .attr("y1", yS(0)).attr("y2", yS(0))
+                        .attr("stroke", "#999")
+                        .attr("stroke-dasharray", "4,3")
+                        .attr("stroke-width", 0.5);
+                }
+
+                // ---- 6d: Practice Curve ----
+                function buildPracticeChart(pc) {
+                    const container = d3.select("#practice-chart");
+                    const W = 856, H = 300;
+                    const m = { top: 20, right: 100, bottom: 50, left: 65 };
+
+                    const svg = container.append("svg")
+                        .attr("viewBox", `0 0 ${W} ${H}`)
+                        .attr("width", "100%");
+
+                    const sn = pc.solve_numbers || [];
+                    const meanMB = pc.mean_mB || [];
+                    const q10 = pc.q10_mB || [];
+                    const q90 = pc.q90_mB || [];
+
+                    if (sn.length === 0) return;
+
+                    const xS = d3.scaleLinear()
+                        .domain([d3.min(sn), d3.max(sn)])
+                        .range([m.left, W - m.right]);
+
+                    let allY = meanMB.concat(q10).concat(q90).filter(v => isFinite(v));
+                    const yS = d3.scaleLinear()
+                        .domain([d3.min(allY) * 1.1, d3.max(allY) > 0 ? d3.max(allY) * 1.1 : 2])
+                        .nice()
+                        .range([H - m.bottom, m.top]);
+
+                    makeAxis(svg, xS, yS, W, H, m, "Solve Number", "Effect (mB)");
+
+                    // Band
+                    if (q10.length > 0 && q90.length > 0) {
+                        const area = d3.area()
+                            .x((d, i) => xS(sn[i]))
+                            .y0((d, i) => yS(q10[i]))
+                            .y1((d, i) => yS(q90[i]));
+
+                        svg.append("path")
+                            .datum(sn)
+                            .attr("d", area)
+                            .attr("fill", "var(--blue)")
+                            .attr("opacity", 0.15);
+                    }
+
+                    // Mean line
+                    const lineGen = d3.line()
+                        .x((d, i) => xS(sn[i]))
+                        .y(d => yS(d));
+
+                    svg.append("path")
+                        .datum(meanMB)
+                        .attr("d", lineGen)
+                        .attr("fill", "none")
+                        .attr("stroke", "var(--blue)")
+                        .attr("stroke-width", 2);
+
+                    // Zero line
+                    svg.append("line")
+                        .attr("x1", m.left).attr("x2", W - m.right)
+                        .attr("y1", yS(0)).attr("y2", yS(0))
+                        .attr("stroke", "#999")
+                        .attr("stroke-dasharray", "4,3")
+                        .attr("stroke-width", 0.5);
+
+                    // Secondary axis label for percentage
+                    if (pc.mean_pct && pc.mean_pct.length > 0) {
+                        const lastPct = pc.mean_pct[pc.mean_pct.length - 1];
+                        svg.append("text")
+                            .attr("x", W - m.right + 8)
+                            .attr("y", yS(meanMB[meanMB.length - 1]) + 4)
+                            .style("font-size", "11px")
+                            .style("fill", "var(--text-light)")
+                            .text(`${lastPct.toFixed(1)}%`);
+                    }
+                }
+
+                // ---- 6e: Basis Components ----
+                function buildBasisComponentsChart(bc) {
+                    const container = d3.select("#basis-components-chart");
+                    const W = 856, H = 340;
+                    const m = { top: 20, right: 140, bottom: 50, left: 65 };
+
+                    const svg = container.append("svg")
+                        .attr("viewBox", `0 0 ${W} ${H}`)
+                        .attr("width", "100%");
+
+                    const pieces = bc.pieces || [];
+                    if (pieces.length === 0) return;
+
+                    const componentKeys = ["sqrt_N", "N", "N_1.5", "N_log_N"];
+                    const componentLabels = ["\u221AN (edge scanning)", "N (per-piece work)", "N^1.5 (assembly)", "N\u00B7log(N) (search)"];
+                    const componentColors = ["#4a7fb5", "#55a868", "#dd8452", "#8172b2"];
+
+                    // Filter to keys that exist
+                    const activeKeys = [];
+                    const activeLabels = [];
+                    const activeColors = [];
+                    componentKeys.forEach((key, i) => {
+                        if (bc[key] && bc[key].length > 0) {
+                            activeKeys.push(key);
+                            activeLabels.push(componentLabels[i]);
+                            activeColors.push(componentColors[i]);
+                        }
+                    });
+
+                    // Also check for any extra keys not in our default list
+                    Object.keys(bc).forEach(key => {
+                        if (key !== "pieces" && !componentKeys.includes(key) && Array.isArray(bc[key]) && bc[key].length > 0) {
+                            activeKeys.push(key);
+                            activeLabels.push(key);
+                            activeColors.push("#999");
+                        }
+                    });
+
+                    if (activeKeys.length === 0) return;
+
+                    const xS = d3.scaleLog()
+                        .domain([d3.min(pieces), d3.max(pieces)])
+                        .range([m.left, W - m.right]);
+
+                    let allY = [];
+                    activeKeys.forEach(k => { allY = allY.concat(bc[k].filter(v => isFinite(v))); });
+                    const yS = d3.scaleLinear()
+                        .domain([d3.min(allY), d3.max(allY)])
+                        .nice()
+                        .range([H - m.bottom, m.top]);
+
+                    svg.append("g")
+                        .attr("class", "axis")
+                        .attr("transform", `translate(0,${H - m.bottom})`)
+                        .call(d3.axisBottom(xS).ticks(6, "~s"))
+                        .append("text")
+                        .attr("x", (W - m.right - m.left) / 2 + m.left).attr("y", 36)
+                        .style("text-anchor", "middle")
+                        .style("font-size", "12px").style("fill", "#6e6e6e")
+                        .text("Piece Count");
+
+                    svg.append("g")
+                        .attr("class", "axis")
+                        .attr("transform", `translate(${m.left},0)`)
+                        .call(d3.axisLeft(yS).ticks(5))
+                        .append("text")
+                        .attr("transform", "rotate(-90)")
+                        .attr("x", -H / 2).attr("y", -40)
+                        .style("text-anchor", "middle")
+                        .style("font-size", "12px").style("fill", "#6e6e6e")
+                        .text("Contribution (mB)");
+
+                    activeKeys.forEach((key, ki) => {
+                        const lineGen = d3.line()
+                            .defined((d, i) => isFinite(bc[key][i]))
+                            .x((d, i) => xS(pieces[i]))
+                            .y((d, i) => yS(bc[key][i]));
+
+                        svg.append("path")
+                            .datum(pieces)
+                            .attr("d", lineGen)
+                            .attr("fill", "none")
+                            .attr("stroke", activeColors[ki])
+                            .attr("stroke-width", 2);
+                    });
+
+                    // Zero line
+                    svg.append("line")
+                        .attr("x1", m.left).attr("x2", W - m.right)
+                        .attr("y1", yS(0)).attr("y2", yS(0))
+                        .attr("stroke", "#999")
+                        .attr("stroke-dasharray", "4,3")
+                        .attr("stroke-width", 0.5);
+
+                    // Legend
+                    const legend = svg.append("g")
+                        .attr("transform", `translate(${W - m.right + 12}, ${m.top + 10})`);
+
+                    activeLabels.forEach((label, i) => {
+                        const g = legend.append("g")
+                            .attr("transform", `translate(0, ${i * 18})`);
+                        g.append("line")
+                            .attr("x1", 0).attr("x2", 16)
+                            .attr("y1", 5).attr("y2", 5)
+                            .attr("stroke", activeColors[i])
+                            .attr("stroke-width", 2);
+                        g.append("text")
+                            .attr("x", 22).attr("y", 9)
+                            .style("font-size", "10px")
+                            .style("fill", "var(--text-light)")
+                            .text(label);
+                    });
+                }
+
+                // ---- 6f: Basis Fractions (Stacked Area) ----
+                function buildBasisFractionsChart(bf) {
+                    const container = d3.select("#basis-fractions-chart");
+                    const W = 856, H = 340;
+                    const m = { top: 20, right: 140, bottom: 50, left: 65 };
+
+                    const svg = container.append("svg")
+                        .attr("viewBox", `0 0 ${W} ${H}`)
+                        .attr("width", "100%");
+
+                    const pieces = bf.pieces || [];
+                    if (pieces.length === 0) return;
+
+                    const componentKeys = ["sqrt_N", "N", "N_1.5", "N_log_N"];
+                    const componentLabels = ["\u221AN (edge scanning)", "N (per-piece work)", "N^1.5 (assembly)", "N\u00B7log(N) (search)"];
+                    const componentColors = ["#4a7fb5", "#55a868", "#dd8452", "#8172b2"];
+
+                    // Filter to keys that exist and have mean
+                    const activeKeys = [];
+                    const activeLabels = [];
+                    const activeColors = [];
+                    componentKeys.forEach((key, i) => {
+                        const entry = bf[key];
+                        if (entry) {
+                            const vals = entry.mean || entry;
+                            if (Array.isArray(vals) && vals.length > 0) {
+                                activeKeys.push(key);
+                                activeLabels.push(componentLabels[i]);
+                                activeColors.push(componentColors[i]);
+                            }
+                        }
+                    });
+
+                    if (activeKeys.length === 0) return;
+
+                    const xS = d3.scaleLog()
+                        .domain([d3.min(pieces), d3.max(pieces)])
+                        .range([m.left, W - m.right]);
+
+                    const yS = d3.scaleLinear()
+                        .domain([0, 1])
+                        .range([H - m.bottom, m.top]);
+
+                    svg.append("g")
+                        .attr("class", "axis")
+                        .attr("transform", `translate(0,${H - m.bottom})`)
+                        .call(d3.axisBottom(xS).ticks(6, "~s"))
+                        .append("text")
+                        .attr("x", (W - m.right - m.left) / 2 + m.left).attr("y", 36)
+                        .style("text-anchor", "middle")
+                        .style("font-size", "12px").style("fill", "#6e6e6e")
+                        .text("Piece Count");
+
+                    svg.append("g")
+                        .attr("class", "axis")
+                        .attr("transform", `translate(${m.left},0)`)
+                        .call(d3.axisLeft(yS).ticks(5, "%"))
+                        .append("text")
+                        .attr("transform", "rotate(-90)")
+                        .attr("x", -H / 2).attr("y", -40)
+                        .style("text-anchor", "middle")
+                        .style("font-size", "12px").style("fill", "#6e6e6e")
+                        .text("Fraction of Solving Time");
+
+                    // Build stacked data
+                    const stackData = pieces.map((p, i) => {
+                        const row = { idx: i };
+                        activeKeys.forEach(key => {
+                            const entry = bf[key];
+                            const vals = entry.mean || entry;
+                            row[key] = Array.isArray(vals) ? (vals[i] || 0) : 0;
+                        });
+                        return row;
+                    });
+
+                    const stack = d3.stack()
+                        .keys(activeKeys)
+                        .order(d3.stackOrderNone)
+                        .offset(d3.stackOffsetNone);
+
+                    const series = stack(stackData);
+
+                    const areaGen = d3.area()
+                        .x((d, i) => xS(pieces[i]))
+                        .y0(d => yS(d[0]))
+                        .y1(d => yS(d[1]));
+
+                    svg.selectAll(".stack-area")
+                        .data(series)
+                        .join("path")
+                        .attr("class", "stack-area")
+                        .attr("d", areaGen)
+                        .attr("fill", (d, i) => activeColors[i])
+                        .attr("opacity", 0.7);
+
+                    // Legend
+                    const legend = svg.append("g")
+                        .attr("transform", `translate(${W - m.right + 12}, ${m.top + 10})`);
+
+                    activeLabels.forEach((label, i) => {
+                        const g = legend.append("g")
+                            .attr("transform", `translate(0, ${i * 18})`);
+                        g.append("rect")
+                            .attr("x", 0).attr("y", 0)
+                            .attr("width", 14).attr("height", 10)
+                            .attr("fill", activeColors[i])
+                            .attr("opacity", 0.7)
+                            .attr("rx", 2);
+                        g.append("text")
+                            .attr("x", 20).attr("y", 9)
+                            .style("font-size", "10px")
+                            .style("fill", "var(--text-light)")
+                            .text(label);
+                    });
+                }
+            }
+        </script>
+    </body>
+</html>

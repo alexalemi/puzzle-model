@@ -4,10 +4,12 @@
 Outputs explorer_team_data.json for the team explorer page.
 """
 
+import argparse
 import json
 import math
 import random
 import re
+import time as _time
 from pathlib import Path
 
 import jax
@@ -32,7 +34,7 @@ from puzzle_model.data import (
     MAX_TEAM_SIZE,
     UNKNOWN_PUZZLER,
 )
-from puzzle_model.model import MODELS, N_REF, PHYS_BASIS_NAMES, YEAR_CENTER
+from puzzle_model.model import MODELS, N_REF, PHYS_BASIS_NAMES, BASELINE_PHYS_BASIS_NAMES, YEAR_CENTER
 from puzzle_model.inference import run_svi
 from puzzle_model.evaluate import evaluate_predictions
 
@@ -283,57 +285,92 @@ def main():
     print(f"  sigma_team (narrow): {np.mean(sigma_team_gmm_vals):.1f} ± {np.std(sigma_team_gmm_vals):.1f} mB")
     print(f"  sigma*k (wide): {np.mean(sigma_gmm_vals * k_sigma_vals):.1f} mB")
 
-    # ── Fit NST variant: model_team_nst (Normal + Student-t mixture) ──
+    # ── Fit production model (autoresearch-improved) ──
     print(f"\n{'='*60}")
-    print("Fitting model_team_nst (joint solo+team, Normal + Student-t mixture)...")
-    model_team_nst = MODELS["model_team_nst"]
-    # Warm-start near empirical values (same sigma/k as GMM, plus nu for Student-t tails).
-    nst_init = {
+    print("Fitting production model (joint solo+team, autoresearch-improved)...")
+    model_prod = MODELS["model"]
+    prod_init = {
         "sigma": jnp.array(60.0),
-        "sigma_team": jnp.array(80.0),
-        "w_raw": jnp.array(0.9),   # → w_clean ≈ 0.95
-        "k_raw": jnp.array(3.7),   # → k_sigma ≈ 4.7
+        "w_raw": jnp.array(0.9),
+        "k_raw": jnp.array(3.7),
     }
     guide_nst, result_nst = run_svi(
-        model_team_nst, joint_train_data,
-        num_steps=5000, lr=0.005, seed=0, init_values=nst_init,
+        model_prod, joint_train_data,
+        num_steps=15000, lr=0.003, seed=0, init_values=prod_init,
     )
 
-    # Evaluate NST on solo test
+    # Evaluate production model on solo test
     posterior_nst = guide_nst.sample_posterior(
         jax.random.PRNGKey(1), result_nst.params, sample_shape=(500,)
     )
     te_nst = {k: v for k, v in solo_test_data.items() if k != "log_time"}
     te_nst.update(solo_test_team)
-    pred_nst = Predictive(model_team_nst, guide=guide_nst, params=result_nst.params, num_samples=200)
+    pred_nst = Predictive(model_prod, guide=guide_nst, params=result_nst.params, num_samples=200)
     pred_nst_test = pred_nst(jax.random.PRNGKey(1), **te_nst)
     metrics_nst_solo = evaluate_predictions(
         np.array(pred_nst_test["log_time"]),
         np.array(solo_test_data["log_time"]),
     )
 
-    # Test log-likelihood for NST on solo test
+    # Test log-likelihood for production model on solo test
     te_nst_with_obs = dict(solo_test_data)
     te_nst_with_obs.update(solo_test_team)
-    ll_nst = log_likelihood(model_team_nst, posterior_nst, **te_nst_with_obs)
+    ll_nst = log_likelihood(model_prod, posterior_nst, **te_nst_with_obs)
     ll_nst_matrix = np.array(ll_nst["log_time"])
     lppd_nst_i = np.logaddexp.reduce(ll_nst_matrix, axis=0) - np.log(ll_nst_matrix.shape[0])
     mean_lpd_nst = float(np.mean(lppd_nst_i))
-    print(f"  NST solo test mean LPD: {mean_lpd_nst:.4f}")
+    print(f"  Production solo test mean LPD: {mean_lpd_nst:.4f}")
     print(f"  Metrics: {metrics_nst_solo}")
 
-    # NST parameters
+    # Production model parameters
     w_clean_nst = np.array(posterior_nst["w_clean"])
     nu_nst = np.array(posterior_nst["nu"])
     k_sigma_nst = np.array(posterior_nst["k_sigma"])
     sigma_nst = np.array(posterior_nst["sigma"])
-    sigma_team_nst = np.array(posterior_nst["sigma_team"])
+    sigma_vals = np.array(posterior_nst["sigma"])
+    team_noise_offset_vals = np.array(posterior_nst["team_noise_offset"])
+    sigma_team_vals = sigma_vals * np.exp(team_noise_offset_vals)
     print(f"  w_clean: {np.mean(w_clean_nst):.3f} ± {np.std(w_clean_nst):.3f}")
     print(f"  nu: {np.mean(nu_nst):.2f} ± {np.std(nu_nst):.2f}")
     print(f"  k_sigma: {np.mean(k_sigma_nst):.2f} ± {np.std(k_sigma_nst):.2f}")
     print(f"  sigma (core): {np.mean(sigma_nst):.1f} ± {np.std(sigma_nst):.1f} mB")
     print(f"  sigma*k (Student-t): {np.mean(sigma_nst * k_sigma_nst):.1f} mB")
-    print(f"  sigma_team (core): {np.mean(sigma_team_nst):.1f} ± {np.std(sigma_team_nst):.1f} mB")
+    print(f"  sigma_team (derived): {np.mean(sigma_team_vals):.1f} ± {np.std(sigma_team_vals):.1f} mB")
+
+    # ── Fit baseline: model_team_nst on same joint data ──
+    print(f"\n{'='*60}")
+    print("Fitting baseline model_team_nst...")
+    model_baseline = MODELS["model_team_nst"]
+    baseline_init = {
+        "sigma": jnp.array(60.0),
+        "sigma_team": jnp.array(80.0),
+        "w_raw": jnp.array(0.9),
+        "k_raw": jnp.array(3.7),
+    }
+    guide_baseline, result_baseline = run_svi(
+        model_baseline, joint_train_data,
+        num_steps=5000, lr=0.005, seed=0, init_values=baseline_init,
+    )
+
+    # Evaluate baseline on solo test
+    posterior_baseline = guide_baseline.sample_posterior(
+        jax.random.PRNGKey(1), result_baseline.params, sample_shape=(500,)
+    )
+    te_baseline = {k: v for k, v in solo_test_data.items() if k != "log_time"}
+    te_baseline.update(solo_test_team)
+    ll_baseline = log_likelihood(model_baseline, posterior_baseline, **{**solo_test_data, **solo_test_team})
+    ll_baseline_matrix = np.array(ll_baseline["log_time"])
+    lppd_baseline_i = np.logaddexp.reduce(ll_baseline_matrix, axis=0) - np.log(ll_baseline_matrix.shape[0])
+    mean_lpd_nst_baseline = float(np.mean(lppd_baseline_i))
+    pred_baseline = Predictive(model_baseline, guide=guide_baseline, params=result_baseline.params, num_samples=200)
+    pred_baseline_test = pred_baseline(jax.random.PRNGKey(1), **te_baseline)
+    metrics_baseline_solo = evaluate_predictions(
+        np.array(pred_baseline_test["log_time"]),
+        np.array(solo_test_data["log_time"]),
+    )
+    print(f"  Baseline solo test mean LPD: {mean_lpd_nst_baseline:.4f}")
+    print(f"  Metrics: {metrics_baseline_solo}")
+    print(f"  Delta (production - baseline): {mean_lpd_nst - mean_lpd_nst_baseline:+.4f}")
 
     # ── Held-out team evaluation ──
     def eval_team_subset(label, data_dict, arrays_dict, model_fn, guide, params, posterior):
@@ -377,14 +414,14 @@ def main():
     else:
         mlpd_group_gmm, metrics_group_gmm = None, None
 
-    print(f"\nHeld-out team evaluation (NST model):")
+    print(f"\nHeld-out team evaluation (production model):")
     mlpd_team_all_nst, metrics_team_all_nst = eval_team_subset(
-        "All team", team_test_data, team_test_arrays, model_team_nst, guide_nst, result_nst.params, posterior_nst)
+        "All team", team_test_data, team_test_arrays, model_prod, guide_nst, result_nst.params, posterior_nst)
     mlpd_duo_nst, metrics_duo_nst = eval_team_subset(
-        "Duo only", duo_test_data, duo_test_arrays, model_team_nst, guide_nst, result_nst.params, posterior_nst)
+        "Duo only", duo_test_data, duo_test_arrays, model_prod, guide_nst, result_nst.params, posterior_nst)
     if len(group_test) > 0:
         mlpd_group_nst, metrics_group_nst = eval_team_subset(
-            "Group only", group_test_data, group_test_arrays, model_team_nst, guide_nst, result_nst.params, posterior_nst)
+            "Group only", group_test_data, group_test_arrays, model_prod, guide_nst, result_nst.params, posterior_nst)
     else:
         mlpd_group_nst, metrics_group_nst = None, None
 
@@ -396,20 +433,21 @@ def main():
         ("Solo test (solo model)", len(solo_test), mean_lpd_solo, metrics_solo),
         ("Solo test (Student-t joint)", len(solo_test), mean_lpd_joint, metrics_joint),
         ("Solo test (GMM joint)", len(solo_test), mean_lpd_gmm, metrics_gmm_solo),
-        ("Solo test (NST joint)", len(solo_test), mean_lpd_nst, metrics_nst_solo),
+        ("Solo test (NST baseline)", len(solo_test), mean_lpd_nst_baseline, metrics_baseline_solo),
+        ("Solo test (production)", len(solo_test), mean_lpd_nst, metrics_nst_solo),
         ("Team test (Student-t)", len(team_test), mlpd_team_all, metrics_team_all),
         ("Team test (GMM)", len(team_test), mlpd_team_all_gmm, metrics_team_all_gmm),
-        ("Team test (NST)", len(team_test), mlpd_team_all_nst, metrics_team_all_nst),
+        ("Team test (production)", len(team_test), mlpd_team_all_nst, metrics_team_all_nst),
         ("Duo test (Student-t)", len(duo_test), mlpd_duo, metrics_duo),
         ("Duo test (GMM)", len(duo_test), mlpd_duo_gmm, metrics_duo_gmm),
-        ("Duo test (NST)", len(duo_test), mlpd_duo_nst, metrics_duo_nst),
+        ("Duo test (production)", len(duo_test), mlpd_duo_nst, metrics_duo_nst),
     ]
     if mlpd_group is not None:
         rows.append(("Group test (Student-t)", len(group_test), mlpd_group, metrics_group))
     if mlpd_group_gmm is not None:
         rows.append(("Group test (GMM)", len(group_test), mlpd_group_gmm, metrics_group_gmm))
     if mlpd_group_nst is not None:
-        rows.append(("Group test (NST)", len(group_test), mlpd_group_nst, metrics_group_nst))
+        rows.append(("Group test (production)", len(group_test), mlpd_group_nst, metrics_group_nst))
     for label, n, lpd, m in rows:
         print(f"{label:<35} {n:>7,} {lpd:>10.4f} {m['rmse_log']:>10.2f} {m['mae_log']:>10.2f} "
               f"{m['coverage_90']:>8.4f} {m['coverage_50']:>8.4f}")
@@ -420,11 +458,11 @@ def main():
     print(f"Delta solo mean LPD (GMM - solo):       {delta_lpd_gmm:+.4f}")
     print(f"Delta solo mean LPD (NST - solo):       {delta_lpd_nst:+.4f}")
     print(f"Delta solo mean LPD (NST - Student-t):  {mean_lpd_nst - mean_lpd_joint:+.4f}")
+    print(f"Delta solo mean LPD (prod - baseline):  {mean_lpd_nst - mean_lpd_nst_baseline:+.4f}")
 
-    # ── Team parameters: Amdahl's s + per-bucket eta + sigma_team (from NST production model) ──
-    s_vals = np.array(posterior_nst["s"])
+    # ── Team parameters: Amdahl's s + per-bucket eta + sigma_team (from production model) ──
+    s_vals = np.array(posterior_nst["s_mean"])
     eta_vals = np.array(posterior_nst["eta_team"])  # (n_samples, 3)
-    sigma_team_vals = np.array(posterior_nst["sigma_team"])
     bucket_labels = ["K=2", "K=3", "K≥4"]
 
     team_params = {
@@ -516,14 +554,14 @@ def main():
                 "mean": round(float(np.mean(vals)), 4),
                 "std": round(float(np.std(vals)), 4),
             }
-    # Add team-only params to joint column (from NST posterior)
+    # Add team-only params to joint column (from production posterior)
     scalar_comparison["joint"]["s"] = {
-        "mean": round(float(np.mean(np.array(posterior_nst["s"]))), 4),
-        "std": round(float(np.std(np.array(posterior_nst["s"]))), 4),
+        "mean": round(float(np.mean(np.array(posterior_nst["s_mean"]))), 4),
+        "std": round(float(np.std(np.array(posterior_nst["s_mean"]))), 4),
     }
     scalar_comparison["joint"]["sigma_team"] = {
-        "mean": round(float(np.mean(np.array(posterior_nst["sigma_team"]))), 4),
-        "std": round(float(np.std(np.array(posterior_nst["sigma_team"]))), 4),
+        "mean": round(float(np.mean(sigma_team_vals)), 4),
+        "std": round(float(np.std(sigma_team_vals)), 4),
     }
     for bi, label in enumerate(["eta_2", "eta_3", "eta_4plus"]):
         vals = np.array(posterior_nst["eta_team"][:, bi])
@@ -541,32 +579,33 @@ def main():
         "std": round(float(np.std(np.array(posterior_nst["k_sigma"]))), 4),
     }
 
-    # ── Predicted vs observed scatter (solo model, logsumexp with velocity) ──
-    alpha_arr = np.mean(np.array(posterior_solo["alpha"]), axis=0)
-    beta_arr = np.mean(np.array(posterior_solo["beta"]), axis=0)
-    log_w_arr = np.mean(np.array(posterior_solo["log_w"]), axis=0)
-    delta_0_val = float(np.mean(np.array(posterior_solo["delta_0"])))
-    delta_arr = np.mean(np.array(posterior_solo["delta"]), axis=0)
-    gamma_val = float(np.mean(np.array(posterior_solo["gamma"])))
+    # ── Predicted vs observed scatter (production model, logsumexp with velocity) ──
+    alpha_arr = np.mean(np.array(posterior_nst["alpha"]), axis=0)
+    beta_arr = np.mean(np.array(posterior_nst["beta"]), axis=0)
+    log_w_arr = np.mean(np.array(posterior_nst["log_w"]), axis=0)
+    delta_0_val = float(np.mean(np.array(posterior_nst["delta_0"])))
+    delta_arr = np.mean(np.array(posterior_nst["delta"]), axis=0)
+    gamma_val = float(np.mean(np.array(posterior_nst["gamma"])))
 
     pieces_all = df_all["puzzle_pieces"].values.astype(float)
     N_arr = pieces_all
-    g_all = np.column_stack([np.sqrt(N_arr), N_arr, N_arr * np.log(N_arr), N_arr ** 2])
-    g_ref = np.array([np.sqrt(N_REF), N_REF, N_REF * np.log(N_REF), N_REF ** 2])
+    g_all = np.column_stack([np.sqrt(N_arr), N_arr, N_arr ** 1.5, N_arr * np.log(N_arr)])
+    g_ref = np.array([np.sqrt(N_REF), N_REF, N_REF ** 1.5, N_REF * np.log(N_REF)])
     w_arr = np.exp(log_w_arr)
     mB_scale_np = 1000.0 / np.log(10.0)
     pc_all = mB_scale_np * (np.log(g_all @ w_arr) - np.log(g_ref @ w_arr))
 
     t_all = df_all["year_frac"].values.astype(float) - YEAR_CENTER
     sn_all = df_all["solve_number"].values.astype(float)
-    rep_all = gamma_val * np.log(sn_all)
+    rep_all = gamma_val * np.tanh(np.log(sn_all))
 
     ta = build_team_arrays(df_all, puzzler_lookup, player_links=player_links)
     alpha_gathered = alpha_arr[ta["team_member_idx"]]  # (n_obs, MAX_TEAM_SIZE)
     delta_gathered = delta_arr[ta["team_member_idx"]]  # (n_obs, MAX_TEAM_SIZE)
 
     # Per-member velocity-adjusted alpha, then logsumexp
-    alpha_adjusted = alpha_gathered + (delta_0_val + delta_gathered) * t_all[:, None]
+    t_sat = np.tanh(t_all / 1.5)
+    alpha_adjusted = alpha_gathered + (delta_0_val + delta_gathered) * t_sat[:, None]
     rates = np.where(ta["team_mask"], np.exp(-alpha_adjusted / mB_scale_np), 0.0)
     total_rate = np.sum(rates, axis=1)
     alpha_parallel_all = -mB_scale_np * np.log(total_rate)
@@ -598,7 +637,7 @@ def main():
             "std": round(float(np.std(resid)), 1),
             "n": int(sel.sum()),
         }
-    print(f"\nSolo-model residuals by team size:")
+    print(f"\nProduction-model residuals by team size:")
     for k, v in residual_by_k.items():
         print(f"  K={k}: {v['mean']:+.1f} ± {v['std']:.1f} mB (n={v['n']:,})")
 
@@ -767,8 +806,8 @@ def main():
     # Piece-count correction for difficulty
     n_puzzles_total = len(beta_mean)
     pc_array = np.array([float(puzzle_pieces_map.get(i, N_REF)) for i in range(n_puzzles_total)])
-    g_pz = np.column_stack([np.sqrt(pc_array), pc_array, pc_array * np.log(pc_array), pc_array ** 2])
-    g_ref_pz = np.array([np.sqrt(N_REF), N_REF, N_REF * np.log(N_REF), N_REF ** 2])
+    g_pz = np.column_stack([np.sqrt(pc_array), pc_array, pc_array ** 1.5, pc_array * np.log(pc_array)])
+    g_ref_pz = np.array([np.sqrt(N_REF), N_REF, N_REF ** 1.5, N_REF * np.log(N_REF)])
     w_samp = np.exp(log_w_samples)
     time_pz = g_pz @ w_samp.T
     time_ref_pz = g_ref_pz @ w_samp.T
@@ -883,9 +922,9 @@ def main():
         "mean": round(float(np.mean(np.array(params_1["k_sigma"]))), 4),
         "std": round(float(np.std(np.array(params_1["k_sigma"]))), 4),
     }
-    # Team params (from NST posterior)
-    s_nst_vals = np.array(posterior_nst["s"])
-    sigma_team_nst_vals = np.array(posterior_nst["sigma_team"])
+    # Team params (from production posterior)
+    s_nst_vals = np.array(posterior_nst["s_mean"])
+    sigma_team_nst_vals = sigma_team_vals  # already computed above
     scalar_params_detail["s"] = {
         "mean": round(float(np.mean(s_nst_vals)), 4),
         "std": round(float(np.std(s_nst_vals)), 4),
@@ -923,8 +962,8 @@ def main():
     # Basis correction curve
     pieces_range = np.array([50, 100, 150, 200, 300, 500, 750, 1000, 1500, 2000, 3000, 5000, 8000, 13500])
     w_samples = np.exp(log_w_samples)
-    g_curve = np.column_stack([np.sqrt(pieces_range), pieces_range, pieces_range * np.log(pieces_range), pieces_range ** 2])
-    g_ref_curve = np.array([np.sqrt(N_REF), N_REF, N_REF * np.log(N_REF), N_REF ** 2])
+    g_curve = np.column_stack([np.sqrt(pieces_range), pieces_range, pieces_range ** 1.5, pieces_range * np.log(pieces_range)])
+    g_ref_curve = np.array([np.sqrt(N_REF), N_REF, N_REF ** 1.5, N_REF * np.log(N_REF)])
     time_curve = g_curve @ w_samples.T
     time_ref_curve = g_ref_curve @ w_samples.T
     correction_samples = mB_scale * (np.log(time_curve) - np.log(time_ref_curve[None, :]))
@@ -1050,6 +1089,7 @@ def main():
             "solo_only": [round(float(v), 1) for v in result_solo.losses[::10]],
             "joint": [round(float(v), 1) for v in result_joint.losses[::10]],
             "nst": [round(float(v), 1) for v in result_nst.losses[::10]],
+            "baseline": [round(float(v), 1) for v in result_baseline.losses[::10]],
         },
         "puzzlers": puzzlers_list,
         "puzzles": puzzles_list,
@@ -1086,7 +1126,7 @@ def main():
     full_team = build_team_arrays(df_all, puzzler_lookup, player_links=player_links)
     full_no_obs = {k: v for k, v in full_data.items() if k != "log_time"}
     full_no_obs.update(full_team)
-    pp_predictive = Predictive(model_team_nst, guide=guide_nst, params=result_nst.params, num_samples=500)
+    pp_predictive = Predictive(model_prod, guide=guide_nst, params=result_nst.params, num_samples=500)
     pp_samples = np.array(pp_predictive(jax.random.PRNGKey(42), **full_no_obs)["log_time"])
     actual = np.array(full_data["log_time"])
     pp_pred_mean = np.mean(pp_samples, axis=0)
@@ -1126,6 +1166,247 @@ def main():
     obs_path.write_text(obs_output)
     print(f"Wrote {obs_path} ({len(obs_output):,} bytes, {len(obs_by_puzzler):,} puzzlers)")
 
+    # ── Generate explorer_auto_data.json ──
+    def parse_results_tsv():
+        """Parse results.tsv from autoresearch experiments."""
+        results_path = root / "results.tsv"
+        if not results_path.exists():
+            return None
+        experiments = []
+        with open(results_path) as f:
+            header = f.readline().strip().split("\t")
+            for idx, line in enumerate(f):
+                parts = line.strip().split("\t")
+                if len(parts) < 5:
+                    continue
+                experiments.append({
+                    "idx": idx,
+                    "commit": parts[0],
+                    "lpd": float(parts[1]) if parts[1] else None,
+                    "memory_gb": float(parts[2]) if parts[2] else 0.0,
+                    "status": parts[3],
+                    "description": parts[4] if len(parts) > 4 else "",
+                })
+        return experiments
+
+    experiments = parse_results_tsv() or []
+
+    # Compute summary stats from experiment history (if available)
+    kept = [e for e in experiments if e["status"] == "keep"]
+    baseline_lpd = experiments[0]["lpd"] if experiments else round(mean_lpd_nst_baseline, 4)
+    best_lpd = max((e["lpd"] for e in kept if e["lpd"] is not None), default=None) if kept else round(mean_lpd_nst, 4)
+
+    # Track cumulative best for timeline
+    cum_best = baseline_lpd
+    for e in experiments:
+        if e["status"] == "keep" and e["lpd"] is not None:
+            cum_best = max(cum_best, e["lpd"])
+        e["cum_best"] = cum_best
+
+    auto_summary = {
+        "baseline_lpd": round(mean_lpd_nst_baseline, 4),
+        "final_lpd": round(mean_lpd_nst, 4),
+        "improvement": round(mean_lpd_nst - mean_lpd_nst_baseline, 6),
+        "n_experiments": len(experiments),
+        "n_kept": len(kept),
+    }
+
+    # Innovation categories
+    innovations = [
+        {"category": "Noise Model", "description": "Heteroscedastic noise, piece-dependent noise, source noise scaling", "commits": ["76a8924", "eta_pieces"]},
+        {"category": "Latent Factors", "description": "Puzzler-puzzle affinity factor (f_puzzler * f_puzzle) captures interaction beyond additive", "commits": ["f_puzzler", "f_puzzle"]},
+        {"category": "Basis Functions", "description": "N^1.5 replaces N^2, better captures super-linear assembly scaling", "commits": ["N_1.5"]},
+        {"category": "Saturating Functions", "description": "tanh(t/1.5) for velocity, tanh(log(sn)) for practice — prevent extrapolation blow-up", "commits": ["tanh"]},
+        {"category": "Source Effects", "description": "Per-source bias and noise scaling distinguish self-reported vs competition data", "commits": ["source_bias", "source_noise"]},
+        {"category": "Team Model", "description": "Softmax Amdahl interpolation, piece-dependent serial fraction, team noise offset", "commits": ["softmax", "s_pieces"]},
+    ]
+
+    # Build comparison metrics
+    auto_comparison = {
+        "baseline": {
+            "test_mean_lpd": round(mean_lpd_nst_baseline, 4),
+            **{k: round(v, 4) for k, v in metrics_baseline_solo.items()},
+        },
+        "improved": {
+            "test_mean_lpd": round(mean_lpd_nst, 4),
+            **{k: round(v, 4) for k, v in metrics_nst_solo.items()},
+        },
+    }
+
+    auto_data = {
+        "summary": auto_summary,
+        "experiments": experiments,
+        "comparison": auto_comparison,
+        "model_detail": model_team_detail,
+        "innovations": innovations,
+        "loss_curves": {
+            "baseline": [round(float(v), 1) for v in result_baseline.losses[::10]],
+            "improved": [round(float(v), 1) for v in result_nst.losses[::10]],
+        },
+    }
+
+    auto_data = sanitize(auto_data)
+    auto_path = root / "explorer_auto_data.json"
+    auto_output = json.dumps(auto_data, separators=(",", ":"))
+    auto_path.write_text(auto_output)
+    print(f"Wrote {auto_path} ({len(auto_output):,} bytes)")
+
+
+def quick_main():
+    """Fast experiment mode: fit production model on joint data, evaluate on solo test, print summary."""
+    t0 = _time.time()
+
+    player_links = load_player_links()
+    print(f"Loaded {len(player_links)} player links")
+
+    # ── Load all data (solo + duo + group) ──
+    print("\nLoading all data...")
+    df_all = load_completed(divisions=("solo", "duo", "group"))
+    df_all = create_puzzle_id(df_all)
+    df_all = add_repeat_features(df_all)
+    df_all, puzzler_lookup, puzzle_lookup = encode_indices(df_all, player_links=player_links)
+
+    n_puzzlers = len(puzzler_lookup)
+    n_puzzles = len(puzzle_lookup)
+    n_solo = (df_all["division"] == "solo").sum()
+    n_duo = (df_all["division"] == "duo").sum()
+    n_group = (df_all["division"] == "group").sum()
+    print(f"Total: {len(df_all):,} obs (solo={n_solo:,}, duo={n_duo:,}, group={n_group:,})")
+    print(f"Puzzlers: {n_puzzlers:,}, Puzzles: {n_puzzles:,}")
+
+    # ── Train/test split on solo data only ──
+    solo_df = df_all[df_all["division"] == "solo"].reset_index(drop=True)
+    solo_train, solo_test = train_test_split(solo_df)
+    mu_fixed = float(np.mean(solo_train["log_time"]))
+    print(f"mu_fixed = {mu_fixed:.3f} mB")
+
+    solo_test_data = prepare_model_data(solo_test, mu_fixed=mu_fixed)
+    solo_test_data["n_puzzlers"] = n_puzzlers
+    solo_test_data["n_puzzles"] = n_puzzles
+
+    # ── Split team data ──
+    team_df = df_all[df_all["division"].isin(["duo", "group"])].reset_index(drop=True)
+    rng_team = np.random.default_rng(42)
+    team_test_mask = rng_team.random(len(team_df)) < 0.2
+    team_train = team_df[~team_test_mask].reset_index(drop=True)
+    team_test = team_df[team_test_mask].reset_index(drop=True)
+
+    # ── Joint training set ──
+    joint_train_df = pd.concat([solo_train, team_train], ignore_index=True)
+    joint_train_data = prepare_model_data(joint_train_df, mu_fixed=mu_fixed)
+    joint_train_data["n_puzzlers"] = n_puzzlers
+    joint_train_data["n_puzzles"] = n_puzzles
+    joint_team_arrays = build_team_arrays(joint_train_df, puzzler_lookup, player_links=player_links)
+    joint_train_data.update(joint_team_arrays)
+
+    solo_test_team = build_team_arrays(solo_test, puzzler_lookup, player_links=player_links)
+    team_test_data = prepare_model_data(team_test, mu_fixed=mu_fixed)
+    team_test_data["n_puzzlers"] = n_puzzlers
+    team_test_data["n_puzzles"] = n_puzzles
+    team_test_arrays = build_team_arrays(team_test, puzzler_lookup, player_links=player_links)
+
+    print(f"Solo train: {len(solo_train):,}, Solo test: {len(solo_test):,}")
+    print(f"Team train: {len(team_train):,}, Team test: {len(team_test):,}")
+    print(f"Joint train: {len(joint_train_df):,}")
+
+    # ── Fit production model ──
+    print(f"\n{'='*60}")
+    print("Fitting production model...")
+    model_prod = MODELS["model"]
+    prod_init = {
+        "sigma": jnp.array(60.0),
+        "w_raw": jnp.array(0.9),
+        "k_raw": jnp.array(3.7),
+    }
+    guide_nst, result_nst = run_svi(
+        model_prod, joint_train_data,
+        num_steps=15000, lr=0.003, seed=0, init_values=prod_init,
+    )
+
+    # ── Evaluate on solo test ──
+    posterior_nst = guide_nst.sample_posterior(
+        jax.random.PRNGKey(1), result_nst.params, sample_shape=(500,)
+    )
+    te_nst = {k: v for k, v in solo_test_data.items() if k != "log_time"}
+    te_nst.update(solo_test_team)
+    pred_nst = Predictive(model_prod, guide=guide_nst, params=result_nst.params, num_samples=200)
+    pred_nst_test = pred_nst(jax.random.PRNGKey(1), **te_nst)
+    metrics_nst_solo = evaluate_predictions(
+        np.array(pred_nst_test["log_time"]),
+        np.array(solo_test_data["log_time"]),
+    )
+
+    te_nst_with_obs = dict(solo_test_data)
+    te_nst_with_obs.update(solo_test_team)
+    ll_nst = log_likelihood(model_prod, posterior_nst, **te_nst_with_obs)
+    ll_nst_matrix = np.array(ll_nst["log_time"])
+    lppd_nst_i = np.logaddexp.reduce(ll_nst_matrix, axis=0) - np.log(ll_nst_matrix.shape[0])
+    mean_lpd_nst = float(np.mean(lppd_nst_i))
+
+    # ── Evaluate on team test (all, duo, group) ──
+    def eval_subset(label, data_dict, arrays_dict):
+        te = {k: v for k, v in data_dict.items() if k != "log_time"}
+        te.update(arrays_dict)
+        te_obs = dict(data_dict)
+        te_obs.update(arrays_dict)
+        ll = log_likelihood(model_prod, posterior_nst, **te_obs)
+        ll_mat = np.array(ll["log_time"])
+        lppd_i = np.logaddexp.reduce(ll_mat, axis=0) - np.log(ll_mat.shape[0])
+        mlpd = float(np.mean(lppd_i))
+        pred = Predictive(model_prod, guide=guide_nst, params=result_nst.params, num_samples=200)
+        pred_samples = pred(jax.random.PRNGKey(3), **te)
+        m = evaluate_predictions(np.array(pred_samples["log_time"]), np.array(data_dict["log_time"]))
+        print(f"  {label}: mean LPD={mlpd:.6f}, RMSE={m['rmse_log']:.2f}, MAE={m['mae_log']:.2f}, "
+              f"Cov90={m['coverage_90']:.4f}")
+        return mlpd, m
+
+    # Duo test
+    duo_test = team_test[team_test["division"] == "duo"].reset_index(drop=True)
+    duo_test_data = prepare_model_data(duo_test, mu_fixed=mu_fixed)
+    duo_test_data["n_puzzlers"] = n_puzzlers
+    duo_test_data["n_puzzles"] = n_puzzles
+    duo_test_arrays = build_team_arrays(duo_test, puzzler_lookup, player_links=player_links)
+
+    # Group test
+    group_test = team_test[team_test["division"] == "group"].reset_index(drop=True)
+    group_test_data = prepare_model_data(group_test, mu_fixed=mu_fixed)
+    group_test_data["n_puzzlers"] = n_puzzlers
+    group_test_data["n_puzzles"] = n_puzzles
+    group_test_arrays = build_team_arrays(group_test, puzzler_lookup, player_links=player_links)
+
+    print(f"\nHeld-out evaluation:")
+    mlpd_team_all, _ = eval_subset("All team", team_test_data, team_test_arrays)
+    mlpd_duo, _ = eval_subset("Duo", duo_test_data, duo_test_arrays)
+    if len(group_test) > 0:
+        mlpd_group, _ = eval_subset("Group", group_test_data, group_test_arrays)
+    else:
+        mlpd_group = 0.0
+
+    elapsed = _time.time() - t0
+    num_params = sum(np.prod(v.shape) for v in result_nst.params.values())
+
+    try:
+        backend = jax.lib.xla_bridge.get_backend()
+        peak_bytes = max(d.memory_stats().get("peak_bytes_in_use", 0) for d in backend.local_devices())
+        peak_vram_mb = peak_bytes / 1024 / 1024
+    except Exception:
+        peak_vram_mb = 0.0
+
+    print(f"\n---")
+    print(f"heldout_likelihood: {mean_lpd_nst:.6f}")
+    print(f"heldout_duo:        {mlpd_duo:.6f}")
+    print(f"heldout_team:       {mlpd_team_all:.6f}")
+    print(f"training_seconds:   {elapsed:.1f}")
+    print(f"peak_vram_mb:       {peak_vram_mb:.1f}")
+    print(f"num_steps:          15000")
+    print(f"num_params:         {num_params}")
+
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--quick", action="store_true", help="Fast experiment mode (solo model only)")
+    args = parser.parse_args()
+    if args.quick:
+        quick_main()
+    else:
+        main()
