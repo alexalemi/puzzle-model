@@ -22,3 +22,5 @@ suggestions.txt
 
 redirect.html
 data/tournament/
+
+*.log
