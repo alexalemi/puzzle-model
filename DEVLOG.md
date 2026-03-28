@@ -1,5 +1,126 @@
 # Development Log
 
+## 2026-03-28
+
+### Added worldjigsawpuzzle.org (WJPF) as 5th data source
+
+Added a scraper for World Jigsaw Puzzle Championship (WJPC) results from worldjigsawpuzzle.org. The existing `usajigsaw.py` already scraped USAJPA nationals from this site; the new `wjpf.py` scraper covers the international WJPC championships (2019, 2022-2025).
+
+**Data added**: 7,927 rows across 57 event pages (4,605 solo, 2,363 duo, 959 group), 4,299 unique competitors. All divisions (individual 500pc, pairs 1000pc, teams 2000pc) and all rounds (qualifying A-F, semifinals S1/S2, finals). Shared Playwright infrastructure via new `wjpf_common.py`.
+
+**Cross-source links**: 166 competitors overlap between SP and WJPF (US competitors who attend Worlds: Peng, Roiter, Walter, Black, etc.). These bridge players connect the US-centric SP dataset with the European-heavy WJPC competitor pool.
+
+**Name normalization**: WJPF uses "First Last" format. Two-pass normalization in combine.py: (1) try all word splits against SP canonical "Last, First" names, (2) default to "last word = surname" with manual corrections for multi-word surnames (Spanish double surnames like "Clemente León").
+
+**Puzzle identity**: WJPC puzzles are secret (no puzzle_name/brand). Each round's puzzle gets a unique identity via `puzzle_name = "{event_id}_{round}"` in combine.py.
+
+### Also scraped 2026 USAJPA Nationals prelims (in progress)
+
+The 2026 Nationals is happening in Atlanta (March 27-29). Scraped available prelim results: individual rounds A-D (798 rows) and pairs rounds A-B (400 rows). Added 2026 URLs to usajigsaw.py. Finals not yet posted.
+
+### Out-of-sample prediction accuracy: 2026 Nationals prelims
+
+The model was refitted with WJPF data but *before* 2026 nationals data was added, making the 2026 prelims a true out-of-sample test. Matched 455 of 552 competitors (with completed times) to model ratings.
+
+**Model accuracy** (455 matched competitors):
+
+| Metric | Our Model (mB) | JPAR |
+|--------|:---:|:---:|
+| Spearman ρ | 0.882 | 0.898 |
+| Kendall τ | 0.700 | 0.719 |
+| Top 10 accuracy | 3/10 | 5/10 |
+| Top 20 accuracy | 12/20 | 13/20 |
+| Top 50 accuracy | 36/50 | 34/50 |
+| Median rank error | 30 | 29 |
+
+Comparison uses 356 competitors matched to both systems. JPAR has a slight edge (ρ = 0.898 vs 0.882), which makes sense: JPAR is computed exclusively from USAJPA-sanctioned events with the same 500pc competition format, while our model trains on a much broader dataset (MSP self-reported times, different piece counts, international data) and predicts using `alpha` alone without puzzle-specific difficulty.
+
+Both systems strongly predict rankings (ρ > 0.88). The model's main disadvantage is a +16 min systematic bias in absolute times (it assumes average puzzle difficulty; competition puzzles are curated to be easier). After bias correction, RMSE drops from 23.6 to 17.0 min.
+
+**Notable predictions**:
+- Alice Rowe: Model #3, JPAR #1, Actual #1
+- Mari Black: Model #1, JPAR #15, Actual #25 (both overrated her, model more so)
+- Kelly Walter: Model #13, JPAR #4, Actual #3 (JPAR called this better)
+- Iryna Shvydchenko: Model #2, JPAR #2, Actual #8 (both overrated, but she's still top tier)
+
+The model's competitive performance despite training on heterogeneous data (300K+ MSP self-reported times, not just sanctioned competitions) is encouraging. The JPAR comparison uses December 2025 published ratings.
+
+### Three-way comparison: Production vs Autoresearch vs JPAR
+
+Ran the autoresearch/mar13 model (20 kept improvements over production, heldout LPD -5.356 vs production's -5.394) on the same data (with WJPF, without 2026 nationals) to see if the improved model closes the gap to JPAR. 352 competitors matched to all three systems.
+
+| Metric | Production (main) | Autoresearch (mar13) | JPAR (Dec 2025) |
+|--------|:---:|:---:|:---:|
+| Spearman ρ | 0.8812 | 0.8817 | **0.8996** |
+| Kendall τ | 0.7005 | 0.7051 | **0.7208** |
+| Top 10 | 3/10 | 4/10 | **5/10** |
+| Top 20 | 11/20 | **13/20** | **13/20** |
+| Top 50 | 36/50 | **37/50** | 35/50 |
+| Median rank error | 30 | **28** | **28** |
+
+The autoresearch model shows consistent improvement over production across all metrics: better ρ, τ, top-N accuracy, and median rank error. It ties JPAR on top-20 (13/20) and beats it on top-50 (37 vs 35). But JPAR still wins overall rank correlation (ρ = 0.900 vs 0.882).
+
+**Notable autoresearch improvements in top-20 predictions**:
+- Kelly Walter: Production #13 → Autoresearch #5 → Actual #3 (much better)
+- Hannah Scott: Production #54 → Autoresearch #40 → Actual #12 (better but still off)
+- Amber Whitmill: Production #25 → Autoresearch #20 → Actual #5 (improved)
+
+**Why JPAR still wins**: JPAR is computed exclusively from USAJPA-sanctioned events — the exact same format (500pc, timed, controlled) as the test set. Our model trains on 264K observations across 5 heterogeneous sources including self-reported MSP times, international WJPC data, and multiple piece counts, then predicts using `alpha` alone without puzzle-specific difficulty. The fact that we're within ρ = 0.02 of a purpose-built rating system using a general-purpose Bayesian model is encouraging. The autoresearch improvements (per-puzzler discrimination, noise scaling, practice rate) help but don't fully bridge the format-specificity gap.
+
+### 2026 Nationals puzzle difficulty estimates
+
+Estimated puzzle difficulty (beta) for each prelim round by using velocity-projected alpha values for all matched competitors and computing the residual. Positive beta = harder than average; negative = easier.
+
+**Individual prelims** (500pc):
+
+| Round | Beta (mB) | Avg puzzler time | Matched |
+|-------|:---------:|:----------------:|:-------:|
+| A | -45.0 | 54m | 118 |
+| C | -46.3 | 54m | 112 |
+| D | -18.8 | 57m | 118 |
+| B | -0.1 | 60m | 107 |
+
+Rounds A and C were the easiest puzzles; Round B was the hardest (nearly average difficulty). All are easier than the training-set average (negative beta), consistent with competition puzzles being curated for completability.
+
+**Pairs prelims** (1000pc):
+
+| Round | Beta (mB) | Avg pair time | Matched |
+|-------|:---------:|:-------------:|:-------:|
+| A | +218.8 | 99m | 111 |
+| B | +352.2 | 135m | 105 |
+
+Pairs Round B was substantially harder than Round A — about 36 minutes longer for an average pair. The positive betas reflect the 1000pc piece count (more pieces = harder, absorbed into beta since we're estimating it as a residual).
+
+### Per-puzzler predictions vs actuals (Mallory's team)
+
+Using velocity-projected alphas and the estimated puzzle betas above.
+
+**Individual:**
+
+| Name | α_proj | Round | Predicted | Actual | Diff |
+|------|:------:|:-----:|:---------:|:------:|:----:|
+| Mallory Alemi | +2.7 | A | 54.4m | 56.9m | +2.5m |
+| Kathy Robbins | +98.7 | C | 67.7m | 64.3m | -3.4m |
+| Amanda Messinger | -14.5 | A | 52.3m | 54.9m | +2.6m |
+| Megan Bailey | -67.4 | D | 49.2m | 56.3m | +7.1m |
+
+All within ~7 minutes. Mallory and Amanda are predicted almost exactly. Kathy slightly outperformed. Megan's high velocity (+116 mB/yr) may be overshooting.
+
+**Pairs** (using logsumexp + Amdahl + eta_2 team model):
+
+| Pair | Team α | Round | Predicted | Actual | Diff | Rank |
+|------|:------:|:-----:|:---------:|:------:|:----:|:----:|
+| Mallory & Kathy | -410.2 | B | 52.5m | 56.9m | +4.4m | 82/200 |
+| Amanda & Megan | -501.1 | A | 31.3m | 35.1m | +3.8m | 42/200 |
+
+Amanda & Megan are the stronger pair — Megan's projected α of -67 and Amanda's -15 give a team α of -501 vs Mallory & Kathy's -410. The logsumexp aggregation means the faster member dominates.
+
+**Team alpha decomposition** (Amdahl serial fraction s = 0.278, duo correction η₂ = -12.1):
+- Mallory (+2.7) & Kathy (+98.7): parallel = -643.6, + Amdahl +245.5, + η₂ -12.1 = **-410.2**
+- Amanda (-14.5) & Megan (-67.4): parallel = -734.4, + Amdahl +245.5, + η₂ -12.1 = **-501.1**
+
+The 28% serial fraction (s = 0.278) means about 28% of the work can't be parallelized (sorting, coordination), so two puzzlers are ~1.5x as fast as the faster member alone rather than 2x.
+
 ## 2026-03-06 (late night)
 
 ### Physical basis model promoted to production

@@ -16,8 +16,10 @@ src/puzzle_model/     # Main package (src layout, hatchling build)
 scraper/              # Data collection
   speedpuzzling.py    # PDF scraper for speedpuzzling.com results
   usajigsaw.py        # Scraper for USA Jigsaw Puzzle Association results
+  wjpf.py             # Scraper for WJPC (World Jigsaw Puzzle Championship) results
+  wjpf_common.py      # Shared Playwright/table-parsing utilities for worldjigsawpuzzle.org
   myspeedpuzzling.py  # Scraper for myspeedpuzzling.com (puzzles, times, players, images)
-  combine.py          # Merges all 4 sources into combined_results.csv
+  combine.py          # Merges all 5 sources into combined_results.csv
 
 scripts/              # Analysis & utility scripts
   refit_all.py        # Refit solo models (1t, 2c, 2r), regenerate explorer_data.json
@@ -48,7 +50,7 @@ deploy.sh             # Deployment script
 
 ## Data Sources
 
-Four data sources, combined by `python -m scraper.combine`:
+Five data sources, combined by `python -m scraper.combine`:
 
 ### 1. speedpuzzling.com (`source=speedpuzzling`)
 - US-based virtual/in-person competitions with controlled conditions
@@ -66,7 +68,21 @@ Four data sources, combined by `python -m scraper.combine`:
 - `division` uses "individual" (not "solo") — normalized downstream
 - Has `time_limit_seconds`
 
-### 3. myspeedpuzzling.com (`source=myspeedpuzzling`)
+### 3. wjpf (`source=wjpf`)
+- World Jigsaw Puzzle Championship (WJPC) results from worldjigsawpuzzle.org
+- International competitions with controlled conditions, same puzzle per round
+- Scraped by `scraper/wjpf.py` → `data/processed/wjpf_results.csv`
+- Shared Playwright infrastructure with usajigsaw.py (same website, `scraper/wjpf_common.py`)
+- WJPC years: 2019, 2022-2025; divisions: individual (500pc), pairs (1000pc), teams (2000pc)
+- Multiple rounds per year: qualifying (A-F), semifinals (S1/S2), final
+- No `puzzle_name` or `puzzle_brand` (secret competition puzzles); puzzle_name filled with `{event_id}_{round}` in combine.py
+- Competitor names: "First Last" format → normalized to "Last, First" in combine.py
+- Country extracted from flag `<img>` tags, appended to `origin`
+- `time_limit_seconds` and `finished_date` extracted from page JavaScript
+- ~4.5K rows, ~2K+ puzzlers (heavily European)
+- Run with: `python -m scraper.wjpf`
+
+### 4. myspeedpuzzling.com (`source=myspeedpuzzling`)
 - Global self-reported solving times from myspeedpuzzling.com
 - Scraped by `scraper/myspeedpuzzling.py` → `data/raw/myspeedpuzzling/`
 - Files: `puzzles.csv`, `solving_times.csv`, `players.csv`, `competitions.csv`, `images/`
@@ -75,12 +91,12 @@ Four data sources, combined by `python -m scraper.combine`:
 - ~302K rows (~243K first-attempt + 59K repeats), ~5K puzzlers
 - Heavily European population (DE, AU, CZ, SE, FI) vs SP's US focus
 
-### 4. mallory (`source=mallory`)
+### 5. mallory (`source=mallory`)
 - Personal puzzle dataset from `data/MalloryPuzzleData.csv`
 - 167 rows, 1 puzzler; canonical name "Alemi, Mallory"
 - Linked to MSP identity via `data/mappings/player_links.csv`
 
-### Combined Dataset (~333K rows, ~8.6K puzzlers, ~20.5K puzzles)
+### Combined Dataset (~338K rows, ~10K puzzlers, ~20.5K puzzles)
 
 Schema (`data/processed/combined_results.csv`):
 
@@ -93,9 +109,11 @@ puzzle_name, finished_date, first_attempt, time_limit_seconds
 ### Player Disambiguation
 
 - UJ individual names normalized to SP "Last, First" format → ~237 linked
+- WJPF "First Last" names normalized to "Last, First": SP-matched first, then default "last word = surname"
+- Manual corrections in `WJPF_NAME_CORRECTIONS` for multi-word surnames (Spanish, etc.)
 - `data/mappings/player_links.csv`: manual MSP player_id → SP name links (applied in combine.py)
 - `scripts/suggest_player_links.py`: finds candidate matches for human review
-- Cross-source overlaps: SP∩UJ=237 players, SP∩MSP=1 (Mallory)
+- Cross-source overlaps: SP∩UJ=237 players, SP∩MSP=1 (Mallory), SP∩WJPF≈50-100 (US competitors at Worlds)
 
 ## Key Data Pipeline
 

@@ -1,4 +1,1202 @@
 source,event_id,year,division,round,puzzle_pieces,time_limit_seconds,rank,competitor_name,origin,time_seconds,completed,pieces_completed
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,1,Kelly Walter Phoenix (Arizona),Phoenix (Arizona),2184.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,2,Hanna Sigler Normal (IL),Normal (IL),2356.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,3,Kyle Kossin Bountiful (Utah),Bountiful (Utah),2391.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,4,Andrea Peng San Francisco (California),San Francisco (California),2433.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,5,Skye Vandeleest San Francisco (CA),San Francisco (CA),2436.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,5,Sammy Brownlow Westport (CT),Westport (CT),2436.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,7,Jennifer Sipple Longmont (CO),Longmont (CO),2445.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,8,Jessa Douglas Centralia (WA),Centralia (WA),2447.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,9,Melinda Shokler West (Texas),West (Texas),2483.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,10,Feifei Xue San Francisco (CA),San Francisco (CA),2561.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,11,Gail McCormick State College (Pennsylvania),State College (Pennsylvania),2578.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,12,Emily Russell Durham (New Durham),Durham (New Durham),2625.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,13,Andrea Heistand Muskegon (Michigan),Muskegon (Michigan),2634.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,14,Jen Lunsford Efland (NC),Efland (NC),2662.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,15,Elizaveta Gallagher Brooklyn (New York),Brooklyn (New York),2664.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,16,Maud Dias Highland Park (New Jersey),Highland Park (New Jersey),2675.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,17,Leslie Richardson Seattle (WA),Seattle (WA),2722.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,18,Ashley Bromiley Union City (New Jersey),Union City (New Jersey),2736.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,19,Casey Abbott Columbia (Tennessee),Columbia (Tennessee),2766.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,20,Jarom Chung Cedar Hills (Ut),Cedar Hills (Ut),2792.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,21,Katie Ruberg Byron Center (MI),Byron Center (MI),2803.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,22,Ryder Jackson Modesto (California),Modesto (California),2806.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,23,Alyssa Zackler Stevenson Ranch (California),Stevenson Ranch (California),2823.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,24,Tally Klinefelter Lilburn (Georgia),Lilburn (Georgia),2882.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,25,Audrey Beasley Lima (Ohio),Lima (Ohio),2913.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,26,Helen Hu San Jose (California),San Jose (California),2959.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,27,Karen Kavett Los Angeles (California),Los Angeles (California),2960.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,28,"Katie Erickson Coon Rapids, MN 55448 (MN)","Coon Rapids, MN 55448 (MN)",2973.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,29,Elizabeth McElveen Greenville (SC),Greenville (SC),3018.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,30,Margaret Long Duluth (GA),Duluth (GA),3045.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,31,Meagan Brucker-Hahn Ann Arbor (Michigan),Ann Arbor (Michigan),3065.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,32,Karen Ni Diamond Bar (California),Diamond Bar (California),3134.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,33,Angela Kwon New York,New York,3141.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,34,Alison Filley Iowa City (IA),Iowa City (IA),3157.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,35,Trish Doty Harrisburg (PA),Harrisburg (PA),3163.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,36,Karina Krajec Ashtabula (Ohio),Ashtabula (Ohio),3166.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,37,Arabella Etzold-Erickson Kings Beach (California),Kings Beach (California),3167.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,38,Andrea Reynolds Ypsilanti (MI),Ypsilanti (MI),3176.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,39,Elizabeth Tashiro Torrance (Ca),Torrance (Ca),3177.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,40,Yuewen Chun Signal Hill (CA),Signal Hill (CA),3183.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,41,Ashley Tucker Festus (MO),Festus (MO),3189.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,42,Kirsty Weitzel Efland (NC),Efland (NC),3191.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,43,Nicole Zern Maple Valley (Washington),Maple Valley (Washington),3243.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,44,Dakota Scully Madison (Wisconsin),Madison (Wisconsin),3275.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,45,Matthew Swanson San Francisco (CA),San Francisco (CA),3288.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,46,Amanda Messinger Cape Coral (Florida),Cape Coral (Florida),3292.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,47,Christina Harwell West (Texas),West (Texas),3297.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,48,Alexandra Michonski Harrisonburg (Virginia),Harrisonburg (Virginia),3306.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,49,Daniel Rodriguez Boulder (Colorado),Boulder (Colorado),3328.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,50,Kamila Lin Cumming (GA),Cumming (GA),3346.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,51,Jaclyn Frishcosy Madison (Wisconsin),Madison (Wisconsin),3375.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,52,Kelsey Mills Indian Harbour Beach (Florida),Indian Harbour Beach (Florida),3379.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,53,Shayne Welsh Ashland (Virginia),Ashland (Virginia),3384.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,54,Jamie Kosberg Chicago (Illinois),Chicago (Illinois),3386.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,55,Mallory Alemi Kissimmee (Florida),Kissimmee (Florida),3412.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,56,Toni Macreynolds Greensboro (North Carolina),Greensboro (North Carolina),3437.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,57,Tara Griffitts Camas (Washington),Camas (Washington),3441.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,58,Kara Bingham Midland (Michigan),Midland (Michigan),3459.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,59,Jessica Peterson Brooklyn Park (Minnesota),Brooklyn Park (Minnesota),3465.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,60,Angela Morford Mandan (Norht Dakota),Mandan (Norht Dakota),3491.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,61,Emily Boudreaux Cedar Park (TX),Cedar Park (TX),3513.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,62,Jessie O’Neill Raleigh (North Carolina),Raleigh (North Carolina),3514.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,63,Melanie Armstrong Elkton (Maryland),Elkton (Maryland),3530.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,64,Ashley Wilson Durham (North Carolina),Durham (North Carolina),3575.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,65,Genesis Thomas Rowlett (Texas),Rowlett (Texas),3576.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,66,Audrey Nelson San Francisco (California),San Francisco (California),3598.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,67,Karen Wells Colorado Springs (CO),Colorado Springs (CO),3606.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,68,Alex Sepela Cincinnati (Ohio),Cincinnati (Ohio),3666.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,69,Marissa Salvato Castro Valley (California),Castro Valley (California),3705.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,69,Claire Sole Harrisburg (Pennsylvania),Harrisburg (Pennsylvania),3705.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,71,Joyce Yoo Las Vegas (NV),Las Vegas (NV),3713.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,72,Raquel Pozsgai Medway (Massachusetts),Medway (Massachusetts),3714.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,73,Krystal Cotriss Glen Burnie (MD),Glen Burnie (MD),3749.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,74,Sonia Lara Chicago (IL),Chicago (IL),3750.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,75,Kristen Sweeney Atlanta (GA),Atlanta (GA),3785.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,76,Emily Ogden Fort Mill (South Carolina),Fort Mill (South Carolina),3792.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,77,J.d. Amstrong Vancouver (Washington),Vancouver (Washington),3805.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,78,Alexandra Babcock Schenectady (New York),Schenectady (New York),3806.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,79,Hiromi Kimura Lynnwood (Washington),Lynnwood (Washington),3810.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,80,Tara Fortier Washington (DC),Washington (DC),3819.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,81,Lori Eich Arnolds Park (Iowa),Arnolds Park (Iowa),3825.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,82,Jodie Morse Ct,Ct,3854.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,83,Lynnae Day Hollis (New Hampshire),Hollis (New Hampshire),3861.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,84,Zoe Beckett Bellingham (Washington),Bellingham (Washington),3879.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,85,Jamie Lim (Washington),(Washington),3905.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,86,Makiko Hiromi New York (NY),New York (NY),3947.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,87,Anna Grim Seattle (Washington),Seattle (Washington),3961.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,88,Michelle Penta South Windsor (CT),South Windsor (CT),3993.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,89,Julia Winer West Hartford (CT),West Hartford (CT),3996.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,90,Beth Luebbe Oxford (Ohio),Oxford (Ohio),4037.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,91,Jenevieve Parker Hideaway (TX),Hideaway (TX),4071.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,92,Ashley Rudolph Orlando (Florida),Orlando (Florida),4072.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,93,Erin Cherry Gloucester (MA),Gloucester (MA),4079.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,94,Rachael Schachtler San Francisco (California),San Francisco (California),4121.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,95,Paula Marques-Roberts Boca Raton (Florida),Boca Raton (Florida),4125.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,96,Rebecca Young Washington,Washington,4144.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,97,Shirley Jiang Chicago (Illinois),Chicago (Illinois),4154.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,97,Emily Baer Bellevue (Washington),Bellevue (Washington),4154.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,99,Sasha Laczkowski Pueblo West (Colorado),Pueblo West (Colorado),4175.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,100,Abby Vaerten Knoxville (Tennessee),Knoxville (Tennessee),4203.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,101,Bettina Fyffe Rancho Sta Margarita (California),Rancho Sta Margarita (California),4219.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,102,Dani Gurevitch Boulder (Colorado),Boulder (Colorado),4280.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,103,Komal Shah North Bergen (New Jersey),North Bergen (New Jersey),4306.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,104,Sara Pratt Edwardsville (Illinois),Edwardsville (Illinois),4317.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,105,Lori Hernández Byron Center (Michigan),Byron Center (Michigan),4360.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,106,Owen Wartella Somerville (Massachusetts),Somerville (Massachusetts),4366.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,107,Michele Dorfman Fort Worth (Texas),Fort Worth (Texas),4407.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,108,Melissa Ryburn Berryville (VA),Berryville (VA),4426.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,109,Hannah Bevis South Hadley (Massachusetts),South Hadley (Massachusetts),4434.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,110,Laura Hauer Marietta (Georgia),Marietta (Georgia),4462.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,111,Carrie Campbell Denton (TX),Denton (TX),4477.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,112,Kasey Smith Smithfield (Virginia),Smithfield (Virginia),4490.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,113,My-Lea Coulombe-Quach Alexandria (Virginia),Alexandria (Virginia),4492.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,114,Kabao Lor Sheboygan (Wisconsin),Sheboygan (Wisconsin),4495.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,115,Brooke Vlasich Oakland (California),Oakland (California),4509.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,116,Jenny Hierlinger St. Paul (Minnesota),St. Paul (Minnesota),4516.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,117,Leah Robbins Portland (Oregon),Portland (Oregon),4555.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,118,Emily Doroff Burnsville (Minnesota),Burnsville (Minnesota),4559.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,119,Catherine Huang Clifton Heights (Pennsylvania),Clifton Heights (Pennsylvania),4606.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,120,Glenn Hollingsworth Wa,Wa,4610.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,121,Ashley Willard Durham (NC),Durham (NC),4614.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,122,Kate Crocker Saint Johnsbury (Vermont),Saint Johnsbury (Vermont),4687.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,123,Ann Glezen Holmes Beach (Florida),Holmes Beach (Florida),4775.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,124,Marie-claire Batau New Orleans (Luisiana),New Orleans (Luisiana),4801.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,125,Andrew Dunkman Washington (DC),Washington (DC),4817.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,126,Gabby Melli Denver (Colorado),Denver (Colorado),4841.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,127,Natalie Hinkley Houston (TX),Houston (TX),4878.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,128,Shay Gibson Birmingham (Alabama),Birmingham (Alabama),4901.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,129,Chelsea Linn Spanish Fork (Utah),Spanish Fork (Utah),4944.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,130,Dawn Marie Bey Richmond (Virgnia),Richmond (Virgnia),4960.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,131,Carol Meyer Fort Worth (Texas),Fort Worth (Texas),4985.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,132,Jeannette Huffman Virginia Beach (Virginia),Virginia Beach (Virginia),5079.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,133,Mariah Westerhausen Dilworth (Minnesota),Dilworth (Minnesota),5089.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,134,Maria Pyrdek Monrovia (California),Monrovia (California),5115.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,135,Chloe Weakly Portland (Oregon),Portland (Oregon),5139.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,136,Karen Floyd Arvada (Colorado),Arvada (Colorado),5146.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,137,Allyson Haim Huntington Beach (California),Huntington Beach (California),5182.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,138,Jayme Becerra Leesburg (Florida),Leesburg (Florida),5236.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,139,Kristina Navarrete Lewisville (Texas),Lewisville (Texas),5252.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,140,Hannah Jansen-Meza St. Louis (Missouri),St. Louis (Missouri),5290.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,141,Alaina Kmitta Denver (Colorado),Denver (Colorado),5345.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,142,Becca Foster Piano (Texas),Piano (Texas),5362.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,143,Paula Van Camp Wheat Ridge (Colorado),Wheat Ridge (Colorado),5392.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,144,Alison Wright Knoxville (Tennessee),Knoxville (Tennessee),,False,493.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,145,Jennifer Davis Knoxville (Tennessee),Knoxville (Tennessee),,False,487.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,146,Jose Salinas Wesley Chapel (Florida),Wesley Chapel (Florida),,False,480.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,147,Katie Bartosh Claremont (California),Claremont (California),,False,479.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,148,Lihan Chen Chicago (Illinois),Chicago (Illinois),,False,473.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,149,Ashlin Lockhart Decatur (Georgia),Decatur (Georgia),,False,464.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,150,Gracie Jing San Francisco (Ca),San Francisco (Ca),,False,463.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,151,Jessica Crosby Myrtle Beach (SC),Myrtle Beach (SC),,False,455.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,152,Todd O’Hara Austin (Texas),Austin (Texas),,False,454.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,153,Valerie Surprenant Huntington Beach (California),Huntington Beach (California),,False,452.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,154,Diana Stanley Portland (OR),Portland (OR),,False,442.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,155,Kyle Germait Burlington (WI),Burlington (WI),,False,437.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,156,Evan Cahill Seattle (Washington),Seattle (Washington),,False,426.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,157,Jenn Thompson Ashburn (VA),Ashburn (VA),,False,421.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,158,Debbie Thompson Spring (Texas),Spring (Texas),,False,419.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,159,Shara Taylor Wexford (PA),Wexford (PA),,False,414.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,160,Anna Locke Concord (California),Concord (California),,False,411.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,161,Mackendrick Zavitz Maitland (Florida),Maitland (Florida),,False,400.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,162,Gloria Johnston Richmond (TX),Richmond (TX),,False,394.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,163,Jessica Fogarty Madison (Wisconsin),Madison (Wisconsin),,False,393.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,164,Maggie Hobbs New Brighton (Minnesota),New Brighton (Minnesota),,False,391.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,165,Sarah Zimerman Chicago (Illinois),Chicago (Illinois),,False,389.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,166,Susan Miller (Nc) Fayetteville (North Carolina),Fayetteville (North Carolina),,False,388.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,167,Allison Russotto Elkins Park (Pensilvania),Elkins Park (Pensilvania),,False,386.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,168,Kristen Bull Mobile (Alabama),Mobile (Alabama),,False,382.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,169,Michelle Lewandowski Toledo (Ohio),Toledo (Ohio),,False,378.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,170,Autumn Janssens Niceville (Florida),Niceville (Florida),,False,369.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,171,Anastasiya Patrusheva Atlanta (Georgia),Atlanta (Georgia),,False,366.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,172,Kasey Cushing Stratham (New Hampshire),Stratham (New Hampshire),,False,365.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,172,Theresa Vaerten Commerce Twp (Michigan),Commerce Twp (Michigan),,False,365.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,174,Jeanette Ward Leesburg (VA),Leesburg (VA),,False,357.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,175,Rachelle Martineau West Springfield (MA),West Springfield (MA),,False,353.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,176,Lisa Coleman Chicago (Illinois),Chicago (Illinois),,False,350.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,177,Laura Vu Salem (Massachusetts),Salem (Massachusetts),,False,347.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,177,John Pringle Somerville (Massachusetts),Somerville (Massachusetts),,False,347.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,179,Carolyn Kuczmarski Independence (Ohio),Independence (Ohio),,False,344.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,180,Sam Thomas Tampa (Florida),Tampa (Florida),,False,341.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,181,Megan Bodway Appleton (Wisconsin),Appleton (Wisconsin),,False,337.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,182,Stephanie Pringle Somerville (Massachusetts),Somerville (Massachusetts),,False,331.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,183,Braden Lee Ocala (Florida),Ocala (Florida),,False,327.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,184,Kelly Hudson Charlotte (North Carolina),Charlotte (North Carolina),,False,325.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,185,Jeff Soesbe Bellevue (Washington),Bellevue (Washington),,False,317.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,186,Jennifer Carlson Birmingham (Michigan),Birmingham (Michigan),,False,314.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,187,Cathy Evans Atlanta (Georgia),Atlanta (Georgia),,False,313.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,188,Mary Wheeler Cincinnati (Ohio),Cincinnati (Ohio),,False,310.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,189,Kathy Janine Atlanta (Georgia),Atlanta (Georgia),,False,309.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,190,Natalie Jackson Modesto (California),Modesto (California),,False,307.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,191,Sruti Sreerama Philadelphia (PA),Philadelphia (PA),,False,294.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,192,Ho Won Cheng Issaquah (Washington),Issaquah (Washington),,False,293.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,193,Rhonda Willock Atlanta (Georgia),Atlanta (Georgia),,False,292.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,194,Rachelle Ashmore Tallahassee (Florida),Tallahassee (Florida),,False,291.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,195,Josh Serna Palatine (Illinois),Palatine (Illinois),,False,282.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,196,Kelty Zavitz Atlanta (Georgia),Atlanta (Georgia),,False,265.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,197,Maria Singleton Decatur (Georgia),Decatur (Georgia),,False,242.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,198,Patty Baker Chesterfield (Virginia),Chesterfield (Virginia),,False,219.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,199,Bari Weinberger Wexford (P),Wexford (P),,False,181.0
+usajigsaw,usajpa_2026_individual,2026,individual,A,500,5400,200,Soup Timmy Atlanta (Georgia),Atlanta (Georgia),,False,78.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,1,Grayson Shannon Norton (Massachusetts),Norton (Massachusetts),2187.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,2,Shea Burkett Athens (Texas),Athens (Texas),2247.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,3,Mari Black Cambridge (Massachusetts),Cambridge (Massachusetts),2466.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,4,Kaitlyn McCluskie Toronto (ON),Toronto (ON),2726.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,5,Briana Roy Waterford (Connecticut),Waterford (Connecticut),2767.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,6,Chloe Glikbarg San Francisco (California),San Francisco (California),2784.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,7,Aubrey Barrow New Richmond (Ohio),New Richmond (Ohio),2810.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,8,Jeanne Roiter Duvall (Washington),Duvall (Washington),2821.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,9,Lauren Kautz Minneapolis (Minnesota),Minneapolis (Minnesota),2837.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,10,Christopher Nammour Palo Alto (California),Palo Alto (California),2851.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,11,Chris Viox Glen Carbon (Illinois),Glen Carbon (Illinois),2862.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,12,Dawne Rasmusson Prior Lake (Minnesota),Prior Lake (Minnesota),2864.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,13,Jamie Marsigit Crewe (Virginia),Crewe (Virginia),2959.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,14,Ben Weissmann San Francisco (California),San Francisco (California),2975.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,15,Simmie Berman Rockville (Maryland),Rockville (Maryland),2976.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,16,"Eric Goulet Washington, Dc (DC)","Washington, Dc (DC)",3020.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,17,Kelly Buhr Soquel (California),Soquel (California),3082.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,18,Nicholas Mueller Columbus (Ohio),Columbus (Ohio),3099.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,19,Timothy Miller New York,New York,3132.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,20,Rose Robbins Portland (Oregon),Portland (Oregon),3142.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,21,Amber Whitear Layton (Utah),Layton (Utah),3150.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,22,Taylor Puch Marietta (Georgia),Marietta (Georgia),3173.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,23,Meri Cartee Saint Peters (Missouri),Saint Peters (Missouri),3174.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,24,Jessica Musser North Richland Hills (Texas),North Richland Hills (Texas),3180.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,25,Min-Yee Deng San Diego (California),San Diego (California),3191.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,26,Kelsie Foster South Lebanon (Ohio),South Lebanon (Ohio),3214.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,27,Annabelle Platt Waltham (Massachusetts),Waltham (Massachusetts),3217.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,27,Amy Paull The Woodlands (Texas),The Woodlands (Texas),3217.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,29,Rebecca Streitz Sunnyvale (California),Sunnyvale (California),3222.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,30,Trisha Siedlecki Walnut (California),Walnut (California),3246.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,31,Jeremy Seidling St Paul (Minnesota),St Paul (Minnesota),3263.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,32,Michelle Bone Washington (DC),Washington (DC),3282.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,33,Michelle Micheli Sterling (Virginia),Sterling (Virginia),3287.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,34,Melissa Germait Burlington (Wisconsin),Burlington (Wisconsin),3319.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,35,Katherine Wren Columbus (Ohio),Columbus (Ohio),3415.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,36,Hope Thompson Hurst (Texas),Hurst (Texas),3419.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,37,Melynda Owens Hurst (Texas),Hurst (Texas),3430.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,38,Chelsea Fedie Bedford (Texas),Bedford (Texas),3435.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,39,Melanie Palmiero Chattanooga (Tennessee),Chattanooga (Tennessee),3443.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,40,Sara Pierce Gainesville (Georgia),Gainesville (Georgia),3452.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,41,Nicole Pichette Spokane (Washington),Spokane (Washington),3474.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,42,Kinsey Keltz Carrollton (Texas),Carrollton (Texas),3510.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,43,Jennifer Hancock San Francisco (California),San Francisco (California),3520.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,44,Scott Eng San Diego (California),San Diego (California),3524.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,45,Lindsey Anderson Orem (Utah),Orem (Utah),3603.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,46,Natalie Schimmelbusch Manassas (Virginia),Manassas (Virginia),3608.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,47,Margaret Kirkland Portland (Oregon),Portland (Oregon),3615.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,48,Emily Howard Bentonville (Arkansas),Bentonville (Arkansas),3653.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,49,Joshua Nelson Minneapolis (Minnesota),Minneapolis (Minnesota),3688.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,50,Kallen O’Connor Fairborn (Ohio),Fairborn (Ohio),3709.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,51,Marisa Martin Portland (Oregon),Portland (Oregon),3711.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,52,"Kevin Erickson Coon Rapids, MN 55448 (Minnesota)","Coon Rapids, MN 55448 (Minnesota)",3714.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,53,Marguerite Byrnes Livonia (Michigan),Livonia (Michigan),3744.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,54,Nicholas Ebelhack Indianapolis (Indiana),Indianapolis (Indiana),3780.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,55,Lindsay Steenstra San Diego (California),San Diego (California),3784.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,56,Ashlyn Koga Brooklyn (New York),Brooklyn (New York),3851.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,57,Alexander Wang Kirkland (Washington),Kirkland (Washington),3875.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,58,Melissa Cody San Diego (California),San Diego (California),3915.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,59,Sami Heathcote Greensboro (North Carolina),Greensboro (North Carolina),3920.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,60,Jasmine Wyatt Kent (Ohio),Kent (Ohio),3929.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,61,Alyssa Graham Phoenix (Arizona),Phoenix (Arizona),3951.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,62,Madeleine Bouchie Park Ridge (Illinois),Park Ridge (Illinois),3956.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,63,Michelle Kaufman Wildwood (Missouri),Wildwood (Missouri),3960.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,64,Victoria Chu Oakland (California),Oakland (California),3962.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,65,Wendy Shieu San Francisco (California),San Francisco (California),3976.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,66,Dan Dougherty Saint Louis (Missouri),Saint Louis (Missouri),4037.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,67,Emily Ma San Francisco (California),San Francisco (California),4043.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,68,Emily Feng Aurora (Colorado),Aurora (Colorado),4060.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,69,Lindsay Cooper Arlington (Virginia),Arlington (Virginia),4073.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,70,Lauren Maggert Wheat Ridge (Colorado),Wheat Ridge (Colorado),4113.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,71,Candace Speight Atlanta (Georgia),Atlanta (Georgia),4114.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,72,Julie Kutchera Peoria (Arizona),Peoria (Arizona),4116.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,73,Jaq Law Portland (Oregon),Portland (Oregon),4127.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,74,Laura McDiarmid Cincinnati (Ohio),Cincinnati (Ohio),4129.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,75,Erin Walker Dallas (Georgia),Dallas (Georgia),4142.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,76,Molly Smith Washington (DC),Washington (DC),4246.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,77,Joe Feehan Washington (DC),Washington (DC),4255.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,78,Melissa Springer Orem (Utah),Orem (Utah),4274.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,79,Christine Durkin Powell (Ohio),Powell (Ohio),4290.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,80,Rachel Falk New York,New York,4303.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,81,Michelle Philo Irvine (California),Irvine (California),4335.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,82,Bill McFadden Stoughton (Massachusetts),Stoughton (Massachusetts),4342.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,83,Arianne Collopy Denver (Colorado),Denver (Colorado),4343.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,84,Amy Aldridge Malabar (Florida),Malabar (Florida),4362.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,85,Amanda Van Straten Saint Johnsbury (Vermont),Saint Johnsbury (Vermont),4384.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,86,Megan Barwegen Chicago (Illinois),Chicago (Illinois),4414.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,87,Joelle Hershberger Saint Paul (Minnesota),Saint Paul (Minnesota),4418.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,88,Dana Saunders Virginia,Virginia,4478.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,89,Sue Kroger Carlsbad (California),Carlsbad (California),4491.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,90,Sandra Hood The Woodlands (Texas),The Woodlands (Texas),4496.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,91,Lauren Turner Bellingham (Washington),Bellingham (Washington),4503.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,92,Julia Buck Washington (DC),Washington (DC),4513.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,93,Melissa Martin North Syracuse (New York),North Syracuse (New York),4595.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,94,Jodi Green Arlington (Massachusetts),Arlington (Massachusetts),4613.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,95,Angela Bourgeois Plymouth (Michigan),Plymouth (Michigan),4634.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,96,Tim Bodway Appleton (Wisconsin),Appleton (Wisconsin),4635.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,97,Ezekiel Blain Mechanicville (New York),Mechanicville (New York),4638.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,98,Sarah Hosley Bloomfiled (Connecticut),Bloomfiled (Connecticut),4643.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,99,Lydia Osner Landenberg (Pennsylvania),Landenberg (Pennsylvania),4679.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,100,Megan Jenkins Plano (Texas),Plano (Texas),4690.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,101,Soon Kim germantown (Maryland),germantown (Maryland),4733.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,102,Angela Ott Sussex (Wisconsin),Sussex (Wisconsin),4751.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,103,Elizabeth Beetschen Bonaire (Georgia),Bonaire (Georgia),4773.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,104,Cami Pottle Chicago (Illinois),Chicago (Illinois),4789.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,105,Karen Kent Chantilly (Virginia),Chantilly (Virginia),4799.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,106,Michelle Tong Northville (Michigan),Northville (Michigan),4853.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,107,Kim Yin Lilburn (Georgia),Lilburn (Georgia),4934.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,108,Rowan Cleland Lakebay (Washington),Lakebay (Washington),5013.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,109,Jennifer Waltman Sleepy Hollow (New York),Sleepy Hollow (New York),5014.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,110,Emily English Cincinnati (Ohio),Cincinnati (Ohio),5044.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,111,Rocio Morfin Warren (Michigan),Warren (Michigan),5053.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,112,Lucas Carter Fairfield (Iowa),Fairfield (Iowa),5088.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,113,Sarah Fleming Martinez (California),Martinez (California),5124.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,114,Deborah Green Cape Canaveral (Florida),Cape Canaveral (Florida),5143.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,115,Sarah Mackey West Hartford (Connecticut),West Hartford (Connecticut),5194.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,116,Wan-Yu Lai Oakland (California),Oakland (California),5222.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,117,Molly Rentz Deland (Florida),Deland (Florida),5235.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,118,Soraya Merriweather Decatur (Georgia),Decatur (Georgia),5238.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,119,Derrick Marcey Atlanta (Georgia),Atlanta (Georgia),5250.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,120,Sandra Vita Herndon (Virginia),Herndon (Virginia),5258.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,121,Tulsi Mali Longmeadow (Massachusetts),Longmeadow (Massachusetts),5288.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,122,Liz Uram Fridley (Minnesota),Fridley (Minnesota),5302.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,123,Katie Pribylshay Palatine (Illinois),Palatine (Illinois),,False,498.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,124,Josh Denton Revere (Massachusetts),Revere (Massachusetts),,False,488.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,125,Lisa Hobbs Rexburg (Idaho),Rexburg (Idaho),,False,482.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,126,Adrienne Cardiel Portland (Oregon),Portland (Oregon),,False,475.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,126,Jessica Bossiere Raleigh (North Carolina),Raleigh (North Carolina),,False,475.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,128,Daniel Narain New York,New York,,False,472.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,129,Cecilia Frew St Louis (Missouri),St Louis (Missouri),,False,467.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,130,Katie Greenfield Atlanta (Georgia),Atlanta (Georgia),,False,463.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,131,Christopher Morrissey Lake Forest Park (Washington),Lake Forest Park (Washington),,False,459.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,131,Chelsea Jacobs Washington (DC),Washington (DC),,False,459.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,133,Deborah Warick Atlanta (Georgia),Atlanta (Georgia),,False,458.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,134,Frank Hollander Bellevue (Washington),Bellevue (Washington),,False,456.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,135,Danielle Dudley Parker (Colorado),Parker (Colorado),,False,452.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,135,Mackenzie Graham Phoenix (Arizona),Phoenix (Arizona),,False,452.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,137,Dessa Burt New Brighton (Minnesota),New Brighton (Minnesota),,False,451.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,138,Stephanie Vargas Carnation (Washington),Carnation (Washington),,False,449.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,139,Cecilia Agraz Manhattan Beach (California),Manhattan Beach (California),,False,444.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,140,Hanna Feldman Jersey City (New Jersey),Jersey City (New Jersey),,False,443.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,141,Amy Hanson Sparks (Nevada),Sparks (Nevada),,False,442.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,142,Barbara Sproatmeyer Fort Worth (Texas),Fort Worth (Texas),,False,432.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,143,Kim Bottorff Atchison (Kansas),Atchison (Kansas),,False,430.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,144,Mark Feldman Los Angeles (California),Los Angeles (California),,False,425.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,145,Trisha Koetter Knobs (Indiana),Knobs (Indiana),,False,415.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,146,Jillian Doroff Little Canada (Minnesota),Little Canada (Minnesota),,False,413.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,147,Hannah Stafford Maryville (Tennessee),Maryville (Tennessee),,False,409.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,148,Ashley Stanley Denver (Colorado),Denver (Colorado),,False,402.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,148,Ashley Mixson Henderson (Nevada),Henderson (Nevada),,False,402.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,150,Jennifer Ferris Boca Raton (Florida),Boca Raton (Florida),,False,398.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,151,Gregory Wiseburn Bellevue (Washington),Bellevue (Washington),,False,396.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,151,Robert Curtin Louisville (Kentucky),Louisville (Kentucky),,False,396.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,153,Eric O’Neill Raleigh (North Carolina),Raleigh (North Carolina),,False,394.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,154,Michelle Abbott Columbia (Tennessee),Columbia (Tennessee),,False,393.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,155,Kate Amey Rosemount (Minnesota),Rosemount (Minnesota),,False,391.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,156,Steve Lee Ocala (Florida),Ocala (Florida),,False,390.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,157,Elizabeth Pratt Edwardsville (Illinois),Edwardsville (Illinois),,False,389.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,158,Jennifer Narozny Clifton (New Jersey),Clifton (New Jersey),,False,388.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,159,Theresa Rudolph Davie (Florida),Davie (Florida),,False,383.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,160,Julia Gabler Minneapolis (Minnesota),Minneapolis (Minnesota),,False,381.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,161,Susan Miller (In) Floyds Knobs (Indiana),Floyds Knobs (Indiana),,False,380.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,162,Katherine Johnson Ashburn (Virginia),Ashburn (Virginia),,False,379.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,163,Kristine Wolfe Newport News (Virginia),Newport News (Virginia),,False,378.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,164,Himakshi Bhatt Kittery (Maine),Kittery (Maine),,False,376.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,165,Kathy Tieu Herndon (Virginia),Herndon (Virginia),,False,372.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,166,Tien Nguyen Escondido (California),Escondido (California),,False,368.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,167,Maurice Werner Washington (DC),Washington (DC),,False,360.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,168,Elizabeth Halperin New York,New York,,False,359.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,169,Anne Kosek Middleton (Wisconsin),Middleton (Wisconsin),,False,357.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,170,Danielle Swales Durham (North Carolina),Durham (North Carolina),,False,356.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,171,Barry Walter Herndon (Virginia),Herndon (Virginia),,False,350.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,172,Lina Zulick Farmington (New York),Farmington (New York),,False,348.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,173,Jason Fox San Diego (California),San Diego (California),,False,346.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,174,Madi Zavitz Orlando (Florida),Orlando (Florida),,False,344.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,175,Colleen S Dunne Columbus (Ohio),Columbus (Ohio),,False,342.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,176,Luann Thompson Grapevine (Texas),Grapevine (Texas),,False,341.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,177,Thao Hughes Poway (California),Poway (California),,False,335.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,178,BreAnna Gallegos Elkins Park (Pensilvania),Elkins Park (Pensilvania),,False,332.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,179,Robert Santana Atlanta (Georgia),Atlanta (Georgia),,False,318.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,180,Kate Shirley Arvada (Colorado),Arvada (Colorado),,False,314.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,180,Mindy May Plano (Texas),Plano (Texas),,False,314.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,182,Kimberly Collier Knoxville (Tennessee),Knoxville (Tennessee),,False,304.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,183,Tim Collins Atlanta (Georgia),Atlanta (Georgia),,False,303.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,184,Lisa Furbush Winder (Georgia),Winder (Georgia),,False,301.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,184,Olivia Soto Apex (North Carolina),Apex (North Carolina),,False,301.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,186,Julie Hadfield Brookhaven (Georgia),Brookhaven (Georgia),,False,291.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,187,Rachel Heeren Decatur (Georgia),Decatur (Georgia),,False,283.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,188,Jeesung Yun Peachtree Cty (Georgia),Peachtree Cty (Georgia),,False,273.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,189,Elsa King Lehigh Acres (Florida),Lehigh Acres (Florida),,False,270.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,190,Keiko Kita New York,New York,,False,268.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,190,Mary Beth Collins Atlanta (Georgia),Atlanta (Georgia),,False,268.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,192,Cathy Cimaglia Ridgeley (West Virginia),Ridgeley (West Virginia),,False,266.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,193,Abbey English Cincinnati (Ohio),Cincinnati (Ohio),,False,253.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,194,David Lockner Tuscaloosa (Alabama),Tuscaloosa (Alabama),,False,241.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,195,Charles Tracy Silver Spring (Maryland),Silver Spring (Maryland),,False,239.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,196,Karen Cardoza Atlanta (Georgia),Atlanta (Georgia),,False,236.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,197,Ann Stewart Atlanta (Georgia),Atlanta (Georgia),,False,224.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,198,Barbara Fisher Mooresville (North Carolina),Mooresville (North Carolina),,False,203.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,198,Liz Gurevitch Folly Beach (South Carolina),Folly Beach (South Carolina),,False,203.0
+usajigsaw,usajpa_2026_individual,2026,individual,B,500,5400,200,Mary Jane Pumphrey Manassas (Virginia),Manassas (Virginia),,False,173.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,1,Hannah Doyle San Mateo (California),San Mateo (California),1999.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,2,Amber Whitmill Chapel Hill (North Carolina),Chapel Hill (North Carolina),2215.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,3,Kylie Ledingham Carmel (Indiana),Carmel (Indiana),2216.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,4,Iryna Shvydchenko San Francisco (California),San Francisco (California),2248.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,5,Caryn Knill St Augustine (Florida),St Augustine (Florida),2283.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,6,Hannah Scott Herndon (Virginia),Herndon (Virginia),2370.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,6,Beatrice Endler Portland (Oregon),Portland (Oregon),2370.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,8,Allie Arendell Honolulu (Hawai),Honolulu (Hawai),2377.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,9,Sarah Stubeck Arlington (Virginia),Arlington (Virginia),2426.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,10,Lewis Dracobly-Helsel Chicago (Illinois),Chicago (Illinois),2434.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,11,Taylor Reed Rolla (Missouri),Rolla (Missouri),2481.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,12,Kelsi Cook Conroe (Texas),Conroe (Texas),2582.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,13,Jessica Rottenbacher South Pasadena (California),South Pasadena (California),2587.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,14,Kim Knaub Loup City (Nebraska),Loup City (Nebraska),2619.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,15,Katie Hartzler Goshen (Indiana),Goshen (Indiana),2737.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,16,Sarah Meyer Cincinnati (Ohio),Cincinnati (Ohio),2778.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,17,Linnea Shieh Sunnyvale (California),Sunnyvale (California),2797.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,18,Rose Barrett Columbus (Ohio),Columbus (Ohio),2825.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,19,Kevin Collins Flint (Michigan),Flint (Michigan),2843.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,20,Melissa Harlow Berwyn (Illinois),Berwyn (Illinois),2933.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,21,Andrea Kyle Saint Paul (Minnesota),Saint Paul (Minnesota),2949.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,22,Lydia Utkin Bellevue (Washington),Bellevue (Washington),2982.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,23,Caroline Orsi San Francisco (California),San Francisco (California),2994.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,24,Elizabeth Nelson Brooklyn Park (Minnesota),Brooklyn Park (Minnesota),2999.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,25,Chelsea Widmaier Gaithersburg (Maryland),Gaithersburg (Maryland),3013.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,26,Doug Ellwanger San Mateo (California),San Mateo (California),3021.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,27,Aimee Seligstein Washington (DC),Washington (DC),3050.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,28,Meredith Yeager Cuyahoga Falls (Ohio),Cuyahoga Falls (Ohio),3104.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,29,Chelsea Suedkamp Fridley (Minnesota),Fridley (Minnesota),3123.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,30,Jennifer Fong Chicago (Illinois),Chicago (Illinois),3124.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,31,Grace Byrnes Everett (Washington),Everett (Washington),3147.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,32,Michael Ha (Washington),(Washington),3150.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,33,Melinda Whiting Cottonwood Heights (Utah),Cottonwood Heights (Utah),3158.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,34,Brittany Houghton Merkel (Texas),Merkel (Texas),3178.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,35,Abigail Ricketts-Savit Severn (Maryland),Severn (Maryland),3208.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,36,Katie Motondo Burlington (North Carolina),Burlington (North Carolina),3228.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,37,Bethany Quinn Monroe (North Carolina),Monroe (North Carolina),3262.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,38,Angela Harrow Elkins Park (Pennsylvania),Elkins Park (Pennsylvania),3289.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,39,Betsey English Clinton (Utah),Clinton (Utah),3324.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,40,Jessica Henderson Columbus (Ohio),Columbus (Ohio),3345.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,41,Kara Taylor Okoboji (Iowa),Okoboji (Iowa),3348.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,42,Liz Walters Crystal (Minnesota),Crystal (Minnesota),3361.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,43,Jennifer Knight Bessemer (Alabama),Bessemer (Alabama),3409.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,44,Sarah Hauge Castle Rock (Colorado),Castle Rock (Colorado),3416.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,45,Jessica Bradley Monument (Colorado),Monument (Colorado),3420.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,46,Carrie Grose Mesa (Arizona),Mesa (Arizona),3432.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,47,Darya Leylian Calabasas (California),Calabasas (California),3444.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,47,Lizzy Klinnert Palatine (Illinois),Palatine (Illinois),3444.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,49,Emmie Lee Big Lake (Minnesota),Big Lake (Minnesota),3458.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,50,Hali Simmons Pittsburgh (Pennsylvania),Pittsburgh (Pennsylvania),3471.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,51,Kristin Blair Denver (Colorado),Denver (Colorado),3474.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,52,Jennifer Morrow Vestal (New York),Vestal (New York),3489.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,53,Bonnie Smith Plymouth (Minnesota),Plymouth (Minnesota),3493.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,54,Angela Guglielmino Barstow (California),Barstow (California),3497.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,55,Jason Pipkin Cincinnati (Ohio),Cincinnati (Ohio),3507.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,56,Nhi Nguyen Houston (Texas),Houston (Texas),3530.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,57,Tessa Melli Denver (Colorado),Denver (Colorado),3540.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,58,Michelle Gauthier Bay City (Michigan),Bay City (Michigan),3555.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,59,Megan Chung Cedar Hills (Utah),Cedar Hills (Utah),3590.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,60,Deborah Dyson Scottsdale (Arizona),Scottsdale (Arizona),3592.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,61,Nicole Dominguez Durham (North Carolina),Durham (North Carolina),3602.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,62,Lisa Filemyr Long Island City (New York),Long Island City (New York),3606.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,63,Jessa Crisp Denver (Colorado),Denver (Colorado),3642.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,64,Danika Dorris Arlington (Virginia),Arlington (Virginia),3662.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,65,Lisa Grow Draper (Utah),Draper (Utah),3668.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,66,Selina Gilbertson Mesa (Arizona),Mesa (Arizona),3669.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,67,Shalise Hassing Syracuse (Utah),Syracuse (Utah),3676.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,68,Ashley Wu (Washington),(Washington),3697.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,69,Linda Hirschfeld Auburn (Indiana),Auburn (Indiana),3717.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,70,Destiny Crenshaw Bonne Terre (Missouri),Bonne Terre (Missouri),3718.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,71,Gretchen Etzold Kings Beach (California),Kings Beach (California),3738.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,72,Kara Bancroft Tucson (Arizona),Tucson (Arizona),3758.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,73,Angelina Grosso Dayton (Ohio),Dayton (Ohio),3800.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,74,Kori Klustaitis Cary (North Carolina),Cary (North Carolina),3812.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,75,Micaela Newman Seattle (Washington),Seattle (Washington),3857.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,75,Kathy Robbins Gulf Breeze (Florida),Gulf Breeze (Florida),3857.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,77,Gwendolyn Adams Sanford (North Carolina),Sanford (North Carolina),3874.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,78,Christina Schwie St. Paul (Minnesota),St. Paul (Minnesota),3883.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,79,Kristen Born San Clemente (California),San Clemente (California),3901.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,80,Rebecca Tsang Chicago (Illinois),Chicago (Illinois),3922.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,81,Brian Wolfe Camas (Washington),Camas (Washington),3923.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,82,Tracy Schultz Charlotte (North Carolina),Charlotte (North Carolina),3952.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,83,Michael Garland St. Louis (Missouri),St. Louis (Missouri),3962.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,84,Sharon Williams Hendersonville (North Carolina),Hendersonville (North Carolina),3979.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,85,Emilee Frost Arlington (Washington),Arlington (Washington),3982.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,86,Kristina Key Charleston (South Carolina),Charleston (South Carolina),3991.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,87,Corey Hasty Olive Branch (Mississippi),Olive Branch (Mississippi),4066.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,88,Kaylie McConnell Holland (Michigan),Holland (Michigan),4088.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,89,Hector Morales Fredericksburg (Virginia),Fredericksburg (Virginia),4091.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,90,Courtney Buhler Noblesville (Indiana),Noblesville (Indiana),4142.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,91,Soren Hansen Arlington (Virginia),Arlington (Virginia),4169.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,91,Gretchen Steen Saint Johnsbury (Vermont),Saint Johnsbury (Vermont),4169.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,93,Micaela Yudelman Newton (Massachusetts),Newton (Massachusetts),4179.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,94,Elizabeth Sondag Herndon (Virginia),Herndon (Virginia),4197.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,95,Karen Brownlow Westport (Connecticut),Westport (Connecticut),4222.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,96,Malorie Okuhara Gonzales (Louisiana),Gonzales (Louisiana),4237.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,97,Nicole Norstrud Colorado Springs (Colorado),Colorado Springs (Colorado),4239.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,98,Svetlana Riumova Denver (Colorado),Denver (Colorado),4245.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,99,Mollie Tessler White Plains (New York),White Plains (New York),4251.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,100,Lisa Weaver Wildwood (Missouri),Wildwood (Missouri),4287.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,101,Wendy Weigant Frederick (Maryland),Frederick (Maryland),4295.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,102,Rachel Gaskin Arlington (Texas),Arlington (Texas),4300.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,103,June Huber Houston (Texas),Houston (Texas),4391.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,104,Rachel Wood Colorado Springs (Colorado),Colorado Springs (Colorado),4436.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,105,Tiffany Moy-Kang Chicago (Illinois),Chicago (Illinois),4452.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,106,Brawn Suelter Lincoln (Nebraska),Lincoln (Nebraska),4459.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,107,Rachel Damiani Cottage Grove (Minnesota),Cottage Grove (Minnesota),4460.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,108,Robin Patrick Durham (North Carolina),Durham (North Carolina),4474.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,109,Sarah Barcousky Orlando (Florida),Orlando (Florida),4527.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,110,Anne Khong San Diego (California),San Diego (California),4542.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,111,Valerie Mobley Kurtistown (Hawaii),Kurtistown (Hawaii),4578.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,112,India Eaford Boston (Massachusetts),Boston (Massachusetts),4607.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,113,Sarah Teare Chelsea (Michigan),Chelsea (Michigan),4648.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,114,Krystal Jakosky Lafayette (Colorado),Lafayette (Colorado),4689.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,115,Lovesong Cahill Oakland (California),Oakland (California),4690.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,116,Michael Dickman Aurora (Colorado),Aurora (Colorado),4729.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,117,Michelle Malcom Warrenton (Virginia),Warrenton (Virginia),4748.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,118,Megan Swanson San Francisco (California),San Francisco (California),4769.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,119,Virginia Lawson Winston-Salem (North Carolina),Winston-Salem (North Carolina),4793.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,120,Jennifer Fry Cape Canaveral (Florida),Cape Canaveral (Florida),4814.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,121,Rachel Shields Portland (Oregan),Portland (Oregan),4915.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,122,Kandace Gordon Powell (Ohio),Powell (Ohio),4943.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,123,Meg Craig Beaverton (Oregon),Beaverton (Oregon),4979.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,124,Kristine Moody Knoxville (Tennessee),Knoxville (Tennessee),4992.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,125,Ayriel Ash Minneapolis (Minnesota),Minneapolis (Minnesota),5007.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,126,Diana Oorzhak Tacoma (Washington),Tacoma (Washington),5017.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,127,Alexandra Pfleegor Atlanta (Georgia),Atlanta (Georgia),5034.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,128,Lynn Kang Buena Park (California),Buena Park (California),5058.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,129,Cindy Grimley-Beason Concord (California),Concord (California),5090.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,129,Leah Finnegan Atlanta (Georgia),Atlanta (Georgia),5090.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,131,Asha Philip Teaneck (New Jersey),Teaneck (New Jersey),5115.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,132,Brandon Harrington San Francisco (California),San Francisco (California),5119.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,133,Shannon May Pittsford (New York),Pittsford (New York),5152.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,134,Isabel Lucas Montclair (New Jersey),Montclair (New Jersey),5171.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,135,Kaitlyn Bultemeier Louisville (Kentucky),Louisville (Kentucky),5187.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,136,Gwen Guerra Margate (Florida),Margate (Florida),5191.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,137,Wendi Dietrich sherman oaks (California),sherman oaks (California),5213.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,138,Heather Haynes-O’Brien Chandler (Arizona),Chandler (Arizona),5224.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,139,Alex Anderson Pittsburgh (Pensilvania),Pittsburgh (Pensilvania),5241.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,140,Tanya Vattanasil Beverly (Massachusetts),Beverly (Massachusetts),5242.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,141,Audrey Brian Saratoga Springs (Utah),Saratoga Springs (Utah),5251.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,142,Cameron Couch New York,New York,5256.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,143,Emily Landgraf Washington (DC),Washington (DC),5263.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,144,Renee Hitch Atlanta (Georgia),Atlanta (Georgia),5375.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,145,Chelsie Vaillancourt Alexandria (Virginia),Alexandria (Virginia),,False,499.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,146,Jeff Amey Rosemount (Minnesota),Rosemount (Minnesota),,False,497.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,147,Caitlin Lowry Brentwood (Maryland),Brentwood (Maryland),,False,489.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,148,Caleb Pieplow Columbiana (Ohio),Columbiana (Ohio),,False,482.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,149,Miranda Kalbach Secaucus (New Jersey),Secaucus (New Jersey),,False,474.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,150,Katherine Lasher Fuquay Varina (North Carolina),Fuquay Varina (North Carolina),,False,472.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,151,Shayla Jones North Richland Hills (Texas),North Richland Hills (Texas),,False,452.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,152,Elizabeth May Pittsford (New York),Pittsford (New York),,False,450.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,153,Stephanie Gildenmeister Bellevue (Ohio),Bellevue (Ohio),,False,443.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,153,Pam Woolsey Atlanta (Georgia),Atlanta (Georgia),,False,443.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,155,Kiki Wang Atlanta (Georgia),Atlanta (Georgia),,False,440.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,156,Bryna Podwoiski Wildwood (South Carolina),Wildwood (South Carolina),,False,437.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,157,Barbara Harris Englewood (New Jersey),Englewood (New Jersey),,False,435.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,158,Jonathan Huang Naperville (Illinois),Naperville (Illinois),,False,432.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,159,Courtney Hilton Salem (Oregon),Salem (Oregon),,False,430.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,160,Lori Zavitz Maitland (Florida),Maitland (Florida),,False,427.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,161,Silvana Procopio San Diego (California),San Diego (California),,False,423.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,162,Dawn Pratt Buffalo (New York),Buffalo (New York),,False,421.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,163,Jennifer Luebbe Oxford (Ohio),Oxford (Ohio),,False,419.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,164,Betsy Lancaster Atlanta (Georgia),Atlanta (Georgia),,False,411.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,165,Sarah Snider Greenvillle (South Carolina),Greenvillle (South Carolina),,False,404.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,166,Inge Werts Dacula (Georgia),Dacula (Georgia),,False,403.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,167,Beatrice Chau San Francisco (California),San Francisco (California),,False,402.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,168,Amanda Frost Clifton Springs (New York),Clifton Springs (New York),,False,391.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,169,Justine Lucca Waltham (Massachusetts),Waltham (Massachusetts),,False,388.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,170,Michelle Wilson Bristol (Virginia),Bristol (Virginia),,False,382.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,171,William Lucca Waltham (Massachusetts),Waltham (Massachusetts),,False,374.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,172,Susan Hann Corey Road (Florida),Corey Road (Florida),,False,368.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,173,Jennie Werner Bellevue (Washington),Bellevue (Washington),,False,364.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,174,Jenny Pace Tallahassee (Florida),Tallahassee (Florida),,False,363.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,175,Jason Narozny Clifton (New Jersey),Clifton (New Jersey),,False,361.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,176,Marianne Bruno Bluffton (South Carolina),Bluffton (South Carolina),,False,360.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,177,Jerry Lai San Francisco (California),San Francisco (California),,False,357.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,178,Susie Peat Palm Desert (California),Palm Desert (California),,False,349.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,179,Dave Harris Tampa (Florida),Tampa (Florida),,False,347.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,179,Kim Martín Norfolk (Virginia),Norfolk (Virginia),,False,347.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,181,Ginger Cline North Lake (Texas),North Lake (Texas),,False,324.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,182,Linda Hayes Palmetto (Georgia),Palmetto (Georgia),,False,317.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,183,Rob Heathcote Columbus (Indiana),Columbus (Indiana),,False,310.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,184,Todd Imara Atlanta (Georgia),Atlanta (Georgia),,False,308.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,184,Annie Mei Fairfax (Virginia),Fairfax (Virginia),,False,308.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,186,Monica Ganz Chicago (Illinois),Chicago (Illinois),,False,303.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,187,Cheri Dracobly Atlanta (Georgia),Atlanta (Georgia),,False,296.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,187,Quantesha Pittman Macon (Georgia),Macon (Georgia),,False,296.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,189,Karen Doukas Wallingford (Connecticut),Wallingford (Connecticut),,False,292.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,190,Ed Siegel Chester (New Jersey),Chester (New Jersey),,False,289.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,191,Cayla Eller Atlanta (Georgia),Atlanta (Georgia),,False,288.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,192,Angela McPherson Washington (DC),Washington (DC),,False,285.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,193,Jessi Yoder Casselberry (Florida),Casselberry (Florida),,False,272.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,194,Jared Cardiel Manhattan Beach (California),Manhattan Beach (California),,False,257.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,195,Tim Conner Avon Lake (Ohio),Avon Lake (Ohio),,False,252.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,196,Julie Headlee Shawnee (Kansas),Shawnee (Kansas),,False,251.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,197,Jessie Ngo Orlando (Florida),Orlando (Florida),,False,248.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,198,Lila King Lehigh Acres (Florida),Lehigh Acres (Florida),,False,243.0
+usajigsaw,usajpa_2026_individual,2026,individual,C,500,5400,199,Khodi Cleland Lakebay (Washington),Lakebay (Washington),,False,191.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,1,Alice Rowe Boulder (Colorado),Boulder (Colorado),1839.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,2,Cathy Roiter Duvall (Washington),Duvall (Washington),2308.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,3,Emma Williamson Marion (Massachusetts),Marion (Massachusetts),2372.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,4,Tiffany Medeiros Lowell (Massachusetts),Lowell (Massachusetts),2445.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,5,Jasper Lee Decatur (Georgia),Decatur (Georgia),2483.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,6,Nathan Biberdorf (Indiana),(Indiana),2490.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,7,Emma Pan West Roxbury (Massachusetts),West Roxbury (Massachusetts),2609.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,8,Xin Li Phuah Seattle (Washington),Seattle (Washington),2627.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,9,Jessica Streitz Philadelphia (Pensilvania),Philadelphia (Pensilvania),2633.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,10,Jasmine Lambert Abingdon (Virginia),Abingdon (Virginia),2700.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,11,Calie Curran Conroe (Texas),Conroe (Texas),2757.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,12,Mathew Nettlow Mableton (Georgia),Mableton (Georgia),2886.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,13,Kate Yee Illinois,Illinois,2895.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,14,Elena Christenfeld Brooklyn (New York),Brooklyn (New York),2923.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,15,Aloysia Larson Grand Forks (North Dakota),Grand Forks (North Dakota),2926.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,16,Elizabeth Alvarez (illinois),(illinois),2982.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,17,Emily Chandran North Attleborough (Massachusetts),North Attleborough (Massachusetts),3026.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,18,Jenna Wyly Chevy Chase (Maryland),Chevy Chase (Maryland),3032.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,19,Robyn Curtis Tacoma (Washington),Tacoma (Washington),3033.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,20,Eb Caron Hartford (Connecticut),Hartford (Connecticut),3040.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,21,Lindsey Niedzwiecki Farmington Hills (Michigan),Farmington Hills (Michigan),3068.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,22,Shannon O’Hara Milwaukee (Wisconsin),Milwaukee (Wisconsin),3073.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,23,Yvonne Feucht Burbank (California),Burbank (California),3076.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,23,Lena Nguyen-Vo Riverview (Florida),Riverview (Florida),3076.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,25,Cosmo Smith Seattle (Washington),Seattle (Washington),3086.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,26,Tammy McLeod Los Angeles (California),Los Angeles (California),3108.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,27,Jessica Derby Minneapolis (Minnesota),Minneapolis (Minnesota),3116.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,28,Angie Gazdic Chicago (Illinois),Chicago (Illinois),3143.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,29,Sabrina Monserate-Lindsay Efland (North Carolina),Efland (North Carolina),3161.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,30,Rebecca Watson Denver (Colorado),Denver (Colorado),3184.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,31,Bethany Litus Pittsburgh (Pensilvania),Pittsburgh (Pensilvania),3187.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,32,Whitney Presley Denver (Columbia),Denver (Columbia),3204.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,33,Edith Lewis Cincinnati (Ohio),Cincinnati (Ohio),3216.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,34,Kate McCrea Landenberg (Pennsylvania),Landenberg (Pennsylvania),3244.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,35,Andrew Bradburn North Hollywood (California),North Hollywood (California),3260.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,36,Brooke Ouro-Djobo Stoughton (Massachusetts),Stoughton (Massachusetts),3285.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,37,Lindsay Wang Arlington (Virginia),Arlington (Virginia),3293.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,38,Kimberly Kenne Pasadena (California),Pasadena (California),3313.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,39,Charese Gainor Bellingham (Washington),Bellingham (Washington),3317.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,40,Isabel Urrutia Waterloo (Ontario),Waterloo (Ontario),3351.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,41,Megan Bailey Tallahassee (Florida),Tallahassee (Florida),3377.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,42,Claire Bailey Palo Alto (California),Palo Alto (California),3396.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,43,Tazia Statucki Washington (DC),Washington (DC),3448.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,44,Carmen Dueñas Woburn (Massachusetts),Woburn (Massachusetts),3450.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,45,Samantha Saake Greensboro (North Carolina),Greensboro (North Carolina),3472.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,46,Manja Wurschke Stamford (Connecticut),Stamford (Connecticut),3478.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,47,Terri Gómez-Ferree Cedar Park (Texas),Cedar Park (Texas),3484.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,48,Melanie Buhlmann Gainesville (Florida),Gainesville (Florida),3501.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,49,Felisa Lewis Potomac (Maryland),Potomac (Maryland),3555.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,50,Rebecca Widmayer Apex (North Carolina),Apex (North Carolina),3560.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,51,Maria Grant (Maine),(Maine),3580.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,52,Irene Ho Mountain View (California),Mountain View (California),3582.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,53,Carley lauer Cincinnati (Ohio),Cincinnati (Ohio),3589.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,53,Maria Seitz Boyertown (Pensilvania),Boyertown (Pensilvania),3589.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,55,Laura Schaefer Atlanta (Georgia),Atlanta (Georgia),3609.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,56,Davey Black Vancouver (Washington),Vancouver (Washington),3641.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,57,Laurie Marcey Cary (North Carolina),Cary (North Carolina),3655.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,58,Audrey Talish Baltimore (Maryland),Baltimore (Maryland),3660.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,59,Brenna Kitchen Clinton (Utah),Clinton (Utah),3701.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,60,Libby Bacon Portland (Oregon),Portland (Oregon),3742.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,61,Erin Sweeney Newark (New Jersey),Newark (New Jersey),3750.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,62,Alexandra Wright Miami (Florida),Miami (Florida),3796.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,63,Caitlyn McMahan Harrisonburg (Virginia),Harrisonburg (Virginia),3797.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,64,Cassandra Sands Centerton (Arkansas),Centerton (Arkansas),3808.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,65,Sarah Goodman St. Louis (Missouri),St. Louis (Missouri),3823.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,66,Jamie Ambabo Decatur (Georgia),Decatur (Georgia),3844.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,67,Stephanie Thompson Sherman Oaks (California),Sherman Oaks (California),3873.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,68,Mandi Schalon San Marcos (California),San Marcos (California),3894.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,69,Michelle McCrea Landenberg (Pensilvania),Landenberg (Pensilvania),3922.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,70,Michelle Chan Houston (Texas),Houston (Texas),3942.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,71,Ann Mortimer Oxford (Ohio),Oxford (Ohio),3946.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,72,Sarah Cabrera Palmetto (Florida),Palmetto (Florida),3955.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,73,Cassie Vonrueden Stevens Point (Wisconsin),Stevens Point (Wisconsin),3963.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,74,Madeleine Tejeda Pedrow Landenberg (Pennsylvania),Landenberg (Pennsylvania),3970.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,75,Melissa Reilly Everett (Washington),Everett (Washington),3977.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,76,Curt Schieler Acton (Massachusetts),Acton (Massachusetts),3986.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,77,Cindy Koster Hideaway (Wisconsin),Hideaway (Wisconsin),4004.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,78,Jennifer Hill Columbia (Pensilvania),Columbia (Pensilvania),4010.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,79,Rosemary Dabbs Knoxville (Tennesse),Knoxville (Tennesse),4015.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,80,Sola Grantham San Mateo (California),San Mateo (California),4022.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,81,Noelle Marshall Thomas Lane (Minnesota),Thomas Lane (Minnesota),4040.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,82,Lindsay Wyatt Winterport (Maine),Winterport (Maine),4045.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,83,Lea Campbell Vancouver (Washington),Vancouver (Washington),4097.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,84,Nikki Hall Castle Rock (Colorado),Castle Rock (Colorado),4105.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,85,Brittany Grissom Sharpsburg (Georgia),Sharpsburg (Georgia),4118.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,86,Maggie Horne North Salem (New York),North Salem (New York),4123.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,87,Mathew Murillo Colorado Springs (Colorado),Colorado Springs (Colorado),4135.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,88,Rushing Smith III Hideaway (Texas),Hideaway (Texas),4227.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,88,Anne Stockdale Everett (Washington),Everett (Washington),4227.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,90,Danielle Mulligan Clinton (Connecticut),Clinton (Connecticut),4261.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,91,Julie Lee Paramus (New Jersey),Paramus (New Jersey),4263.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,92,Kristin Williams Ypsilanti (Michigan),Ypsilanti (Michigan),4318.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,93,Erin Fisk Portland (Oregon),Portland (Oregon),4320.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,94,Jennifer Malone Cary (North Carolina),Cary (North Carolina),4322.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,95,Amber Eskridge Lorton (Virginia),Lorton (Virginia),4336.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,96,Lori Nussbaum Klamath Falls (Oregon),Klamath Falls (Oregon),4377.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,97,Karina Pareja Peachtree City (Georgia),Peachtree City (Georgia),4447.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,98,Stephanie Ho Piedmont (California),Piedmont (California),4451.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,99,Courtney Berge North Augusta (South Carolina),North Augusta (South Carolina),4456.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,100,Erin Manthey Apple Valley (Minnesota),Apple Valley (Minnesota),4465.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,101,Katie Everson Plymouth (Minnesota),Plymouth (Minnesota),4478.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,101,Holly Winters Deppe Conifer (Colorado),Conifer (Colorado),4478.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,103,Aubrey Keisel Aurora (Colorado),Aurora (Colorado),4504.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,104,Jiamei Qian San Mateo County (California),San Mateo County (California),4515.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,105,Erin Leidy Northglenn (Colorado),Northglenn (Colorado),4541.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,106,Heather Boyd Lenoir City (Tennessee),Lenoir City (Tennessee),4565.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,107,Norah Molina California,California,4700.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,108,Marissa Belau Alameda (California),Alameda (California),4705.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,109,Leila Beikmohamadi Efland (North Carolina),Efland (North Carolina),4711.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,110,Rebecca Roberts Sugar Hill (Georgia),Sugar Hill (Georgia),4722.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,111,Helen Carter Canton (Georgia),Canton (Georgia),4744.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,112,Faye Alleman Houston (Texas),Houston (Texas),4748.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,113,Jessica Kelwaski Atlanta (Georgia),Atlanta (Georgia),4749.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,114,Luanne Hill Boyds (Maryland),Boyds (Maryland),4756.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,115,Sonja Cames Mount Dora (Florida),Mount Dora (Florida),4769.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,116,Juliana Echeverri Dc,Dc,4774.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,117,Jordan Halperin New York,New York,4788.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,118,Caleigh Shaw Stillwater (Oklahoma),Stillwater (Oklahoma),4839.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,119,Lisa Schuler Mounds View (Minnesota),Mounds View (Minnesota),4841.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,120,Jennifer Cartee Monterey (California),Monterey (California),4844.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,121,Mary Ann Alwan Dana Point (California),Dana Point (California),4850.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,122,Leila Berger Los Angeles (California),Los Angeles (California),4857.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,123,Genevieve Geiger Washington (DC),Washington (DC),4885.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,124,Ameenah Saafir Canton (Michigan),Canton (Michigan),4919.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,125,Erica Baker Thurmont (Maryland),Thurmont (Maryland),4932.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,126,Tiffany Rivera San Diego (California),San Diego (California),4941.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,127,Carolyn Baker Thurmont (Maryland),Thurmont (Maryland),4985.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,128,Courtney Wong Sausalito (California),Sausalito (California),4991.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,129,Amy Carr Albuquerque (New Mexico),Albuquerque (New Mexico),5082.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,130,Trisha Heathcote Columbus (Indiana),Columbus (Indiana),5099.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,131,Jim Van Den Hogen Kimberly (Wisconsin),Kimberly (Wisconsin),5103.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,132,Cierra Wagner Clifton Springs (New York),Clifton Springs (New York),5110.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,133,Clare Kay San Francisco (California),San Francisco (California),5128.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,134,Jessica Cutshall Dublin (Ohio),Dublin (Ohio),5136.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,135,Frank Lieu Chicago (Illinois),Chicago (Illinois),5190.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,136,John Walczak Carmel (Indiana),Carmel (Indiana),5233.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,137,Mallory Roy Va (Virginia),Va (Virginia),5260.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,138,Michele Kunde San Diego (California),San Diego (California),5273.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,139,Davion Johnson Bradenton (Florida),Bradenton (Florida),5280.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,140,Karen May Pittsford (New York),Pittsford (New York),5348.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,141,Colleen Morris Saint Johnsbury (Vermont),Saint Johnsbury (Vermont),5362.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,142,Mary Beth Guilbo Katy (Texas),Katy (Texas),5364.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,143,Jen Demint Grand Rapids (Michigan),Grand Rapids (Michigan),5386.0,True,
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,144,Ashley Miller Chattanooga (Tennessee),Chattanooga (Tennessee),,False,500.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,144,Jennifer Leiras Deland (Florida),Deland (Florida),,False,500.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,146,Heather Stober Huddleston (Virginia),Huddleston (Virginia),,False,496.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,147,Cathy Luers Liberty Township (Ohio),Liberty Township (Ohio),,False,490.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,148,Nailun Chen Naperville (Illinois),Naperville (Illinois),,False,486.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,149,Christian Cimaglia Ridgeley (West Virginia),Ridgeley (West Virginia),,False,483.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,150,Angela McFarland Warrenton (Virginia),Warrenton (Virginia),,False,472.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,151,Heather Harris Tampa (Florida),Tampa (Florida),,False,466.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,151,Kate Pieplow Columbiana (Ohio),Columbiana (Ohio),,False,466.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,153,Emily Patterson Hampton (New Hampshire),Hampton (New Hampshire),,False,465.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,154,Jennifer King Herndon (Virginia),Herndon (Virginia),,False,459.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,155,Max Schooley Alameda (California),Alameda (California),,False,452.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,156,Joan Rau Avondale Estates (Georgia),Avondale Estates (Georgia),,False,451.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,156,Kristina Mauersberger St. Paul (Minnesota),St. Paul (Minnesota),,False,451.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,158,Amy Davis Fort White (Florida),Fort White (Florida),,False,438.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,159,Annabella Roiger Chicago (Illinois),Chicago (Illinois),,False,431.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,159,Kristen Lyda Marietta (Georgia),Marietta (Georgia),,False,431.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,161,Loretta Nowak Marlton (New Jersey),Marlton (New Jersey),,False,429.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,161,Crystal Thomas Atlanta (Georgia),Atlanta (Georgia),,False,429.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,163,Sandra Kopec Concord (California),Concord (California),,False,428.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,164,Deborah Wilson Tucson (Arizona),Tucson (Arizona),,False,427.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,165,Hana Johnstone Chicago (Illinois),Chicago (Illinois),,False,423.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,166,Laura Ghantous Raleigh (North Carolina),Raleigh (North Carolina),,False,422.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,167,Becky Hierlinger Roseville (Minnesota),Roseville (Minnesota),,False,414.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,168,Linda Andrews Silver Spring (Maryland),Silver Spring (Maryland),,False,413.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,169,Kirsten Erich Atlanta (Georgia),Atlanta (Georgia),,False,411.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,170,Debra Atkinson Houston (Texas),Houston (Texas),,False,408.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,171,Tina McConnell Holland (Michigan),Holland (Michigan),,False,407.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,172,Cierra McPeak Cleveland (Ohio),Cleveland (Ohio),,False,406.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,173,Jane Davis Milton (Massachusetts),Milton (Massachusetts),,False,405.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,174,Jenna Mikish Washington (DC),Washington (DC),,False,396.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,175,Caroline Meyer Rhome (Texas),Rhome (Texas),,False,383.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,176,Jean Doroff Burnsville (Minnesota),Burnsville (Minnesota),,False,381.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,177,Karla Matute Chester (New Jersey),Chester (New Jersey),,False,368.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,178,Jessica Scheideler Grand Island (Nebraska),Grand Island (Nebraska),,False,367.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,179,Diane Ryu Louisville (Colorado),Louisville (Colorado),,False,365.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,179,Jonathan Tong St. Louis (Missouri),St. Louis (Missouri),,False,365.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,181,Alison satinoff Tampa (Florida),Tampa (Florida),,False,350.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,182,Rob Shields Portland (Oregon),Portland (Oregon),,False,343.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,183,Elizabeth Gray Wetumpka (Alabama),Wetumpka (Alabama),,False,336.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,184,Michele Moody Gulf Breeze (Florida),Gulf Breeze (Florida),,False,323.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,185,Susan Dias Washington (DC),Washington (DC),,False,318.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,186,Natalia Soto Kissimmee (Florida),Kissimmee (Florida),,False,315.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,187,Lucy Cruz Bloomfield (New Jersey),Bloomfield (New Jersey),,False,312.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,188,Art Zirger Atlanta (Georgia),Atlanta (Georgia),,False,310.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,189,Susan Wailes Satellite Beach (Florida),Satellite Beach (Florida),,False,293.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,190,Heidi Haynes (Washington),(Washington),,False,280.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,191,Jody Murphy Long Beach (California),Long Beach (California),,False,279.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,192,Fusako Menna New York,New York,,False,276.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,193,Erika Hunter West Valley (Utah),West Valley (Utah),,False,275.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,194,Virginia Gulde Tallahassee (Florida),Tallahassee (Florida),,False,254.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,195,Darrell Wilson Bristol (Virginia),Bristol (Virginia),,False,224.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,196,Jill Fowler Avon Lake (Ohio),Avon Lake (Ohio),,False,218.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,197,Deb McKibben Atchison (Kansas),Atchison (Kansas),,False,196.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,198,Connie Bickford Wallingford (Connecticut),Wallingford (Connecticut),,False,171.0
+usajigsaw,usajpa_2026_individual,2026,individual,D,500,5400,199,Kenny Carlsen Atlanta (Georgia),Atlanta (Georgia),,False,150.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,1,Kaitlyn McCluskie Hannah Doyle Toronto (ON) / San Mateo (California),Toronto (ON) / San Mateo (California),1271.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,2,Alice Rowe Hannah Scott Boulder (Colorado) / Herndon (Virginia),Boulder (Colorado) / Herndon (Virginia),1306.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,3,Mari Black Hanna Sigler Cambridge (Massachusetts) / Normal (Illinois),Cambridge (Massachusetts) / Normal (Illinois),1395.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,4,Cathy Roiter Lauren Kautz Duvall (Washington) / Minneapolis (Minnesota),Duvall (Washington) / Minneapolis (Minnesota),1450.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,5,Chloe Glikbarg Skye Vandeleest San Francisco (California),San Francisco (California),1481.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,6,Jennifer Sipple Jasmine Lambert Longmont (Colorado) / Abingdon (Virginia),Longmont (Colorado) / Abingdon (Virginia),1497.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,7,Kelly Buhr Caryn Knill Soquel (California) / St Augustine (Florida),Soquel (California) / St Augustine (Florida),1529.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,8,Xin Li Phuah Beatrice Endler Seattle (Washington) / Portland (Oregon),Seattle (Washington) / Portland (Oregon),1544.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,9,Kylie Ledingham Katie Hartzler Carmel (Indiana) / Goshen (Indiana),Carmel (Indiana) / Goshen (Indiana),1548.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,10,Annabelle Platt Emma Williamson Waltham (Massachusetts) / Marion (Massachusetts),Waltham (Massachusetts) / Marion (Massachusetts),1555.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,11,Kate Yee Lewis Dracobly-Helsel Illinois / Chicago (Illinois),Illinois / Chicago (Illinois),1592.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,12,Christopher Nammour Helen Hu Palo Alto (California) / San Jose (California),Palo Alto (California) / San Jose (California),1629.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,13,Melinda Shokler Christina Harwell West (Texas),West (Texas),1667.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,14,Aubrey Barrow Kelsie Foster Cincinnati (Ohio) / South Lebanon (Ohio),Cincinnati (Ohio) / South Lebanon (Ohio),1699.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,15,Emma Pan Min-Yee Deng West Roxbury (Massachusetts) / San Diego (California),West Roxbury (Massachusetts) / San Diego (California),1702.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,16,Gail McCormick Jenna Wyly State College (Pennsylvania) / New York,State College (Pennsylvania) / New York,1703.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,17,Kelsi Cook Calie Curran Spring (Texas) / Houston (Texas),Spring (Texas) / Houston (Texas),1705.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,18,Amy Paull Jasmine Wyatt The Woodlands (Texas) / Kent (Ohio),The Woodlands (Texas) / Kent (Ohio),1773.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,19,Elizabeth Alvarez Madeleine Bouchie Chicago (Illinois) / Park Ridge (Illinois),Chicago (Illinois) / Park Ridge (Illinois),1798.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,20,Maud Dias Ashley Bromiley Highland Park (New Jersey) / Union City (New Jersey),Highland Park (New Jersey) / Union City (New Jersey),1809.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,21,Linnea Shieh Caroline Orsi Sunnyvale (California) / San Francisco (California),Sunnyvale (California) / San Francisco (California),1832.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,22,Sabrina Monserate-Lindsay Kirsty Weitzel Durham (North Carolina) / Cary (North Carolina),Durham (North Carolina) / Cary (North Carolina),1855.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,23,Karen Kavett Yuewen Chun Los Angeles (California) / Signal Hill (California),Los Angeles (California) / Signal Hill (California),1859.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,24,Jessica Derby Liz Walters Minneapolis (Minnesota) / Crystal (Minnesota),Minneapolis (Minnesota) / Crystal (Minnesota),1881.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,25,Melanie Armstrong Taylor Puch Elkton (Maryland) / Marietta (Georgia),Elkton (Maryland) / Marietta (Georgia),1883.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,26,Trisha Siedlecki Jessica Rottenbacher Walnut (California) / South Pasadena (California),Walnut (California) / South Pasadena (California),1896.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,27,Melynda Owens Jessica Musser Hurst (Texas) / North Richland Hills (Texas),Hurst (Texas) / North Richland Hills (Texas),1926.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,28,Betsey English Brenna Kitchen Clinton (Utah),Clinton (Utah),1949.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,29,Ben Weissmann Kelly Luo San Francisco (California),San Francisco (California),1972.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,30,Rebecca Widmayer Laurie Marcey Apex (North Carolina) / Cary (North Carolina),Apex (North Carolina) / Cary (North Carolina),1989.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,31,Meagan Brucker-Hahn Trish Doty Ann Arbor (Michigan) / Harrisburg (Pensilvania),Ann Arbor (Michigan) / Harrisburg (Pensilvania),2029.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,32,Darya Leylian Elizabeth Tashiro Calabasas (California) / Torrance (California),Calabasas (California) / Torrance (California),2030.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,33,Katie Ruberg Lori Hernández Byron Center (Michigan),Byron Center (Michigan),2048.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,34,Timothy Miller Sarah Goodman New York / St. Louis (Missouri),New York / St. Louis (Missouri),2052.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,35,Alison Filley Andrea Reynolds Iowa City (Iowa) / Ypsilanti (Michigan),Iowa City (Iowa) / Ypsilanti (Michigan),2053.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,36,Alyssa Zackler Kayla Berkowitz Los Angeles (California) / San Diego (California),Los Angeles (California) / San Diego (California),2064.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,37,Alex Sepela Laura McDiarmid Cincinnati (Ohio),Cincinnati (Ohio),2074.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,38,Sara Pierce Rachel Damiani Gainesville (Georgia) / Cottage Grove (Minnesota),Gainesville (Georgia) / Cottage Grove (Minnesota),2083.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,39,Grace Byrnes Marguerite Byrnes Everett (Washington) / Livonia (Michigan),Everett (Washington) / Livonia (Michigan),2092.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,40,Mandi Schalon Jake Schalon San Marcos (California),San Marcos (California),2095.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,41,Mandy Galicki Jacque Kuhn Brookhaven (Georgia),Brookhaven (Georgia),2101.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,42,Megan Bailey Amanda Messinger Tallahassee (Florida) / Cape Coral (Florida),Tallahassee (Florida) / Cape Coral (Florida),2106.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,43,Michelle Abbott Casey Abbott Columbia (Tennessee),Columbia (Tennessee),2107.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,44,Margaret Kirkland Marisa Martín Portland (Oregon),Portland (Oregon),2110.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,45,Aimee Seligstein Chelsea Widmaier Washington (DC) / Gaithersburg (Maryland),Washington (DC) / Gaithersburg (Maryland),2116.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,46,Genesis Thomas Kinsey Keltz Rowlett (Texas) / Carrollton (Texas),Rowlett (Texas) / Carrollton (Texas),2117.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,47,Terri Gómez-Ferree Emily Boudreaux Cedar Park (Texas),Cedar Park (Texas),2120.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,48,Nicole Dominguez Jessie O’Neill Raleigh (North Carolina),Raleigh (North Carolina),2149.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,49,Andrew Bradburn Kimberly Kenne North Hollywood (California) / Pasadena (California),North Hollywood (California) / Pasadena (California),2154.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,50,Kristin Williams Lindsey Niedzwiecki Ypsilanti (Michigan) / Farmington Hills (Michigan),Ypsilanti (Michigan) / Farmington Hills (Michigan),2171.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,51,Brawn Suelter Joyce Yoo Lincoln (Nebraska) / Las Vegas (Nevada),Lincoln (Nebraska) / Las Vegas (Nevada),2179.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,52,Alexandra Michonski Caitlyn McMahan Harrisonburg (Virginia) / Richmond (Virginia),Harrisonburg (Virginia) / Richmond (Virginia),2184.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,53,Melissa Germait Kyle Germait Burlington (Wisconsin),Burlington (Wisconsin),2186.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,54,Jaq Law Davey Black Portland (Oregon) / Vancouver (Washington),Portland (Oregon) / Vancouver (Washington),2195.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,55,Claire Bailey Jiamei Qian Palo Alto (California) / San Mateo County (California),Palo Alto (California) / San Mateo County (California),2204.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,56,Emily Howard Cassandra Sands Bentonville (Arkansas) / Centerton (Arkansas),Bentonville (Arkansas) / Centerton (Arkansas),2208.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,57,Angela Harrow Claire Sole Elkins Park (Pennsylvania) / Harrisburg (Pennsylvania),Elkins Park (Pennsylvania) / Harrisburg (Pennsylvania),2211.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,58,Kristin Blair Arianne Collopy Denver (Colorado) / Lone Tree (Colorado),Denver (Colorado) / Lone Tree (Colorado),2212.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,58,Bill McFadden Brooke Ouro-Djobo Stoughton (Massachusetts),Stoughton (Massachusetts),2212.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,60,Irene Ho Sola Grantham Mountain View (California) / San Mateo (California),Mountain View (California) / San Mateo (California),2216.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,61,Melissa Cody Scott Eng San Diego (California),San Diego (California),2223.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,62,Melanie Buhlmann Sarah Cabrera Gainesville (Florida) / Palmetto (Florida),Gainesville (Florida) / Palmetto (Florida),2234.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,63,Dawn Marie Bey Jamie Marsigit Richmond (Virgnia) / Crewe (Virginia),Richmond (Virgnia) / Crewe (Virginia),2251.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,64,Erin Fisk Mary Powell Portland (Oregon),Portland (Oregon),2257.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,65,Sarah Hosley Maria Grant Bloomfiled (Connecticut) / East Boothbay (Maine),Bloomfiled (Connecticut) / East Boothbay (Maine),2263.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,66,Michael Ha Andrew Dunkman Washington (DC),Washington (DC),2301.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,67,Wendy Escudero Kelly Spoon San Diego (California),San Diego (California),2305.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,68,Clare Kay Jennifer Hancock San Francisco (California),San Francisco (California),2342.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,69,Michelle McCrea Kate McCrea Landenberg (Pensilvania),Landenberg (Pensilvania),2349.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,70,Joe Feehan Karina Krajec Washington (DC) / Ashtabula (Ohio),Washington (DC) / Ashtabula (Ohio),2354.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,71,Megan Hoban Sarah Hoban Medford (Massachusetts) / Manlius (New York),Medford (Massachusetts) / Manlius (New York),2360.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,72,Isabel Urrutia Karen Brownlow Waterloo (Ontario) / Westport (Connecticut),Waterloo (Ontario) / Westport (Connecticut),2375.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,73,Meri Cartee Jennifer Cartee Saint Peters (Missouri) / Monterey (California),Saint Peters (Missouri) / Monterey (California),2394.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,74,Julie Kutchera Carrie Grose Peoria (Arizona) / Mesa (Arizona),Peoria (Arizona) / Mesa (Arizona),2395.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,75,Katherine Wren Kandace Gordon Columbus (Ohio) / Powell (Ohio),Columbus (Ohio) / Powell (Ohio),2405.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,76,Jeff Vincent Brittany Houghton Prairie Village (Kansas) / Merkel (Texas),Prairie Village (Kansas) / Merkel (Texas),2412.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,77,Noelle Marshall Katie Everson Winona (Minnesota) / Plymouth (Minnesota),Winona (Minnesota) / Plymouth (Minnesota),2432.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,78,Jennifer Malone Leila Beikmohamadi Cary (North Carolina),Cary (North Carolina),2456.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,79,Angela Kwon Lisa Filemyr New York / Long Island City (New York),New York / Long Island City (New York),2465.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,80,Megan Jenkins Rachel Gaskin Plano (Texas) / Arlington (Texas),Plano (Texas) / Arlington (Texas),2470.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,81,Anne Stockdale Tiffany Rivera Everett (Washington) / San Diego (California),Everett (Washington) / San Diego (California),2472.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,82,Kayli Bodway Dakota Scully Appleton (Wi) / Madison (Wisconsin),Appleton (Wi) / Madison (Wisconsin),2473.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,83,Rowan Cleland Melissa Reilly Lakebay (Washington) / Everett (Washington),Lakebay (Washington) / Everett (Washington),2483.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,84,Mollie Tessler Maggie Horne North Salem (New York) / Brooklyn (New York),North Salem (New York) / Brooklyn (New York),2490.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,85,Kamila Lin Elizabeth Beetschen Cumming (Georgia) / Bonaire (Georgia),Cumming (Georgia) / Bonaire (Georgia),2498.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,86,Emily Ma Wan-Yu Lai San Francisco (California) / Oakland (California),San Francisco (California) / Oakland (California),2504.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,87,Anne Khong Sue Kroger San Diego (California) / Carlsbad (California),San Diego (California) / Carlsbad (California),2547.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,88,Stephanie Ho Victoria Chu Oakland (California),Oakland (California),2555.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,89,Nicole Zern Sarah Eytinge Maple Valley (Washington) / Seattle (Washington),Maple Valley (Washington) / Seattle (Washington),2587.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,90,Erin Cherry Jodi Green Gloucester (Massachusetts) / Arlington (Massachusetts),Gloucester (Massachusetts) / Arlington (Massachusetts),2592.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,91,Sami Heathcote Megan Barwegen Cincinnati (Ohio) / Chicago (Illinois),Cincinnati (Ohio) / Chicago (Illinois),2631.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,92,Lisa Weaver Michelle Kaufman Madison (Wisconsin) / Wildwood (Missouri),Madison (Wisconsin) / Wildwood (Missouri),2636.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,93,Courtney Wong Norah Molina Sausalito (California) / Emeryville (California),Sausalito (California) / Emeryville (California),2653.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,94,Jessica Cutshall Linda Hirschfeld Dublin (Ohio) / Auburn (Indiana),Dublin (Ohio) / Auburn (Indiana),2685.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,95,Soren Hansen Sandra Vita Washington (DC) / Herndon (Virginia),Washington (DC) / Herndon (Virginia),2697.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,96,Brooke Vlasich Cindy Grimley-Beason Oakland (California) / Concord (California),Oakland (California) / Concord (California),2702.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,97,Erin Walker Jenny Cimino Dallas (Georgia) / Atlanta (Georgia),Dallas (Georgia) / Atlanta (Georgia),2733.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,98,Karen May Shannon May Pittsford (New York),Pittsford (New York),2742.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,99,Kate Crocker Gretchen Steen Saint Johnsbury (Vermont),Saint Johnsbury (Vermont),2745.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,100,Dana Saunders Angela McFarland Virginia / Warrenton (Virginia),Virginia / Warrenton (Virginia),2750.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,101,Jennifer Ferris Paula Marques-Roberts Boca Raton (Florida),Boca Raton (Florida),2762.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,102,Lori Eich Jennie Zumbusch Arnolds Park (Iowa),Arnolds Park (Iowa),2771.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,103,Shirley Jiang Frank Lieu Chicago (Illinois),Chicago (Illinois),2776.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,104,Kevin Collins Addy Anderson Flint (Michigan),Flint (Michigan),2803.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,104,Jennifer Fong Cindy Clark Chicago (Illinois) / North Bergen (New Jersey),Chicago (Illinois) / North Bergen (New Jersey),2803.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,106,Bettina Fyffe Cecilia Agraz Rancho Sta Margarita (California) / Manhattan Beach (California),Rancho Sta Margarita (California) / Manhattan Beach (California),2830.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,107,Cindy Koster Rocio Morfin Hideaway (Wisconsin) / Warren (Michigan),Hideaway (Wisconsin) / Warren (Michigan),2833.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,108,Lisa Schuler Leslie Mallery Mounds View (Minnesota),Mounds View (Minnesota),2850.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,109,Joelle Hershberger Ayriel Ash Saint Paul (Minnesota) / Minneapolis (Minnesota),Saint Paul (Minnesota) / Minneapolis (Minnesota),2865.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,110,Sonja Cames Amy Davis Mount Dora (Florida) / Fort White (Florida),Mount Dora (Florida) / Fort White (Florida),2871.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,111,Rachel Shields Leah Robbins Portland (Oregan),Portland (Oregan),2877.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,112,Jamie Wimmer Corey Hasty Olive Branch (Mississippi) / Memphis (Tennessee),Olive Branch (Mississippi) / Memphis (Tennessee),2907.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,113,Shannon O’Hara Todd O’Hara Milwaukee (Wisconsin),Milwaukee (Wisconsin),2910.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,114,Michelle Malcom Aurali Dade Warrenton (Virginia),Warrenton (Virginia),2915.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,114,Lindsay Wyatt Jessica Scheideler Winterport (Maine) / Grand Island (Nebraska),Winterport (Maine) / Grand Island (Nebraska),2915.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,116,Michelle Philo Jason Fox San Diego (California),San Diego (California),2918.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,117,Courtney Buhler Ameenah Saafir Noblesville (Indiana) / Canton (Michigan),Noblesville (Indiana) / Canton (Michigan),2921.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,118,Kaylie McConnell Tina McConnell Holland (Michigan),Holland (Michigan),2954.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,119,Emily Baer Audrey Brian Bellevue (Washington) / Saratoga Springs (Utah),Bellevue (Washington) / Saratoga Springs (Utah),2958.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,120,Gwendolyn Adams Jessica Bossiere Sanford (North Carolina) / Raleigh (North Carolina),Sanford (North Carolina) / Raleigh (North Carolina),2961.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,121,Katie Pribylshay Maria Pyrdek Palatine (Illinois) / Monrovia (California),Palatine (Illinois) / Monrovia (California),2971.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,122,Emily Meacham Steph Kelliher Whitefield (New Hampshire),Whitefield (New Hampshire),2997.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,123,Kathy Tieu Amber Eskridge Herndon (Virginia) / Lorton (Virginia),Herndon (Virginia) / Lorton (Virginia),3011.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,124,Sarah Barcousky Danny Atyeo Orlando (Florida),Orlando (Florida),3019.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,125,Zoe Beckett Brandon Amstrong Bellingham (Washington),Bellingham (Washington),3031.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,126,Susan Johnson Bridget Johnson Flowery Branch (Georgia) / Charlotte (North Carolina),Flowery Branch (Georgia) / Charlotte (North Carolina),3046.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,127,Shay Gibson Brittany Grissom Birmingham (Alabama) / Sharpsburg (Georgia),Birmingham (Alabama) / Sharpsburg (Georgia),3050.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,128,Nikki Hall Evelyn Saavedra Castle Rock (Colorado) / Parker (Colorado),Castle Rock (Colorado) / Parker (Colorado),3055.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,129,Robin Patrick Ashley Willard Durham (North Carolina),Durham (North Carolina),3061.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,130,Tulsi Mali Himakshi Bhatt Longmeadow (Massachusetts) / Hartford (Connecticut),Longmeadow (Massachusetts) / Hartford (Connecticut),3085.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,131,Kendall Parrish Molly Poniatowski Brooklyn (New York),Brooklyn (New York),3102.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,132,Jennifer Waltman Heather Stober Sleepy Hollow (New York) / Huddleston (Virginia),Sleepy Hollow (New York) / Huddleston (Virginia),3106.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,133,Maggie Gaynor Ashlee Hawkins Kimberly (Idaho) / Twin Falls (Idaho),Kimberly (Idaho) / Twin Falls (Idaho),3127.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,134,Lizzy Klinnert Josh Serna Palatine (Illinois),Palatine (Illinois),3144.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,135,Tara Fortier Angela McPherson Washington (DC),Washington (DC),3165.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,136,Deborah Dyson Anne Seto Scottsdale (Arizona) / Alamo (California),Scottsdale (Arizona) / Alamo (California),3185.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,137,Susan Hann Amy Aldridge Malabar (Florida),Malabar (Florida),3228.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,138,Jane Davis Owen Wartella Milton (Massachusetts) / Somerville (Massachusetts),Milton (Massachusetts) / Somerville (Massachusetts),3240.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,139,Chelsea Jacobs Chelsie Vaillancourt Washington (DC) / Alexandria (Virginia),Washington (DC) / Alexandria (Virginia),3245.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,140,Marissa Belau Max Schooley Carmichael (California) / Oakland (California),Carmichael (California) / Oakland (California),3287.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,141,Dessa Burt Maggie Hobbs New Brighton (Minnesota) / Saint Paul (Minnesota),New Brighton (Minnesota) / Saint Paul (Minnesota),3299.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,142,Becky Hierlinger Julia Gabler Roseville (Minnesota) / Minneapolis (Minnesota),Roseville (Minnesota) / Minneapolis (Minnesota),3312.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,143,Robert Dysko Elizabeth Dysko Ann Arbor (Michigan),Ann Arbor (Michigan),3321.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,144,Katherine Lasher Jennifer Luebbe Fuquay Varina (North Carolina) / River Forest (Illinois),Fuquay Varina (North Carolina) / River Forest (Illinois),3335.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,145,Anna Locke Sarah Fleming Concord (California) / Martinez (California),Concord (California) / Martinez (California),3344.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,146,Renita Gidlund Gina Abbiate San Diego (California),San Diego (California),3359.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,147,Amanda Frost Cierra Wagner Clifton Springs (New York) / Rushville (New York),Clifton Springs (New York) / Rushville (New York),3365.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,148,Soraya Merriweather Adria Mulligan Decatur (Georgia),Decatur (Georgia),3373.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,149,Rebecca Roberts Quantesha Pittman Sugar Hill (Georgia) / Macon (Georgia),Sugar Hill (Georgia) / Macon (Georgia),3444.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,150,Frank Hollander Christopher Morrissey Bellevue (Washington) / Seattle (Washington),Bellevue (Washington) / Seattle (Washington),3457.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,151,Jordan Halperin Elizabeth Halperin New York,New York,3507.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,152,Chloe Weakly Diana Stanley Portland (Oregon),Portland (Oregon),3518.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,153,Nailun Chen Jonathan Huang Naperville (Illinois),Naperville (Illinois),3571.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,154,Claire Williamson Olivia Frick Atlanta (Georgia),Atlanta (Georgia),3657.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,155,Amy Hanson Ashley Stanley Sparks (Nevada) / -,Sparks (Nevada) / -,3819.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,156,Lachlan Davidson Simon Davidson Chicago (Illinois) / Wellesley (Massachusetts),Chicago (Illinois) / Wellesley (Massachusetts),3834.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,157,Lisa Hobbs Kanani Hepworth Rexburg (Idaho),Rexburg (Idaho),3860.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,158,Barbara Sproatmeyer Ginger Cline Fort Worth (Texas) / North Lake (Texas),Fort Worth (Texas) / North Lake (Texas),3894.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,159,Dawn Pratt Deborah Warick Buffalo (New York) / Atlanta (Georgia),Buffalo (New York) / Atlanta (Georgia),3928.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,160,Jason Narozny Jennifer Narozny Clifton (New Jersey),Clifton (New Jersey),3954.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,161,Glenn Hollingsworth Dean Papastrat Seattle (Washington) / Bellevue (Washington),Seattle (Washington) / Bellevue (Washington),3986.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,162,Tien Nguyen Thao Hughes Escondido (California) / Poway (California),Escondido (California) / Poway (California),3987.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,163,Krystal Jakosky Tina Taylor Lafayette (Colorado),Lafayette (Colorado),3998.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,164,Jennifer Leiras Olivia Medina Deland (Florida) / High Springs (Florida),Deland (Florida) / High Springs (Florida),3999.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,165,Tonya Edwards Kim Spinello Atlanta (Georgia) / Decatur (Georgia),Atlanta (Georgia) / Decatur (Georgia),4057.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,166,Dave Harris Heather Harris Tampa (Florida),Tampa (Florida),4078.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,166,Jenn Schauer Beverly Rice Loup City (Nebraska) / Ord (Nebraska),Loup City (Nebraska) / Ord (Nebraska),4078.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,168,Shital Sukul Gwen Guerra Miami (Florida) / Margate (Florida),Miami (Florida) / Margate (Florida),4080.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,169,Danielle Mulligan Kj Donovan Clinton (Connecticut) / Preston (Connecticut),Clinton (Connecticut) / Preston (Connecticut),4104.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,170,Heather Haynes-O’Brien Heidi Haynes Chandler (Arizona) / Burien (Washington),Chandler (Arizona) / Burien (Washington),4133.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,171,Stephanie Gildenmeister Cierra McPeak Bellevue (Ohio) / Cleveland (Ohio),Bellevue (Ohio) / Cleveland (Ohio),4143.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,172,Debra Atkinson Debbie Thompson Houston (Texas) / Richmond (Texas),Houston (Texas) / Richmond (Texas),4169.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,172,Carolyn Kuczmarski Sarah Zimerman Independence (Ohio) / Chicago (Illinois),Independence (Ohio) / Chicago (Illinois),4169.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,174,Kristine Wolfe Kim Martín Newport News (Virginia) / Norfolk (Virginia),Newport News (Virginia) / Norfolk (Virginia),4170.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,175,BreAnna Gallegos Allison Russotto Elkins Park (Pensilvania) / Neptune (New Jersey),Elkins Park (Pensilvania) / Neptune (New Jersey),4197.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,176,Jennifer King Barry Walter Herndon (Virginia),Herndon (Virginia),4209.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,177,Angela Lim Melissa Park Edina (Minnesota) / Oakdale (Minnesota),Edina (Minnesota) / Oakdale (Minnesota),4216.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,178,Rebecca Ogden Raeanna Simcoe Fort Mill (South Carolina),Fort Mill (South Carolina),4234.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,179,Sandra Kopec Jody Murphy Concord (California) / Long Beach (California),Concord (California) / Long Beach (California),4405.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,180,Cathy Luers Patty Baker Liberty Township (Ohio) / Chesterfield (Virginia),Liberty Township (Ohio) / Chesterfield (Virginia),4443.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,181,Deborah Wilson Julie Headlee Tucson (Arizona) / Shawnee (Kansas),Tucson (Arizona) / Shawnee (Kansas),,False,475.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,182,Madi Zavitz Kelty Zavitz Orlando (Florida) / Atlanta (Georgia),Orlando (Florida) / Atlanta (Georgia),,False,446.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,183,Ted Dorris Lisa McGunigal Detroit (Michigan),Detroit (Michigan),,False,442.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,184,Ed Siegel Karla Matute Chester (New Jersey),Chester (New Jersey),,False,430.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,185,Tanya Vattanasil Danvers Massachusetts Danvers (Massachusetts) / Virginia (Kansas),Danvers (Massachusetts) / Virginia (Kansas),,False,413.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,186,Shara Taylor Bari Weinberger Wexford (Pensilvania) / Pittsburgh (Pennsylvania),Wexford (Pensilvania) / Pittsburgh (Pennsylvania),,False,406.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,186,Jodi Mancilla Teela Jackson Monroe (Washington) / Snelville (Georgia),Monroe (Washington) / Snelville (Georgia),,False,406.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,188,Kim Bottorff Deb McKibben Atchison (Kansas),Atchison (Kansas),,False,396.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,189,Meredith Milby Spencer Milby Lawrenceville (Georgia),Lawrenceville (Georgia),,False,395.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,190,Bill Iverson Annie Mei Arlington (Virginia) / Fairfax (Virginia),Arlington (Virginia) / Fairfax (Virginia),,False,387.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,191,Jeanette Ward Zach Cummings Leesburg (Virginia),Leesburg (Virginia),,False,381.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,191,Grace Lee Christine Lee Alpharetta (Georgia),Alpharetta (Georgia),,False,381.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,193,Tyler Pottle Gabe Gaeta Bellingham (Washington) / Chicago (Illinois),Bellingham (Washington) / Chicago (Illinois),,False,365.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,194,Flannery Winchester Rachel Hill Decatur (Georgia) / East Point (Georgia),Decatur (Georgia) / East Point (Georgia),,False,353.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,195,Ann Glezen John Glezen Holmes Beach (Florida),Holmes Beach (Florida),,False,351.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,196,Beatrice Chau Sylvia Chau San Francisco (California) / Saratoga (California),San Francisco (California) / Saratoga (California),,False,343.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,197,Mary Wheeler Kathy Janini Cincinnati (Ohio) / Atlanta (Georgia),Cincinnati (Ohio) / Atlanta (Georgia),,False,340.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,198,Michele Lewandowski Lynda Lewandowski Atlanta (Georgia),Atlanta (Georgia),,False,321.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,199,Marianne Bruno Pasquale Bruno Bluffton (South Carolina),Bluffton (South Carolina),,False,298.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,A,1000,7200,200,Kathy Dougherty Nancy Baime Wexford (Pensilvania) / Pittsburgh (Pensilvania),Wexford (Pensilvania) / Pittsburgh (Pensilvania),,False,276.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,1,Josh Trauger Conner DeLaat Cincinnati (Ohio),Cincinnati (Ohio),1312.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,2,Kelly Walter Jessa Douglas Phoenix (Arizona) / Centralia (Washington),Phoenix (Arizona) / Centralia (Washington),1730.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,3,Jeanne Roiter Sarah Schuler Duvall (Washington) / St. Paul (Minnesota),Duvall (Washington) / St. Paul (Minnesota),1918.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,4,Jen Lunsford Amber Whitmill Efland (North Carolina) / Chapel Hill (North Carolina),Efland (North Carolina) / Chapel Hill (North Carolina),1967.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,5,Rebecca Streitz Jessica Streitz Sunnyvale (California) / Philadelphia (Pensilvania),Sunnyvale (California) / Philadelphia (Pensilvania),1970.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,6,Eb Caron Michaela Keener Hartford (Connecticut) / Lexington (Kentucky),Hartford (Connecticut) / Lexington (Kentucky),2044.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,7,Andrea Heistand Allie Arendell Muskegon (Michigan) / Honolulu (Hawai),Muskegon (Michigan) / Honolulu (Hawai),2047.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,8,Grayson Shannon Sammy Brownlow Norton (Massachusetts) / Westport (Connecticut),Norton (Massachusetts) / Westport (Connecticut),2056.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,9,Simmie Berman Tiffany Medeiros Rockville (Maryland) / Lowell (Massachusetts),Rockville (Maryland) / Lowell (Massachusetts),2059.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,10,Andrea Kyle Dawne Rasmusson Saint Paul (Minnesota) / Prior Lake (Minnesota),Saint Paul (Minnesota) / Prior Lake (Minnesota),2154.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,11,Rose Barrett Colleen M Dunne Columbus (Ohio),Columbus (Ohio),2224.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,12,Cosmo Smith Leslie Richardson Seattle (Washington),Seattle (Washington),2240.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,13,Kyle Kossin Mathew Nettlow Bountiful (Utah) / Mableton (Georgia),Bountiful (Utah) / Mableton (Georgia),2241.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,14,Chris Viox Taylor Reed Glen Carbon (Illinois) / Rolla (Missouri),Glen Carbon (Illinois) / Rolla (Missouri),2244.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,15,Eric Goulet Lindsay Wang Washington (DC) / Arlington (Virginia),Washington (DC) / Arlington (Virginia),2253.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,16,Sarah Meyer Edith Lewis Cincinnati (Ohio),Cincinnati (Ohio),2291.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,17,Emily Chandran Emily Russell Dover (New Hampshire) / Durham (New Durham),Dover (New Hampshire) / Durham (New Durham),2298.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,18,Elizabeth McElveen Jasper Lee Greenville (South Carolina) / Decatur (Georgia),Greenville (South Carolina) / Decatur (Georgia),2347.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,19,Feifei Xue Audrey Nelson San Francisco (California),San Francisco (California),2364.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,20,Jim Eakins Andrea Peng Cambridge (Massachusetts) / San Francisco (California),Cambridge (Massachusetts) / San Francisco (California),2365.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,21,Alexander Wang Lydia Utkin Kirkland (Washington) / Bellevue (Washington),Kirkland (Washington) / Bellevue (Washington),2391.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,22,Iryna Shvydchenko Rachael Schachtler San Francisco (California),San Francisco (California),2414.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,23,Rose Robbins Nicole Pichette Portland (Oregon) / Spokane (Washington),Portland (Oregon) / Spokane (Washington),2433.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,24,Margaret Long Tally Klinefelter Duluth (Georgia) / Lilburn (Georgia),Duluth (Georgia) / Lilburn (Georgia),2453.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,25,Jeremy Seidling Kara Taylor St Paul (Minnesota) / Okoboji (Iowa),St Paul (Minnesota) / Okoboji (Iowa),2531.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,26,Susanne Riehemann Doug Ellwanger Mountain View (California) / San Mateo (California),Mountain View (California) / San Mateo (California),2566.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,27,Nicholas Ebelhack Nathan Biberdorf Indianapolis (Indiana) / Beech Grove (Indiana),Indianapolis (Indiana) / Beech Grove (Indiana),2571.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,28,Amber Whitear Shalise Hassing Layton (Utah) / Syracuse (Utah),Layton (Utah) / Syracuse (Utah),2607.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,29,Tammy McLeod Yvonne Feucht Los Angeles (California) / Burbank (California),Los Angeles (California) / Burbank (California),2635.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,30,Hiromi Kimura Lena Nguyen-Vo Lynnwood (Washington) / Riverview (Florida),Lynnwood (Washington) / Riverview (Florida),2679.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,31,Elizabeth Nelson Joshua Nelson Brooklyn Park (Minnesota) / Minneapolis (Minnesota),Brooklyn Park (Minnesota) / Minneapolis (Minnesota),2689.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,32,Grey Rogers Katherine Dilks Shreveport (Louisiana) / Haddonfield (New Jersey),Shreveport (Louisiana) / Haddonfield (New Jersey),2698.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,33,Jessica Henderson Nicholas Mueller Columbus (Ohio),Columbus (Ohio),2711.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,34,Jarom Chung Megan Chung Cedar Hills (Utah),Cedar Hills (Utah),2713.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,35,Karen Ni Carmen Dueñas Diamond Bar (California) / Woburn (Massachusetts),Diamond Bar (California) / Woburn (Massachusetts),2767.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,36,Elizaveta Gallagher Ashlyn Koga Brooklyn (New York),Brooklyn (New York),2780.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,37,Shea Burkett Clarissa Long Athens (Texas),Athens (Texas),2790.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,38,Aloysia Larson Emmie Lee Grand Forks (North Dakota) / Big Lake (Minnesota),Grand Forks (North Dakota) / Big Lake (Minnesota),2797.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,38,Kara Bingham Michelle Gauthier Midland (Michigan) / Bay City (Michigan),Midland (Michigan) / Bay City (Michigan),2797.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,40,Karen Wells Jessica Bradley Monument (Colorado) / Parker (Colorado),Monument (Colorado) / Parker (Colorado),2821.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,41,Bethany Litus Hali Simmons Pittsburgh (Pensilvania),Pittsburgh (Pensilvania),2863.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,42,Abigail Ricketts-Savit Lindsay Cooper Severn (Maryland) / Arlington (Virginia),Severn (Maryland) / Arlington (Virginia),2867.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,43,Samantha Saake Toni Macreynolds Greensboro (North Carolina),Greensboro (North Carolina),2880.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,44,Alyssa Graham Selina Gilbertson Phoenix (Arizona) / Mesa (Arizona),Phoenix (Arizona) / Mesa (Arizona),2888.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,45,Michelle Bone Julia Buck Washington (DC),Washington (DC),2895.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,46,Michelle Micheli Kasey Smith Sterling (Virginia) / Smithfield (Virginia),Sterling (Virginia) / Smithfield (Virginia),2926.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,47,Gretchen Etzold Arabella Etzold-Erickson Kings Beach (California),Kings Beach (California),2938.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,48,Carley lauer Jason Pipkin Cincinnati (Ohio),Cincinnati (Ohio),2954.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,49,Natalie Schimmelbusch Elizabeth Sondag Manassas (Virginia) / Herndon (Virginia),Manassas (Virginia) / Herndon (Virginia),2964.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,50,Laura Parker Kimberly Williamson Atlanta (Georgia),Atlanta (Georgia),3000.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,51,Whitney Presley Sarah Hauge Denver (Colorado) / Castle Rock (Colorado),Denver (Colorado) / Castle Rock (Colorado),3002.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,52,"Kevin Erickson Katie Erickson Coon Rapids, MN 55448 (Minnesota) / Coon Rapids (Minnesota)","Coon Rapids, MN 55448 (Minnesota) / Coon Rapids (Minnesota)",3019.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,53,Bethany Quinn Sharon Williams Monroe (North Carolina) / Hendersonville (North Carolina),Monroe (North Carolina) / Hendersonville (North Carolina),3024.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,54,Lindsey Anderson Lisa Grow Orem (Utah) / Draper (Utah),Orem (Utah) / Draper (Utah),3030.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,55,Miranda Lo Melinda Whiting Cottonwood Heights (Utah),Cottonwood Heights (Utah),3044.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,56,Kim Knaub Tresia White Loup City (Nebraska),Loup City (Nebraska),3048.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,57,Jonathan Armstrong Libby Bacon Vancouver (Washington) / Portland (Oregon),Vancouver (Washington) / Portland (Oregon),3052.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,58,Eve Mayfield Holly Ashworth Smyrna (Georgia) / Atlanta (Georgia),Smyrna (Georgia) / Atlanta (Georgia),3060.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,59,Tara Griffitts Brian Wolfe Camas (Washington),Camas (Washington),3073.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,60,Rachel Chiu Kacie Salmon Los Angeles (California),Los Angeles (California),3114.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,61,Micaela Newman Melanie Palmiero Seattle (Washington) / Chattanooga (Tennessee),Seattle (Washington) / Chattanooga (Tennessee),3119.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,62,Michelle Chan Kailee Chan Houston (Texas) / Houton (Texas),Houston (Texas) / Houton (Texas),3126.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,63,Kristen Sweeney Erin Sweeney Atlanta (Georgia) / Newark (New Jersey),Atlanta (Georgia) / Newark (New Jersey),3127.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,64,Rachel Wood Rebecca Watson Colorado Springs (Colorado) / Denver (Colorado),Colorado Springs (Colorado) / Denver (Colorado),3134.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,65,Angie Gazdic Sonia Lara Chicago (Illinois),Chicago (Illinois),3135.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,66,Jennifer Hill Manja Wurschke Columbia (Pensilvania) / Stamford (Connecticut),Columbia (Pensilvania) / Stamford (Connecticut),3163.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,67,Lindsay Steenstra Cassie Vonrueden San Diego (California) / Stevens Point (Wisconsin),San Diego (California) / Stevens Point (Wisconsin),3179.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,68,Charese Gainor Lauren Turner Bellingham (Washington),Bellingham (Washington),3222.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,69,Rushing Smith III Jenevieve Parker Hideaway (Texas) / Carrollton (Texas),Hideaway (Texas) / Carrollton (Texas),3256.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,70,Karolina Kosakowska Emily Gombotz Medford (Massachusetts),Medford (Massachusetts),3282.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,71,Jennifer Morrow Melissa Martin Vestal (New York) / North Syracuse (New York),Vestal (New York) / North Syracuse (New York),3283.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,72,Angela Guglielmino Meena Deschutter Barstow (California) / Santa Monica (California),Barstow (California) / Santa Monica (California),3305.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,73,Hope Thompson Carrie Campbell Hurst (Texas) / Denton (Texas),Hurst (Texas) / Denton (Texas),3308.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,74,Dan Dougherty Cecilia Frew Saint Louis (Missouri) / St Louis (Missouri),Saint Louis (Missouri) / St Louis (Missouri),3319.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,75,Kristin Jimenez Melissa Harlow Berwyn (Illinois),Berwyn (Illinois),3325.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,76,Meredith Yeager Hannah Bevis Cuyahoga Falls (Ohio) / South Hadley (Massachusetts),Cuyahoga Falls (Ohio) / South Hadley (Massachusetts),3326.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,77,Bonnie Smith Chris Smith Plymouth (Minnesota),Plymouth (Minnesota),3354.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,78,Tessa Melli Gabby Melli Denver (Colorado),Denver (Colorado),3363.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,79,Ezekiel Blain Alexandra Babcock Mechanicville (New York) / Schenectady (New York),Mechanicville (New York) / Schenectady (New York),3397.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,80,Jen Demint Lynnae Day Grand Rapids (Michigan) / Hollis (New Hampshire),Grand Rapids (Michigan) / Hollis (New Hampshire),3399.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,81,Madeleine Tejeda Pedrow Lydia Osner Landenberg (Pennsylvania),Landenberg (Pennsylvania),3404.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,82,Mallory Alemi Kathy Robbins Kissimmee (Florida) / Gulf Breeze (Florida),Kissimmee (Florida) / Gulf Breeze (Florida),3411.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,83,Felisa Lewis Soon Kim Potomac (Maryland) / Germantown (Maryland),Potomac (Maryland) / Germantown (Maryland),3425.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,84,Beth Luebbe Ann Mortimer Oxford (Ohio),Oxford (Ohio),3443.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,85,Daniel Rodriguez Paula Van Camp Boulder (Colorado) / Wheat Ridge (Colorado),Boulder (Colorado) / Wheat Ridge (Colorado),3447.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,86,Sarah Mackey Michelle Penta West Hartford (Connecticut) / South Windsor (Connecticut),West Hartford (Connecticut) / South Windsor (Connecticut),3510.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,87,Danielle Dudley Jessa Crisp Parker (Colorado) / Denver (Colorado),Parker (Colorado) / Denver (Colorado),3514.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,88,Sarah Teare Angela Bourgeois Chelsea (Michigan) / Plymouth (Michigan),Chelsea (Michigan) / Plymouth (Michigan),3521.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,88,Jessica Crosby Jennifer Knight Myrtle Beach (South Carolina) / Bessemer (Alabama),Myrtle Beach (South Carolina) / Bessemer (Alabama),3521.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,90,Michael Dickman Dylan Dickman Aurora (Colorado),Aurora (Colorado),3540.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,91,Kristina Key Christine Durkin Charleston (South Carolina) / Columbus (Ohio),Charleston (South Carolina) / Columbus (Ohio),3572.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,92,Jamie Ambabo Luna Ambabo Decatur (Georgia),Decatur (Georgia),3598.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,93,Maria Seitz Jodie Morse Boyertown (Pensilvania) / New London (Connecticut),Boyertown (Pensilvania) / New London (Connecticut),3602.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,94,Mary Ann Alwan Kristen Born Dana Point (California) / San Clemente (California),Dana Point (California) / San Clemente (California),3651.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,95,Emily Ogden Dwight Dugan Fort Mill (South Carolina),Fort Mill (South Carolina),3661.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,96,Wendy Shieu Brandon Harrington San Francisco (California),San Francisco (California),3667.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,97,Danika Dorris John Dorris Arlington (Virginia),Arlington (Virginia),3669.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,98,Krystal Cotriss Luanne Hill Baltimore (Maryland) / Boyds (Maryland),Baltimore (Maryland) / Boyds (Maryland),3678.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,99,Wendi Dietrich Stephanie Thompson Sherman oaks (California),Sherman oaks (California),3695.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,100,Carolyn Baker Erica Baker Thurmont (Maryland) / Kensington (Maryland),Thurmont (Maryland) / Kensington (Maryland),3697.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,101,Sasha Laczkowski Nicole Norstrud Pueblo West (Colorado) / Colorado Springs (Colorado),Pueblo West (Colorado) / Colorado Springs (Colorado),3706.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,102,Stephanie Vargas Lea Campbell Carnation (Washington) / Vancouver (Washington),Carnation (Washington) / Vancouver (Washington),3734.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,103,Nhi Nguyen Kim Alvarez Houston (Texas),Houston (Texas),3738.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,104,Ryder Jackson Natalie Jackson Modesto (California),Modesto (California),3751.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,105,Amanda Van Straten Colleen Morris Saint Johnsbury (Vermont),Saint Johnsbury (Vermont),3794.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,106,Rebecca Tsang Tiffany Moy-Kang Chicago (Illinois),Chicago (Illinois),3802.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,107,Derrick Marcey Ashley Wilson Atlanta (Georgia) / Durham (North Carolina),Atlanta (Georgia) / Durham (North Carolina),3807.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,108,Kara Bancroft Mackenzie Graham Tucson (Arizona) / Phoenix (Arizona),Tucson (Arizona) / Phoenix (Arizona),3816.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,109,Kori Klustaitis Brittany Nixon Cary (North Carolina),Cary (North Carolina),3842.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,110,June Huber Laura Piland Houston (Texas) / Willis (Texas),Houston (Texas) / Willis (Texas),3843.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,111,Lori Nussbaum Jamie Lim Klamath Falls (Oregon) / Seattle (Washington),Klamath Falls (Oregon) / Seattle (Washington),3864.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,112,Holly Winters Deppe Kate Shirley Conifer (Colorado) / Arvada (Colorado),Conifer (Colorado) / Arvada (Colorado),3896.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,113,Angela Morford Mariah Westerhausen Mandan (Norht Dakota) / Dilworth (Minnesota),Mandan (Norht Dakota) / Dilworth (Minnesota),3899.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,114,Makiko Hiromi Daniel Narain New York / Jersey City (New Jersey),New York / Jersey City (New Jersey),4083.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,115,Mary Beth Guilbo Malorie Okuhara Katy (Texas) / Gonzales (Louisiana),Katy (Texas) / Gonzales (Louisiana),4105.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,116,Hana Johnstone Cami Pottle Chicago (Illinois) / Bellingham (Washington),Chicago (Illinois) / Bellingham (Washington),4122.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,117,My-Lea Coulombe-Quach Maurice Werner Alexandria (Virginia) / Washington (DC),Alexandria (Virginia) / Washington (DC),4132.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,118,Curt Schieler Ariel Schieler Acton (Massachusetts),Acton (Massachusetts),4158.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,119,Theresa Rudolph Ashley Rudolph Davie (Florida) / Orlando (Florida),Davie (Florida) / Orlando (Florida),4165.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,120,Sara Pratt Elizabeth Pratt Edwardsville (Illinois),Edwardsville (Illinois),4186.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,121,Tazia Statucki Jenna Mikish Washington (DC) / Clearwater (Minnesota),Washington (DC) / Clearwater (Minnesota),4192.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,122,Laura Hauer Alaina Kmitta Marietta (Georgia) / Denver (Colorado),Marietta (Georgia) / Denver (Colorado),4235.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,123,India Eaford Davion Johnson Boston (Massachusetts) / Bradenton (Florida),Boston (Massachusetts) / Bradenton (Florida),4247.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,124,Megan Schleck Molly Maloy Bethlehem (New Hampshire) / St. Johnsbury (Vermont),Bethlehem (New Hampshire) / St. Johnsbury (Vermont),4270.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,125,Kate Pieplow Caleb Pieplow Columbiana (Ohio),Columbiana (Ohio),4314.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,126,Caleigh Shaw Andrew Walsh Stillwater (Oklahoma),Stillwater (Oklahoma),4322.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,127,Kate Amey Jeff Amey Rosemount (Minnesota),Rosemount (Minnesota),4334.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,128,Kettie Olsen Aubrey Keisel Aurora (Colorado) / Durham (North Carolina),Aurora (Colorado) / Durham (North Carolina),4343.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,129,Ashley Tucker Jenna Beetz Festus (Missouri),Festus (Missouri),4347.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,130,Charity Taboas Amanda Rollins Bloomington (Indiana) / Wilmington (Ohio),Bloomington (Indiana) / Wilmington (Ohio),4375.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,131,Anna McElroy Courtney Mense Bellingham (Washington),Bellingham (Washington),4411.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,132,Deborah Green Jennifer Fry Cape Canaveral (Florida),Cape Canaveral (Florida),4473.0,True,
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,133,Mark Feldman Hanna Feldman Los Angeles (California) / Jersey City (New Jersey),Los Angeles (California) / Jersey City (New Jersey),,False,499.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,134,Tim Bodway Megan Bodway Appleton (Wisconsin),Appleton (Wisconsin),,False,482.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,135,Faye Alleman Natalie Hinkley Houston (Texas),Houston (Texas),,False,478.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,136,Julia Winer Cara Ashnault West Hartford (Connecticut) / Bloomfield (Connecticut),West Hartford (Connecticut) / Bloomfield (Connecticut),,False,466.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,137,Jenny Hierlinger Colleen S Dunne St. Paul (Minnesota) / Columbus (Ohio),St. Paul (Minnesota) / Columbus (Ohio),,False,464.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,138,Anna Voight Erin Manthey Apple Valley (Minnesota),Apple Valley (Minnesota),,False,463.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,139,Emily Landgraf Komal Shah Chicago (Illinois) / North Bergen (New Jersey),Chicago (Illinois) / North Bergen (New Jersey),,False,462.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,140,Barbara Harris Rachel Falk Englewood (New Jersey) / New York,Englewood (New Jersey) / New York,,False,461.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,141,Anne Kosek Hannah Jansen-Meza Middleton (Wisconsin) / St. Louis (Missouri),Middleton (Wisconsin) / St. Louis (Missouri),,False,457.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,142,Luann Thompson Shayla Jones Grapevine (Texas) / North Richland Hills (Texas),Grapevine (Texas) / North Richland Hills (Texas),,False,456.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,142,Silvana Procopio Jacob Abel San Diego (California),San Diego (California),,False,456.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,144,Caroline Meyer Carol Meyer Rhome (Texas) / Fort Worth (Texas),Rhome (Texas) / Fort Worth (Texas),,False,455.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,145,Juliana Echeverri Natalia Echeverri Dc / Greer (South Carolina),Dc / Greer (South Carolina),,False,454.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,145,Karina Pareja Jeesung Yun Peachtree City (Georgia) / Peachtree Cty (Georgia),Peachtree City (Georgia) / Peachtree Cty (Georgia),,False,454.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,147,Emily Patterson Kasey Cushing Hampton (New Hampshire) / Stratham (New Hampshire),Hampton (New Hampshire) / Stratham (New Hampshire),,False,450.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,148,Jayme Becerra Gloria Johnston Leesburg (Florida) / Richmond (Texas),Leesburg (Florida) / Richmond (Texas),,False,447.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,149,Laura Ghantous Susan Miller (Nc) Raleigh (North Carolina) / Fayetteville (North Carolina),Raleigh (North Carolina) / Fayetteville (North Carolina),,False,446.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,149,Katherine Johnson Jenn Thompson Ashburn (Virginia) / Grapevine (Texas),Ashburn (Virginia) / Grapevine (Texas),,False,446.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,151,Michele Dorfman Sarah Snider Fort Worth (Texas) / Greenvillle (South Carolina),Fort Worth (Texas) / Greenvillle (South Carolina),,False,440.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,152,John Walczak Kyle Walczak Carmel (Indiana),Carmel (Indiana),,False,439.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,153,Adrienne Cardiel Jared Cardiel Portland (Oregon) / Manhattan Beach (California),Portland (Oregon) / Manhattan Beach (California),,False,438.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,154,Catherine Huang Sruti Sreerama Clifton Heights (Pennsylvania) / Philadelphia (Pensilvania),Clifton Heights (Pennsylvania) / Philadelphia (Pensilvania),,False,433.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,155,Lisa Moskowitz Melinda Contreras San Clemente (California) / Arlington (Virginia),San Clemente (California) / Arlington (Virginia),,False,426.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,156,Lucy Cruz Asha Philip Bloomfield (New Jersey) / Teaneck (New Jersey),Bloomfield (New Jersey) / Teaneck (New Jersey),,False,425.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,157,Rob Shields Karen Kent Portland (Oregon) / Chantilly (Virginia),Portland (Oregon) / Chantilly (Virginia),,False,424.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,158,Molly Rentz Grace Moore Deland (Florida) / Kokomo (Indiana),Deland (Florida) / Kokomo (Indiana),,False,422.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,159,Susan Miller (In) Trisha Koetter Floyds Knobs (Indiana),Floyds Knobs (Indiana),,False,418.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,160,Wendy Weigant Loretta Nowak Frederick (Maryland) / Marlton (New Jersey),Frederick (Maryland) / Marlton (New Jersey),,False,417.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,161,Rosemary Dabbs Alex Isordia Stockton (Tennesse),Stockton (Tennesse),,False,415.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,162,Kristine Moody Michele Moody Knoxville (Tennessee) / Gulf Breeze (Florida),Knoxville (Tennessee) / Gulf Breeze (Florida),,False,412.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,163,Allyson Haim Valerie Surprenant Huntington Beach (California),Huntington Beach (California),,False,411.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,164,Emily Doroff Jean Doroff Burnsville (Minnesota),Burnsville (Minnesota),,False,400.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,165,Destiny Crenshaw Andrè Crenshaw Bonne Terre (Missouri),Bonne Terre (Missouri),,False,399.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,166,Tracy Hardy Sandy Reitzel Sebring (Florida) / Genoa (Ohio),Sebring (Florida) / Genoa (Ohio),,False,398.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,167,Jennie Werner Evan Cahill Bellevue (Washington) / Seattle (Washington),Bellevue (Washington) / Seattle (Washington),,False,397.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,168,Lina Zulick Cheryl Nolan Farmington (New York) / Bloomfield (New York),Farmington (New York) / Bloomfield (New York),,False,396.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,169,Meg Craig Toby Craig Beaverton (Oregon),Beaverton (Oregon),,False,395.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,170,Cathy Cimaglia Christian Cimaglia Ridgeley (West Virginia),Ridgeley (West Virginia),,False,390.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,170,Danielle Swales Diane Ryu Durham (North Carolina) / Louisville (Colorado),Durham (North Carolina) / Louisville (Colorado),,False,390.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,170,Lynn Kang Liz Schreck Buena Park (California) / Chicago (Illinois),Buena Park (California) / Chicago (Illinois),,False,390.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,173,Annabella Roiger Grace Choi Chicago (Illinois) / Atlanta (Georgia),Chicago (Illinois) / Atlanta (Georgia),,False,383.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,173,Cameron Couch Kevin Rodríguez New York / Atlanta (Georgia),New York / Atlanta (Georgia),,False,383.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,175,Joan Rau Kim McKenzie Avondale Estates (Georgia) / Atlanta (Georgia),Avondale Estates (Georgia) / Atlanta (Georgia),,False,382.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,176,Lori Zavitz Mackendrick Zavitz Maitland (Florida),Maitland (Florida),,False,381.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,177,Mary Paguaga Elisabeth Parker Atlanta (Georgia) / New York,Atlanta (Georgia) / New York,,False,378.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,178,Melissa Ryburn Kai Johnson Berryville (Virginia),Berryville (Virginia),,False,376.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,179,Claire @Claireandpeter Peter @Claireandpeter Washington (DC),Washington (DC),,False,373.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,180,Amy Carr Dallas Broad Albuquerque (New Mexico),Albuquerque (New Mexico),,False,372.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,181,Makayla Thompson Shaina Millington White Plains (Maryland),White Plains (Maryland),,False,371.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,182,Tara Cozier Andrea Vaughn Atlanta (Georgia),Atlanta (Georgia),,False,368.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,183,Sandra Wilcox Kevin Wilson Shepherdstown (West Virginia),Shepherdstown (West Virginia),,False,367.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,184,Niki O’Neil Veronica Liebig Midlothian (Virginia),Midlothian (Virginia),,False,361.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,185,Lihan Chen Angela Sun Chicago (Illinois) / Duluth (Georgia),Chicago (Illinois) / Duluth (Georgia),,False,349.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,186,Rachelle Martineau Jeanne Martineau West Springfield (Massachusetts),West Springfield (Massachusetts),,False,348.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,187,Pamela Currie Michelle Dineen Savage (Minnesota) / Burnsville (Minnesota),Savage (Minnesota) / Burnsville (Minnesota),,False,338.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,188,Darrell Wilson Michelle Wilson Bristol (Virginia),Bristol (Virginia),,False,336.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,188,Judy Connor Alexandra Pfleegor Atlanta (Georgia),Atlanta (Georgia),,False,336.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,190,Jarrett King Vicky Babcock Roswell (Georgia),Roswell (Georgia),,False,335.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,191,Erika Hunter West Valley (Utah),West Valley (Utah),,False,312.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,192,John Pringle Maria Singleton Somerville (Massachusetts) / Decatur (Georgia),Somerville (Massachusetts) / Decatur (Georgia),,False,280.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,193,Mathew Murillo Soup Timmy Colorado Springs (Colorado) / Atlanta (Georgia),Colorado Springs (Colorado) / Atlanta (Georgia),,False,268.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,194,Ruth Dunkman Bob Dunkman Woodridge (Illinois),Woodridge (Illinois),,False,266.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,195,Alison Wright Mary Jane Pumphrey Knoxville (Tennessee) / Manassas (Virginia),Knoxville (Tennessee) / Manassas (Virginia),,False,265.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,196,Susie Peat Angela Shaw Palm Desert (California) / Anderson (South Carolina),Palm Desert (California) / Anderson (South Carolina),,False,263.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,197,Connie Bickford Karen Doukas Wallingford (Connecticut),Wallingford (Connecticut),,False,249.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,198,Elsa King Lila King Lehigh Acres (Florida),Lehigh Acres (Florida),,False,242.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,199,Barbara Fisher Mike Fisher Mooresville (North Carolina),Mooresville (North Carolina),,False,211.0
+usajigsaw,usajpa_2026_pairs,2026,pairs,B,1000,7200,200,Jill Fowler Tim Conner Avon Lake (Ohio),Avon Lake (Ohio),,False,197.0
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,1,Kelly Walter Phoenix (Arizona),Phoenix (Arizona),2434.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,2,Hannah Doyle San Mateo (California),San Mateo (California),2449.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,3,Alice Rowe Boulder (Co),Boulder (Co),2535.0,True,
@@ -78,7 +1276,7 @@ usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,76,Rebecca Strei
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,77,Chloe Muellers Monterey (Ma),Monterey (Ma),3393.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,78,Angela Harrow Elkins Park (PA),Elkins Park (PA),3412.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,79,Joshua Nelson Minneapolis (Mn),Minneapolis (Mn),3440.0,True,
-usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,80,Elizabeth Caron Hartford (Connecticut),Hartford (Connecticut),3445.0,True,
+usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,80,Eb Caron Hartford (Connecticut),Hartford (Connecticut),3445.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,81,Alyssa Zackler Stevenson Ranch (California),Stevenson Ranch (California),3480.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,82,Michelle Micheli Sterling (VA),Sterling (VA),3487.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,83,Lindsay Wang Arlington (Va),Arlington (Va),3488.0,True,
@@ -115,7 +1313,7 @@ usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,113,Shannon O’
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,113,Grace Byrnes Everett (Wa),Everett (Wa),3721.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,115,Nhi Nguyen Houston (Tx),Houston (Tx),3722.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,116,Michael Ha (Washington),(Washington),3725.0,True,
-usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,117,Maddie Bouchie Chicago (IL),Chicago (IL),3731.0,True,
+usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,117,Madeleine Bouchie Park Ridge (Illinois),Park Ridge (Illinois),3731.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,118,Sarah Craig Cincinnati (Ohio),Cincinnati (Ohio),3767.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,119,Karen Ni Diamond Bar (California),Diamond Bar (California),3773.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,120,Tara Griffitts Camas (Washington),Camas (Washington),3778.0,True,
@@ -132,7 +1330,7 @@ usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,130,Christine Pa
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,131,Lena Nguyen-Vo Monroe (Washington),Monroe (Washington),3849.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,132,Rita Loeffler Columbus (OH),Columbus (OH),3858.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,133,Calie Curran Conroe (Tx),Conroe (Tx),3874.0,True,
-usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,134,Amanda Messinger Mayflower (AR),Mayflower (AR),3876.0,True,
+usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,134,Amanda Messinger Cape Coral (Florida),Cape Coral (Florida),3876.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,135,Brooke Ouro-Djobo Stoughton (MA),Stoughton (MA),3878.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,136,Kimberly Kenne Pasadena (California),Pasadena (California),3882.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,137,Kristin Blair Denver (CO),Denver (CO),3891.0,True,
@@ -173,7 +1371,7 @@ usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,171,Melynda Owen
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,172,Yasmeen Almog Jackson Hole (Wyoming),Jackson Hole (Wyoming),4161.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,173,Mary Beth Harris Brighton (Michigan),Brighton (Michigan),4173.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,174,Carley lauer Cincinnati (Ohio),Cincinnati (Ohio),4188.0,True,
-usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,175,Maggie Kirkland Portland (OR),Portland (OR),4202.0,True,
+usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,175,Margaret Kirkland Portland (OR),Portland (OR),4202.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,176,Lori Eich Los Angeles (California),Los Angeles (California),4210.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,177,Jennifer Luscher Annapolis (Maryland),Annapolis (Maryland),4216.0,True,
 usajigsaw,usajpa_2025_individual,2025,individual,final,500,5400,178,Jamie Ambabo Decatur (Ga),Decatur (Ga),4235.0,True,
@@ -203,7 +1401,7 @@ usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,1,Kelly Walter Andrea Pen
 usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,2,Josh Trauger Conner DeLaat Cincinnati (OH),Cincinnati (OH),1996.0,True,
 usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,3,Jeanne Roiter Cathy Roiter Duvall (Washington),Duvall (Washington),2055.0,True,
 usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,4,Sarah Schuler Lauren Kautz St. Paul (Minnesota) / Minneapolis (Mn),St. Paul (Minnesota) / Minneapolis (Mn),2079.0,True,
-usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,5,Elizabeth Caron Michaela Keener Hartford (Connecticut) / Lexington (Kentucky),Hartford (Connecticut) / Lexington (Kentucky),2128.0,True,
+usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,5,Eb Caron Michaela Keener Hartford (Connecticut) / Lexington (Kentucky),Hartford (Connecticut) / Lexington (Kentucky),2128.0,True,
 usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,6,Alice Rowe Hannah Scott Boulder (Co) / Herndon (Virginia),Boulder (Co) / Herndon (Virginia),2134.0,True,
 usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,7,Emma Pan Min-Yee Deng West Roxbury (Massachusetts) / San Diego (Ca),West Roxbury (Massachusetts) / San Diego (Ca),2145.0,True,
 usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,8,Christopher Nammour Hannah Doyle Palo Alto (CA) / San Mateo (California),Palo Alto (CA) / San Mateo (California),2238.0,True,
@@ -256,7 +1454,7 @@ usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,54,Michelle Chan Kailee C
 usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,55,Ashley Bromiley Soon Kim Union City (New Jersey) / germantown (md),Union City (New Jersey) / germantown (md),3107.0,True,
 usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,56,Alyssa Zackler Maria Seitz Stevenson Ranch (California) / Boyertown (PA),Stevenson Ranch (California) / Boyertown (PA),3108.0,True,
 usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,57,Nicholas Ebelhack Nathan Biberdorf Indianapolis (IN),Indianapolis (IN),3117.0,True,
-usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,58,Elizabeth Alvarez Maddie Bouchie (illinois) / Chicago (IL),(illinois) / Chicago (IL),3118.0,True,
+usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,58,Elizabeth Alvarez Madeleine Bouchie (illinois) / Park Ridge (Illinois),(illinois) / Park Ridge (Illinois),3118.0,True,
 usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,59,Aloysia Larson Emmie Lee Grand Forks (ND) / Big Lake (MN),Grand Forks (ND) / Big Lake (MN),3123.0,True,
 usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,60,Darya Leylian Yuewen Chun Calabasas (CA) / Signal Hill (CA),Calabasas (CA) / Signal Hill (CA),3129.0,True,
 usajigsaw,usajpa_2025_pairs,2025,pairs,final,1000,7200,61,Timothy Miller Sarah Goodman New York (NY) / St. Louis (Missouri),New York (NY) / St. Louis (Missouri),3160.0,True,
@@ -441,16 +1639,16 @@ usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,40,Just Gonna Squeeze Ri
 usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,41,Pieceful Warriors Taylor Reed / Cecilia Frew / Maria Seitz / Rose Barrett Springfield,Springfield,10120.0,True,
 usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,42,Chicago Puzzle Club Shirley Jiang  /  Frank Lieu  /  Elizabeth Alvarez  /  Maddie Bouchie Chicago,Chicago,10311.0,True,
 usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,43,Dc Piecemakers Aimee Seligstein  /  Chelsea Widmaier  /  Krystal Cotriss  /  Tazia Statucki Washington DC,Washington DC,10466.0,True,
-usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,44,Puzzle Sharks Jonathan Armstrong  /  David Black  /  Maggie Kirkland  /  Marisa Martin Vancouver,Vancouver,10603.0,True,
+usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,44,Puzzle Sharks Jonathan Armstrong    /    David Black    /    Maggie Kirkland    /    Marisa Martin Vancouver,Vancouver,10603.0,True,
 usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,45,Virginia Puzzlers Amanda Herman  /  Julianna Duke  /  Natalie Schimmelbusch  /  Elizabeth Sondag Stephens City,Stephens City,10670.0,True,
 usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,46,Carolina Snapdragons Jen Lunsford  /  Kirsty Weitzel  /  Sabrina Monserate-Lindsay  /  Leila Beikmohamadi Efland,Efland,10721.0,True,
 usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,47,Edge Of Glory Ashley Bromiley  /  Felisa Lewis  /  Jessica Crosby  /  Soon Kim Union City,Union City,10736.0,True,
-usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,48,Lowcal Calzone Zone Gabrielle Melli  /  Tessa Melli  /  Kristin Blair  /  Sarah Hauge Denver,Denver,,False,1977.0
+usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,48,Lowcal Calzone Zone Gabrielle Melli   /   Tessa Melli   /   Kristin Blair   /   Sarah Hauge Denver,Denver,,False,1977.0
 usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,49,Empire State Tessallators Jennifer Morrow  /  Bailey Baleno  /  Erin Ireland  /  Jessica Rykowski Vestal,Vestal,,False,1962.0
 usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,50,Puzzle Pisces Joe Feehan  /  Billy Weaver  /  Michael Ha  /  Jay Ritch Washington,Washington,,False,1943.0
 usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,51,Jigsaw Junkies (In) Kylie Ledingham  /  Misty Ledingham  /  Krinda Hie  /  Kelly Pryor Carmel,Carmel,,False,1901.0
 usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,52,Fit Happen! Bill McFadden  /  Brooke Ouro-Djobo  /  Erin Cherry  /  Sarah Proctor Stoughton,Stoughton,,False,1894.0
-usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,53,Puzzle Rizz Hiromi Kimura  /  Lena Nguyen-Vo  /  Chris Morrissey  /  Cami Pottle Lynnwood,Lynnwood,,False,1885.0
+usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,53,Puzzle Rizz Hiromi Kimura   /   Lena Nguyen-Vo   /   Chris Morrissey   /   Cami Pottle Lynnwood,Lynnwood,,False,1885.0
 usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,54,Puzzle Jiggle Giggle Fits Karen Wells  /  Jessica Bradley  /  Jessica Stewart  /  Kristin Squire Monument,Monument,,False,1880.0
 usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,55,Scatterbrains Alexandra Michonski  /  Caitlyn Helmore  /  Stephanie Owen  /  Debbie Owen Harrisonburg,Harrisonburg,,False,1870.0
 usajigsaw,usajpa_2025_teams,2025,teams,final,2000,10800,56,Puzzlesotans Kevin Erickson  /  Katie Erickson  /  Laura Erickson  /  Ethan Falstrom Coon Rapids,Coon Rapids,,False,1869.0
@@ -519,7 +1717,7 @@ usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,18,Katherine Dil
 usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,19,Andrea Kyle Saint Paul (Minnesota),Saint Paul (Minnesota),2850.0,True,
 usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,20,Emma Pan West Roxbury (Massachusetts),West Roxbury (Massachusetts),2868.0,True,
 usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,21,Megan Jones Warwick (Ri),Warwick (Ri),2883.0,True,
-usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,21,Elizabeth Caron Hartford (Connecticut),Hartford (Connecticut),2883.0,True,
+usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,21,Eb Caron Hartford (Connecticut),Hartford (Connecticut),2883.0,True,
 usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,23,Kelly Buhr Soquel (California),Soquel (California),2892.0,True,
 usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,24,Karen Kavett Los Angeles (California),Los Angeles (California),2917.0,True,
 usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,25,Linnea Shieh Sunnyvale (CA),Sunnyvale (CA),2999.0,True,
@@ -530,7 +1728,7 @@ usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,29,Alyssa Zackle
 usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,30,Josh Trauger Cincinnati (OH),Cincinnati (OH),3109.0,True,
 usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,31,Elizabeth McElveen Greenville (Sc),Greenville (Sc),3143.0,True,
 usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,32,Gail McCormick State College (Pennsylvania),State College (Pennsylvania),3144.0,True,
-usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,33,Amanda Messinger Mayflower (AR),Mayflower (AR),3153.0,True,
+usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,33,Amanda Messinger Cape Coral (Florida),Cape Coral (Florida),3153.0,True,
 usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,34,Min-Yee Deng San Diego (Ca),San Diego (Ca),3157.0,True,
 usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,35,Samantha Zucker -,-,3187.0,True,
 usajigsaw,usajpa_2024_individual,2024,individual,final,500,5400,36,Katie Luscher Annapolis (Maryland),Annapolis (Maryland),3203.0,True,
@@ -612,7 +1810,7 @@ usajigsaw,usajpa_2024_pairs,2024,pairs,final,1000,7200,11,Grey Rogers Katherine 
 usajigsaw,usajpa_2024_pairs,2024,pairs,final,1000,7200,12,Josh Trauger Geoffrey Scott Cincinnati (OH) / New York,Cincinnati (OH) / New York,5134.0,True,
 usajigsaw,usajpa_2024_pairs,2024,pairs,final,1000,7200,13,Gail McCormick Sarah Oman State College (Pennsylvania) / Corvallis (OR),State College (Pennsylvania) / Corvallis (OR),5260.0,True,
 usajigsaw,usajpa_2024_pairs,2024,pairs,final,1000,7200,14,Amy Paull Alexx Cisotto The Woodlands (Texas) / Houston (Texas),The Woodlands (Texas) / Houston (Texas),5315.0,True,
-usajigsaw,usajpa_2024_pairs,2024,pairs,final,1000,7200,15,Yvonne Feucht Elizabeth Caron Burbank (California) / Hartford (Connecticut),Burbank (California) / Hartford (Connecticut),5468.0,True,
+usajigsaw,usajpa_2024_pairs,2024,pairs,final,1000,7200,15,Yvonne Feucht Eb Caron Burbank (California) / Hartford (Connecticut),Burbank (California) / Hartford (Connecticut),5468.0,True,
 usajigsaw,usajpa_2024_pairs,2024,pairs,final,1000,7200,16,Elizabeth McElveen Jasper Lee Greenville (Sc) / Decatur (GA),Greenville (Sc) / Decatur (GA),5502.0,True,
 usajigsaw,usajpa_2024_pairs,2024,pairs,final,1000,7200,17,Wendy Escudero Kelly Spoon San Diego (California),San Diego (California),5548.0,True,
 usajigsaw,usajpa_2024_pairs,2024,pairs,final,1000,7200,18,Elizabeth Nelson Joshua Nelson Brooklyn Park (Mn) / Minneapolis (Mn),Brooklyn Park (Mn) / Minneapolis (Mn),5625.0,True,

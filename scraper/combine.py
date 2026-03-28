@@ -3,8 +3,9 @@
 Sources:
 1. speedpuzzling.com - US competition results (scraped from PDFs)
 2. usajigsaw - USA Jigsaw Puzzle Association results
-3. myspeedpuzzling.com - global self-reported solving times
-4. mallory - personal solve log (MalloryPuzzleData.csv)
+3. wjpf - World Jigsaw Puzzle Federation championship results
+4. myspeedpuzzling.com - global self-reported solving times
+5. mallory - personal solve log (MalloryPuzzleData.csv)
 
 Output schema:
     source, event_id, year, division, round, rank, competitor_name, origin,
@@ -21,6 +22,7 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).parent.parent
 SP_PATH = PROJECT_ROOT / "data" / "processed" / "speedpuzzling_results.csv"
 UJ_PATH = PROJECT_ROOT / "data" / "processed" / "usajigsaw_results.csv"
+WJPF_PATH = PROJECT_ROOT / "data" / "processed" / "wjpf_results.csv"
 MSP_PUZZLES_PATH = PROJECT_ROOT / "data" / "raw" / "myspeedpuzzling" / "puzzles.csv"
 MSP_TIMES_PATH = PROJECT_ROOT / "data" / "raw" / "myspeedpuzzling" / "solving_times.csv"
 MALLORY_PATH = PROJECT_ROOT / "data" / "MalloryPuzzleData.csv"
@@ -318,6 +320,86 @@ def normalize_uj_names(uj: pd.DataFrame, sp_names: set[str]) -> pd.DataFrame:
     return uj
 
 
+# Manual corrections for WJPF multi-word surnames.
+# Maps raw "First Last" name → corrected "Last, First" form.
+# Default normalization uses "last word = surname" which fails for
+# Spanish two-part surnames and similar patterns.
+WJPF_NAME_CORRECTIONS: dict[str, str] = {
+    "Alejandro Clemente León": "Clemente León, Alejandro",
+    "Alejandro Clemente Leon": "Clemente León, Alejandro",
+    "Ana Gil Luciano": "Gil Luciano, Ana",
+    "Gisela Arranz Toro": "Arranz Toro, Gisela",
+    "Ángel Heras Salcedo": "Heras Salcedo, Ángel",
+    "Angel Heras Salcedo": "Heras Salcedo, Ángel",
+    "Soraya Pérez Carayol": "Pérez Carayol, Soraya",
+    "Soraya Perez Carayol": "Pérez Carayol, Soraya",
+}
+
+
+def _name_to_last_first(name: str) -> str:
+    """Convert 'First [Middle] Last' to 'Last, First [Middle]'.
+
+    Uses the last word as the surname by default.
+    Checks WJPF_NAME_CORRECTIONS for known multi-word surnames.
+    """
+    if name in WJPF_NAME_CORRECTIONS:
+        return WJPF_NAME_CORRECTIONS[name]
+    parts = name.split()
+    if len(parts) < 2:
+        return name
+    return f"{parts[-1]}, {' '.join(parts[:-1])}"
+
+
+def normalize_wjpf_names(wjpf: pd.DataFrame, sp_names: set[str]) -> pd.DataFrame:
+    """Normalize WJPF competitor names to 'Last, First' format.
+
+    Two-pass approach:
+    1. For solo competitors, try all 'First [Middle] Last' → 'Last, First [Middle]'
+       splits against the SP name set (case-insensitive). Uses canonical SP casing.
+    2. For names not matching SP, apply default 'last word = surname' conversion
+       with manual corrections for known multi-word surnames.
+
+    Pairs/teams are left as-is (they use '&' separated names).
+    """
+    wjpf = wjpf.copy()
+    sp_lower = {n.lower(): n for n in sp_names}
+
+    sp_matched = 0
+    default_converted = 0
+    for idx, row in wjpf.iterrows():
+        if row.get("division") not in ("solo",):
+            continue
+        name = row["competitor_name"]
+        # Already in "Last, First" format (shouldn't happen, but guard)
+        if "," in name:
+            continue
+
+        parts = name.split()
+        if len(parts) < 2:
+            continue
+
+        # Pass 1: try all possible splits against SP name set
+        matched = False
+        for i in range(1, len(parts)):
+            first = " ".join(parts[:i])
+            last = " ".join(parts[i:])
+            attempt = f"{last}, {first}"
+            if attempt.lower() in sp_lower:
+                wjpf.at[idx, "competitor_name"] = sp_lower[attempt.lower()]
+                sp_matched += 1
+                matched = True
+                break
+
+        # Pass 2: default conversion
+        if not matched:
+            wjpf.at[idx, "competitor_name"] = _name_to_last_first(name)
+            default_converted += 1
+
+    print(f"  WJPF name normalization: {sp_matched} SP-matched,"
+          f" {default_converted} default-converted")
+    return wjpf
+
+
 def load_player_links() -> dict[str, str]:
     """Load manual MSP player_id -> SP competitor_name links.
 
@@ -444,7 +526,7 @@ def combine() -> pd.DataFrame:
         # 1A: Normalize "individual" division to "solo"
         uj.loc[uj["division"] == "individual", "division"] = "solo"
         # Known event dates for USA Jigsaw Nationals
-        uj_dates = {2022: "2022-10-22", 2024: "2024-03-23", 2025: "2025-04-05"}
+        uj_dates = {2022: "2022-10-22", 2024: "2024-03-23", 2025: "2025-04-05", 2026: "2026-03-28"}
         uj["finished_date"] = uj["year"].map(uj_dates)
         # 1B: Normalize UJ individual names to SP "Last, First" format
         if SP_PATH.exists():
@@ -455,6 +537,26 @@ def combine() -> pd.DataFrame:
         print(f"usajigsaw: {len(uj)} rows ({(uj['division'] == 'solo').sum()} solo)")
     else:
         print(f"WARNING: {UJ_PATH} not found, skipping")
+
+    # wjpf (World Jigsaw Puzzle Federation championship results)
+    if WJPF_PATH.exists():
+        wjpf = pd.read_csv(WJPF_PATH)
+        wjpf["first_attempt"] = True
+        # Fill missing puzzle_name: each round uses a different secret puzzle
+        # Column is all-NaN from CSV (float64), convert to string first
+        wjpf["puzzle_name"] = wjpf["puzzle_name"].astype(object)
+        mask = wjpf["puzzle_name"].isna()
+        wjpf.loc[mask, "puzzle_name"] = (
+            wjpf.loc[mask, "event_id"] + "_" + wjpf.loc[mask, "round"].fillna("final")
+        )
+        # Normalize competitor names to SP "Last, First" format
+        sp_names = set(frames[0]["competitor_name"].unique()) if frames else set()
+        if sp_names:
+            wjpf = normalize_wjpf_names(wjpf, sp_names)
+        frames.append(wjpf)
+        print(f"wjpf: {len(wjpf)} rows ({(wjpf['division'] == 'solo').sum()} solo)")
+    else:
+        print(f"NOTE: {WJPF_PATH} not found, skipping (run: python -m scraper.wjpf)")
 
     # 1C: Load manual player links for MSP->SP identity merging
     player_links = load_player_links()
